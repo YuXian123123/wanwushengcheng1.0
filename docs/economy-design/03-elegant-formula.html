@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经济系统优雅公式设计</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .math {
+            text-align: center;
+            font-style: italic;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e8f4fc;
+            border-radius: 5px;
+        }
+        .principle {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .formula-group {
+            margin: 25px 0;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .formula-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>经济系统优雅公式设计</h1>
+        
+        <div class="principle">
+            <strong>优雅原则：</strong>经济系统的数学公式应体现经济本质，简洁而富有表现力。每个公式都应有明确的经济意义和不变量约束。
+        </div>
+
+        <h2>1. 货币公式</h2>
+        <div class="formula-group">
+            <div class="formula-title">货币供应量</div>
+            <div class="math">
+                M = Σ(balances)
+            </div>
+            <p>货币供应量等于所有账户余额的总和</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">流通速度</div>
+            <div class="math">
+                V = transactions / M
+            </div>
+            <p>流通速度表示单位货币在一定时间内的周转次数</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">通胀率控制</div>
+            <div class="math">
+                π = k(M·V - Y)
+            </div>
+            <p>通胀率由货币供应量、流通速度与实际产出的关系决定，k为调节系数</p>
+        </div>
+
+        <h2>2. 定价公式</h2>
+        <div class="formula-group">
+            <div class="formula-title">供需定价</div>
+            <div class="math">
+                P = P₀ × (D/S)<sup>α</sup>
+            </div>
+            <p>价格由供需比决定，α为价格弹性系数</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">动态调整</div>
+            <div class="math">
+                P' = P × (1 + ΔD - ΔS)
+            </div>
+            <p>价格根据供需变化进行动态调整</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">市场均衡条件</div>
+            <div class="math">
+                ∂D/∂P + ∂S/∂P = 0
+            </div>
+            <p>市场均衡时，需求对价格的变化率与供给对价格的变化率之和为零</p>
+        </div>
+
+        <h2>3. 交易公式</h2>
+        <div class="formula-group">
+            <div class="formula-title">交易成本</div>
+            <div class="math">
+                C = f(amount, type) = c₀ + c₁·amount + c₂·type
+            </div>
+            <p>交易成本由基础费用、数量费用和类型费用组成</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">税收公式</div>
+            <div class="math">
+                T = rate × amount
+            </div>
+            <p>税收等于税率乘以交易金额</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">净收益</div>
+            <div class="math">
+                R = benefit - cost - tax
+            </div>
+            <p>净收益等于总收益减去成本和税收</p>
+        </div>
+
+        <h2>4. 生存公式</h2>
+        <div class="formula-group">
+            <div class="formula-title">生存压力</div>
+            <div class="math">
+                P = (L/L₀) × min(coins/c₀, 1)
+            </div>
+            <p>生存压力由生命值比例和货币充足度共同决定</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">延寿决策</div>
+            <div class="math">
+                extend = coins > threshold ? 1 : 0
+            </div>
+            <p>当货币超过阈值时决定延寿</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">预期寿命</div>
+            <div class="math">
+                E = L₀ + extensions × extension_amount
+            </div>
+            <p>预期寿命等于基础寿命加上延寿次数乘以延寿量</p>
+        </div>
+
+        <h2>5. 奖励公式</h2>
+        <div class="formula-group">
+            <div class="formula-title">任务奖励</div>
+            <div class="math">
+                R = base × difficulty × urgency
+            </div>
+            <p>任务奖励由基础奖励、难度系数和紧急程度共同决定</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">知识奖励</div>
+            <div class="math">
+                R = value × quality
+            </div>
+            <p>知识奖励由知识价值和质量决定</p>
+        </div>
+        
+        <div class="formula-group">
+            <div class="formula-title">创新奖励</div>
+            <div class="math">
+                R = base × novelty_factor
+            </div>
+            <p>创新奖励由基础奖励和新颖性因子决定</p>
+        </div>
+
+        <h2>不变量约束</h2>
+        <ul>
+            <li><strong>货币守恒：</strong>Σ(balances) = M</li>
+            <li><strong>价格非负：</strong>P ≥ 0</li>
+            <li><strong>成本非负：</strong>C ≥ 0</li>
+            <li><strong>生命值边界：</strong>0 ≤ L ≤ L<sub>max</sub></li>
+            <li><strong>奖励非负：</strong>R ≥ 0</li>
+        </ul>
+
+        <h2>设计优势</h2>
+        <ol>
+            <li><strong>数学清晰性：</strong>每个公式都有明确的经济意义</li>
+            <li><strong>系统一致性：</strong>所有公式在统一的经济框架下协调工作</li>
+            <li><strong>可调节性：</strong>通过参数调节可以适应不同的经济环境</li>
+            <li><strong>可验证性：</strong>公式间的关系可以进行数学验证</li>
+        </ol>
+    </div>
+</body>
+</html>

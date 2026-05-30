@@ -23,7 +23,7 @@ pub enum ResourceType {
 }
 
 /// 资源消耗结构
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct ResourceCost {
     pub resource_type: ResourceType,
     pub amount: u32,

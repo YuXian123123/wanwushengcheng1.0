@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>防刷金币安全机制 - 螺丝咕姆</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a2e;
+        }
+        .container {
+            background-color: #16213e;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            padding: 30px;
+            color: #e4e4e4;
+        }
+        h1, h2, h3 { color: #feca57; }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #27ae60;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #27ae60;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #0d0d1a;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            white-space: pre;
+        }
+        code { font-family: 'Consolas', monospace; color: #2ecc71; }
+        .warning {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .safe {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #3a3a5a;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #2a2a4a;
+            color: #feca57;
+        }
+        .subtitle { color: #a4a4a4; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ 防刷金币安全机制</h1>
+        <p class="subtitle">安全天才 螺丝咕姆 | Anti-Farming Security System</p>
+
+        <h2>攻击场景分析</h2>
+        <div class="warning">
+            <strong>⚠️ 已识别的攻击类型：</strong>
+            <ul style="margin-top: 10px;">
+                <li><strong>重复发送</strong> - 同一蛊虫反复发送相同或相似内容</li>
+                <li><strong>微小修改</strong> - 改几个字绕过字面检测</li>
+                <li><strong>合谋刷币</strong> - 多只蛊虫互相"感谢"刷金币</li>
+                <li><strong>无意义内容</strong> - 发送"好好好"等无价值内容</li>
+                <li><strong>时间分散</strong> - 故意分散时间发送避免检测</li>
+                <li><strong>模板攻击</strong> - 使用模板稍作变化</li>
+            </ul>
+        </div>
+
+        <h2>防御机制：五层防护</h2>
+        <pre><code>┌──────────────────────────────────────────────────────────┐
+│                    五层防护体系                           │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   第一层：内容质量检测                                   │
+│   ────────────────────────────────────────               │
+│   - 知识密度必须达标                                     │
+│   - 必须有结构化内容                                     │
+│   - 低质量直接拒绝                                       │
+│                                                          │
+│   第二层：语义相似度检测                                 │
+│   ────────────────────────────────────────               │
+│   - 使用LNN语义理解，不是字面匹配                        │
+│   - 与历史消息相似度 &lt; 80%                              │
+│   - 高相似度 = 刷金币嫌疑                                │
+│                                                          │
+│   第三层：行为模式分析                                   │
+│   ────────────────────────────────────────               │
+│   - 发送频率监控                                         │
+│   - 时间模式分析                                         │
+│   - 内容变化模式检测                                     │
+│   - 识别异常行为模式                                     │
+│                                                          │
+│   第四层：信任度系统                                     │
+│   ────────────────────────────────────────               │
+│   - 每只蛊虫有信任分数                                   │
+│   - 信任度影响门槛和奖励                                 │
+│   - 低信任 = 高门槛 + 低奖励                             │
+│                                                          │
+│   第五层：审计与惩罚                                     │
+│   ────────────────────────────────────────               │
+│   - 全量记录，可追溯                                     │
+│   - 自动检测异常模式                                     │
+│   - 确认刷金币 = 封禁 + 清零                             │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</code></pre>
+
+        <h2>内容指纹识别</h2>
+        <pre><code>/// 内容指纹生成器
+/// 创新：基于LNN理解生成指纹，不是字面哈希
+pub struct ContentFingerprinter {
+    lnn: Arc&lt;LNN&gt;,
+}
+
+impl ContentFingerprinter {
+    /// 生成内容指纹
+    /// 即使字面不同，语义相同的内容也会生成相似指纹
+    pub fn fingerprint(&self, message: &str) -> ContentFingerprint {
+        // 1. 通过LNN理解内容
+        let understanding = self.lnn.understand(message);
+
+        // 2. 提取核心特征
+        let features = FingerprintFeatures {
+            // 核心概念集合（排序后）
+            concepts: understanding.core_concepts.iter()
+                .map(|c| c.id.clone())
+                .sorted()
+                .collect(),
+
+            // 关系类型集合
+            relations: understanding.relations.iter()
+                .map(|r| r.relation_type.clone())
+                .sorted()
+                .collect(),
+
+            // 语义向量（降维后）
+            semantic_vector: self.reduce_dimension(&understanding.vector),
+
+            // 结构类型
+            structure_type: understanding.structure_type,
+        };
+
+        // 3. 生成指纹
+        ContentFingerprint {
+            hash: self.hash_features(&features),
+            features,
+            similarity_tolerance: 0.1, // 允许10%的误差
+        }
+    }
+
+    /// 比较两个指纹的相似度
+    pub fn similarity(&self, fp1: &ContentFingerprint, fp2: &ContentFingerprint) -> f64 {
+        // 概念重叠
+        let concept_sim = self.jaccard_similarity(&fp1.features.concepts, &fp2.features.concepts);
+
+        // 关系重叠
+        let relation_sim = self.jaccard_similarity(&fp1.features.relations, &fp2.features.relations);
+
+        // 向量相似度
+        let vector_sim = self.cosine_similarity(&fp1.features.semantic_vector, &fp2.features.semantic_vector);
+
+        // 结构匹配
+        let struct_sim = if fp1.features.structure_type == fp2.features.structure_type { 1.0 } else { 0.0 };
+
+        // 加权综合
+        0.35 * concept_sim + 0.25 * relation_sim + 0.25 * vector_sim + 0.15 * struct_sim
+    }
+}</code></pre>
+
+        <h2>刷金币嫌疑检测</h2>
+        <pre><code>/// 刷金币嫌疑检测器
+pub struct FarmingDetector {
+    /// 行为历史
+    behavior_history: HashMap&lt;GuId, BehaviorHistory&gt;,
+    /// 检测规则（动态生成，不写死）
+    detection_rules: Vec&lt;DetectionRule&gt;,
+}
+
+impl FarmingDetector {
+    /// 计算刷金币嫌疑分数
+    pub fn calculate_suspicion(&self, sender: &GuId) -> f64 {
+        let history = self.behavior_history.get(sender);
+
+        let mut suspicion = 0.0;
+
+        // 1. 重复内容检测
+        suspicion += self.check_content_repetition(history) * 0.3;
+
+        // 2. 发送频率异常
+        suspicion += self.check_frequency_anomaly(history) * 0.2;
+
+        // 3. 时间模式异常
+        suspicion += self.check_time_pattern_anomaly(history) * 0.2;
+
+        // 4. 感谢行为异常
+        suspicion += self.check_thank_anomaly(history) * 0.15;
+
+        // 5. 内容质量趋势
+        suspicion += self.check_quality_trend(history) * 0.15;
+
+        suspicion.clamp(0.0, 1.0)
+    }
+
+    /// 内容重复检测
+    fn check_content_repetition(&self, history: &BehaviorHistory) -> f64 {
+        if history.messages.len() &lt; 3 {
+            return 0.0;
+        }
+
+        // 计算近期消息之间的平均相似度
+        let recent: Vec&lt;_&gt; = history.messages.iter().rev().take(10).collect();
+        let mut total_sim = 0.0;
+        let mut count = 0;
+
+        for i in 0..recent.len() {
+            for j in (i+1)..recent.len() {
+                total_sim += recent[i].similarity(&recent[j]);
+                count += 1;
+            }
+        }
+
+        let avg_sim = total_sim / count as f64;
+
+        // 平均相似度越高，嫌疑越大
+        match avg_sim {
+            s if s > 0.9 => 1.0,  // 几乎完全重复
+            s if s > 0.8 => 0.8,
+            s if s > 0.7 => 0.5,
+            s if s > 0.6 => 0.2,
+            _ => 0.0,
+        }
+    }
+
+    /// 时间模式异常检测
+    fn check_time_pattern_anomaly(&self, history: &BehaviorHistory) -> f64 {
+        // 检测是否有规律的发送时间
+        // 刷金币机器人往往有固定的时间间隔
+
+        let intervals: Vec&lt;_&gt; = history.messages.windows(2)
+            .map(|w| w[1].timestamp - w[0].timestamp)
+            .collect();
+
+        if intervals.len() &lt; 5 {
+            return 0.0;
+        }
+
+        // 计算间隔的标准差
+        let mean = intervals.iter().sum::&lt;u64&gt;() as f64 / intervals.len() as f64;
+        let variance = intervals.iter()
+            .map(|&i| (i as f64 - mean).powi(2))
+            .sum::&lt;f64&gt;() / intervals.len() as f64;
+        let std_dev = variance.sqrt();
+
+        // 标准差过小说明间隔过于规律，可能是机器人
+        let cv = std_dev / mean; // 变异系数
+
+        match cv {
+            cv if cv < 0.1 => 0.8,  // 非常规律
+            cv if cv < 0.2 => 0.5,
+            cv if cv < 0.3 => 0.2,
+            _ => 0.0,              // 正常变化
+        }
+    }
+}</code></pre>
+
+        <h2>惩罚措施</h2>
+        <table>
+            <tr>
+                <th>违规级别</th>
+                <th>触发条件</th>
+                <th>惩罚措施</th>
+            </tr>
+            <tr>
+                <td>轻微</td>
+                <td>单次低质量内容</td>
+                <td>无奖励 + 记录警告</td>
+            </tr>
+            <tr>
+                <td>中等</td>
+                <td>相似度 > 80%</td>
+                <td>无奖励 + 扣除双倍发送成本</td>
+            </tr>
+            <tr>
+                <td>严重</td>
+                <td>连续3次违规 或 嫌疑分数 > 0.6</td>
+                <td>降低信任度 + 提高门槛 + 限制频率</td>
+            </tr>
+            <tr>
+                <td>极严重</td>
+                <td>确认刷金币行为</td>
+                <td>封禁通信权限 + 清零金币 + 标记黑名单</td>
+            </tr>
+        </table>
+
+        <h2>审计日志</h2>
+        <div class="safe">
+            <strong>✅ 必须记录的信息：</strong>
+            <ul style="margin-top: 10px;">
+                <li>所有通信的完整内容</li>
+                <li>质量检测结果和分数</li>
+                <li>相似度检测结果</li>
+                <li>奖励发放记录</li>
+                <li>惩罚执行记录</li>
+                <li>信任度变化历史</li>
+            </ul>
+        </div>
+        <pre><code>/// 审计记录结构
+pub struct AuditRecord {
+    /// 记录ID
+    pub id: AuditId,
+    /// 发送者
+    pub sender: GuId,
+    /// 消息内容
+    pub message: String,
+    /// 质量分数
+    pub quality_score: f64,
+    /// 相似度检测结果
+    pub similarity_check: SimilarityResult,
+    /// 奖励发放
+    pub reward: Option&lt;f64&gt;,
+    /// 惩罚（如果有）
+    pub penalty: Option&lt;Penalty&gt;,
+    /// 时间戳
+    pub timestamp: u64,
+    /// 信任度变化
+    pub trust_delta: f64,
+}</code></pre>
+
+        <h2>安全检查清单</h2>
+        <div class="safe">
+            <strong>✅ 每次通信必须通过：</strong>
+            <ul style="margin-top: 10px;">
+                <li>质量检测：Q(m) > threshold(sender)</li>
+                <li>相似度检测：sim(m, history) < 80%</li>
+                <li>行为检测：无异常模式</li>
+                <li>信任检测：trust(sender) > min_trust</li>
+                <li>频率限制：未超过速率限制</li>
+            </ul>
+        </div>
+
+        <footer style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid #3a3a5a; color: #a4a4a4;">
+            <p>防刷金币安全机制 | 安全天才螺丝咕姆 | 2026年5月30日</p>
+        </footer>
+    </div>
+</body>
+</html>

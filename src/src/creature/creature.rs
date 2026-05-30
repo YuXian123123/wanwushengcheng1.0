@@ -1,12 +1,12 @@
 //! 蛊虫实体模块 - 定义完整的蛊虫数据结构
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use uuid::Uuid;
 
 use crate::creature::{
-    Ability, Lifecycle, MetaCognition, ResourcePool, ResourceType, ResourceCost,
+    Ability, Lifecycle, MetaCognition, ResourcePool,
 };
+use crate::creature::ability::DamageType;
 
 /// 特性结构体
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -44,17 +44,6 @@ pub enum AttributeType {
     Wisdom,
 }
 
-/// 伤害类型（与ability模块中的定义保持一致）
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum DamageType {
-    Physical,
-    Fire,
-    Ice,
-    Lightning,
-    Poison,
-    Psychic,
-}
-
 /// 蛊虫实体结构体
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GuCreature {
@@ -65,13 +54,13 @@ pub struct GuCreature {
     /// 生命周期
     pub lifecycle: Lifecycle,
     /// 能力集合
-    pub abilities: HashSet<Ability>,
+    pub abilities: Vec<Ability>,
     /// 元认知
     pub cognition: MetaCognition,
     /// 资源池
     pub resources: ResourcePool,
     /// 特性集合
-    pub traits: HashSet<Trait>,
+    pub traits: Vec<Trait>,
 }
 
 impl GuCreature {
@@ -89,10 +78,10 @@ impl GuCreature {
             id,
             name,
             lifecycle,
-            abilities: abilities.into_iter().collect(),
+            abilities,
             cognition,
             resources,
-            traits: traits.into_iter().collect(),
+            traits,
         }
     }
 
@@ -120,23 +109,23 @@ impl GuCreature {
     /// 学习新能力
     pub fn learn_ability(&self, ability: Ability) -> Self {
         let mut new_self = self.clone();
-        
+
         // 检查是否有足够的资源学习能力
         if !new_self.resources.can_afford(&ability.cost) {
             return new_self; // 资源不足，无法学习
         }
-        
+
         // 消耗资源
         if let Some(new_resources) = new_self.resources.consume(&ability.cost) {
             new_self.resources = new_resources;
-            
+
             // 添加能力到集合
-            new_self.abilities.insert(ability.clone());
-            
+            new_self.abilities.push(ability.clone());
+
             // 更新认知状态
             new_self.cognition = new_self.cognition.learn_ability(ability.id());
         }
-        
+
         new_self
     }
 
@@ -166,7 +155,7 @@ impl GuCreature {
     /// 添加特性
     pub fn add_trait(&self, trait_item: Trait) -> Self {
         let mut new_self = self.clone();
-        new_self.traits.insert(trait_item);
+        new_self.traits.push(trait_item);
         new_self
     }
 
@@ -271,9 +260,9 @@ mod tests {
         );
 
         let learned_creature = creature.learn_ability(ability.clone());
-        
+
         // 检查能力是否已学习
-        assert!(learned_creature.abilities.contains(&ability));
+        assert!(learned_creature.abilities.iter().any(|a| a.id == ability.id));
         
         // 检查资源是否已消耗
         assert_eq!(learned_creature.resources.energy(), 70);

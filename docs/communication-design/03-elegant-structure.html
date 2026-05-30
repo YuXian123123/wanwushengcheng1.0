@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通信系统优雅架构 - 拉蒂奥</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b3a4b 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #3498db;
+            margin-bottom: 30px;
+        }
+        h1 { font-size: 2em; color: #3498db; }
+        .subtitle { color: #a4a4a4; margin-top: 10px; }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #3498db;
+        }
+        h2 { color: #48cae4; margin-bottom: 15px; }
+        h3 { color: #feca57; margin: 15px 0 10px; }
+        .highlight {
+            background: rgba(52,152,219,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .diagram {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid rgba(52,152,219,0.3);
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: rgba(52,152,219,0.2);
+            color: #3498db;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(52,152,219,0.3);
+            color: #a4a4a4;
+        }
+        .math {
+            font-style: italic;
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📐 通信系统优雅架构</h1>
+            <div class="subtitle">Elegant Communication Architecture</div>
+            <div class="subtitle" style="font-size: 0.9em;">优雅天才 拉蒂奥 | Elegance Genius</div>
+        </header>
+
+        <section class="section">
+            <h2>设计原则</h2>
+            <div class="highlight">
+                <strong>🎯 优雅至上：对不优雅、不灵活的设计零容忍</strong>
+                <ol style="margin-top: 10px; margin-left: 20px;">
+                    <li><strong>不可变性</strong> - 所有状态变化通过新对象创建</li>
+                    <li><strong>数学形式化</strong> - 使用精确的数学公式描述</li>
+                    <li><strong>类型安全</strong> - 编译期保证正确性</li>
+                    <li><strong>最小惊讶原则</strong> - 行为符合直觉</li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>消息类型定义</h2>
+            <div class="diagram">/// 消息唯一标识
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct MessageId(Uuid);
+
+/// 信道类型
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChannelType {
+    /// 世界频道 - 全局广播
+    World,
+    /// 小组频道 - 组内通信
+    Group { group_id: GroupId },
+    /// 个人频道 - 点对点
+    Personal { peer_id: GuId },
+}
+
+/// 消息类型
+#[derive(Debug, Clone)]
+pub enum MessageType {
+    /// 知识消息
+    Knowledge {
+        content: String,
+        concepts: HashSet&lt;String&gt;,
+        confidence: f64,
+    },
+    /// 交易消息
+    Trade {
+        product: ProductInfo,
+        price: f64,
+        action: TradeAction,
+    },
+    /// 状态消息
+    Status {
+        lifecycle_phase: LifecyclePhase,
+        health: f64,
+    },
+    /// 情绪消息
+    Emotion {
+        pleasure: f64,
+        arousal: f64,
+    },
+    /// 系统消息
+    System {
+        event: SystemEvent,
+    },
+}
+
+/// 消息定义（不可变）
+#[derive(Debug, Clone)]
+pub struct Message {
+    /// 消息ID
+    pub id: MessageId,
+    /// 发送者
+    pub sender: GuId,
+    /// 信道
+    pub channel: ChannelType,
+    /// 消息类型
+    pub message_type: MessageType,
+    /// 时间戳
+    pub timestamp: u64,
+    /// 签名
+    pub signature: MessageSignature,
+}
+
+impl Message {
+    /// 创建新消息（唯一构造方式）
+    pub fn new(
+        sender: GuId,
+        channel: ChannelType,
+        message_type: MessageType,
+        signer: &MessageSigner,
+    ) -> Self {
+        Self {
+            id: MessageId(Uuid::new_v4()),
+            sender,
+            channel,
+            message_type,
+            timestamp: now(),
+            signature: signer.sign(&sender, &channel, &message_type),
+        }
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>信道状态表示</h2>
+            <div class="diagram">/// 信道状态（数学形式化）
+///
+/// 信道状态是一个六元组：
+/// <span class="math">C = (type, participants, capacity, load, cost, state)</span>
+#[derive(Debug, Clone)]
+pub struct ChannelState {
+    /// 信道类型
+    pub channel_type: ChannelType,
+    /// 参与者集合 <span class="math">P ⊆ Gu</span>
+    pub participants: HashSet&lt;GuId&gt;,
+    /// 容量 <span class="math">cap ∈ ℕ⁺</span>
+    pub capacity: u32,
+    /// 当前负载 <span class="math">load ∈ [0, cap]</span>
+    pub load: u32,
+    /// 成本系数 <span class="math">α > 0</span>
+    pub cost_factor: f64,
+    /// 状态 <span class="math">s ∈ {Active, Idle, Closed}</span>
+    pub state: ChannelStatus,
+}
+
+/// 信道状态枚举
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ChannelStatus {
+    Active,
+    Idle,
+    Closed,
+}
+
+impl ChannelState {
+    /// 计算负载率
+    /// <span class="math">ρ = load / cap</span>
+    pub fn load_ratio(&self) -> f64 {
+        self.load as f64 / self.capacity as f64
+    }
+
+    /// 判断是否可用
+    /// <span class="math">available ⇔ load < cap ∧ state = Active</span>
+    pub fn is_available(&self) -> bool {
+        self.load < self.capacity && self.state == ChannelStatus::Active
+    }
+
+    /// 增加负载（返回新信道状态）
+    /// <span class="math">C' = C with load' = load + 1</span>
+    pub fn with_increased_load(&self) -> Option&lt;Self&gt; {
+        if self.load >= self.capacity {
+            return None;
+        }
+        Some(Self {
+            load: self.load + 1,
+            ..self.clone()
+        })
+    }
+
+    /// 减少负载（返回新信道状态）
+    /// <span class="math">C' = C with load' = load - 1</span>
+    pub fn with_decreased_load(&self) -> Self {
+        Self {
+            load: self.load.saturating_sub(1),
+            ..self.clone()
+        }
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>通信成本计算</h2>
+            <h3>成本公式</h3>
+            <table>
+                <tr>
+                    <th>信道类型</th>
+                    <th>成本公式</th>
+                    <th>变量说明</th>
+                </tr>
+                <tr>
+                    <td>世界频道</td>
+                    <td><span class="math">C = α_w × L × (1 + ρ)</span></td>
+                    <td>α_w=5, L=消息长度, ρ=系统负载</td>
+                </tr>
+                <tr>
+                    <td>小组频道</td>
+                    <td><span class="math">C = α_g × L × N</span></td>
+                    <td>α_g=2, N=组员数量</td>
+                </tr>
+                <tr>
+                    <td>个人频道</td>
+                    <td><span class="math">C = α_p × L</span></td>
+                    <td>α_p=1</td>
+                </tr>
+            </table>
+
+            <div class="diagram">/// 成本计算器
+pub struct CostCalculator {
+    /// 世界频道成本系数
+    world_factor: f64,    // α_w = 5.0
+    /// 小组频道成本系数
+    group_factor: f64,    // α_g = 2.0
+    /// 个人频道成本系数
+    personal_factor: f64, // α_p = 1.0
+}
+
+impl CostCalculator {
+    /// 计算消息成本
+    ///
+    /// # 数学定义
+    /// <span class="math">cost(m, c) = α_c × |m| × f(c)</span>
+    ///
+    /// 其中:
+    /// - <span class="math">α_c</span> 是信道类型对应成本系数
+    /// - <span class="math">|m|</span> 是消息长度
+    /// - <span class="math">f(c)</span> 是信道相关因子
+    pub fn calculate(&self, message: &Message, channel: &ChannelState) -> f64 {
+        let length = message.content_length() as f64;
+
+        match channel.channel_type {
+            ChannelType::World => {
+                // 世界频道：考虑系统负载
+                self.world_factor * length * (1.0 + channel.load_ratio())
+            }
+            ChannelType::Group { .. } => {
+                // 小组频道：按人数计费
+                self.group_factor * length * channel.participants.len() as f64
+            }
+            ChannelType::Personal { .. } => {
+                // 个人频道：固定成本
+                self.personal_factor * length
+            }
+        }
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>不可变操作机制</h2>
+            <div class="diagram">/// 通信系统（不可变设计）
+pub struct CommunicationSystem {
+    /// 消息历史
+    messages: Vec&lt;Message&gt;,
+    /// 信道状态
+    channels: HashMap&lt;ChannelType, ChannelState&gt;,
+    /// 蛊虫金币
+    balances: HashMap&lt;GuId, f64&gt;,
+}
+
+impl CommunicationSystem {
+    /// 发送消息（返回新系统状态）
+    ///
+    /// 不突变原系统，而是创建新状态
+    pub fn with_message_sent(
+        &self,
+        sender: GuId,
+        channel: ChannelType,
+        message_type: MessageType,
+    ) -> Option&lt;(Self, Message)&gt; {
+        // 1. 获取信道状态
+        let channel_state = self.channels.get(&channel)?;
+
+        // 2. 检查可用性
+        if !channel_state.is_available() {
+            return None;
+        }
+
+        // 3. 创建消息
+        let message = Message::new(
+            sender.clone(),
+            channel.clone(),
+            message_type,
+            &MessageSigner::default(),
+        );
+
+        // 4. 计算成本
+        let cost = CostCalculator::default().calculate(&message, channel_state);
+
+        // 5. 检查余额
+        let balance = self.balances.get(&sender).copied().unwrap_or(0.0);
+        if balance < cost {
+            return None;
+        }
+
+        // 6. 创建新状态
+        let new_system = Self {
+            messages: {
+                let mut msgs = self.messages.clone();
+                msgs.push(message.clone());
+                msgs
+            },
+            channels: {
+                let mut chs = self.channels.clone();
+                if let Some(ch) = chs.get_mut(&channel) {
+                    *ch = ch.with_increased_load()?;
+                }
+                chs
+            },
+            balances: {
+                let mut bals = self.balances.clone();
+                bals.insert(sender.clone(), balance - cost);
+                bals
+            },
+        };
+
+        Some((new_system, message))
+    }
+
+    /// 接收消息（返回新系统状态）
+    pub fn with_message_delivered(&self, message_id: &MessageId) -> Option&lt;Self&gt; {
+        // 找到消息
+        let message = self.messages.iter().find(|m| m.id == *message_id)?;
+
+        // 更新信道负载
+        let new_channels = self.channels.iter().map(|(k, v)| {
+            if *k == message.channel {
+                (k.clone(), v.with_decreased_load())
+            } else {
+                (k.clone(), v.clone())
+            }
+        }).collect();
+
+        Some(Self {
+            channels: new_channels,
+            ..self.clone()
+        })
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>与生命周期关联</h2>
+            <div class="diagram">/// 通信与生命周期的关联
+///
+/// 通信权限和成本与蛊虫生命周期阶段相关
+impl GuCreature {
+    /// 获取通信权限
+    pub fn communication_permission(&self) -> CommunicationPermission {
+        match self.lifecycle.phase() {
+            // 卵期：无通信权限
+            LifecyclePhase::Egg => CommunicationPermission::None,
+
+            // 幼虫期：仅个人频道
+            LifecyclePhase::Larva => CommunicationPermission::PersonalOnly,
+
+            // 成长期：个人+小组频道
+            LifecyclePhase::Growth => CommunicationPermission {
+                personal: true,
+                group: true,
+                world: false,
+            },
+
+            // 成熟期：全部权限
+            LifecyclePhase::Maturity => CommunicationPermission::Full,
+
+            // 衰老期：权限受限
+            LifecyclePhase::Aging => CommunicationPermission {
+                personal: true,
+                group: false,
+                world: false,
+            },
+
+            // 死亡：无权限
+            LifecyclePhase::Dead => CommunicationPermission::None,
+        }
+    }
+
+    /// 计算通信成本（考虑生命周期）
+    pub fn communication_cost(&self, base_cost: f64) -> f64 {
+        let phase_factor = match self.lifecycle.phase() {
+            LifecyclePhase::Growth => 1.0,
+            LifecyclePhase::Maturity => 0.8, // 成熟期成本优惠
+            LifecyclePhase::Aging => 1.5,    // 衰老期成本增加
+            _ => 1.0,
+        };
+
+        base_cost * phase_factor
+    }
+
+    /// 发送消息（返回新蛊虫状态）
+    pub fn with_message_sent(
+        &self,
+        channel: ChannelType,
+        message_type: MessageType,
+        system: &CommunicationSystem,
+    ) -> Option&lt;(Self, Message)&gt; {
+        // 检查权限
+        if !self.communication_permission().allows(&channel) {
+            return None;
+        }
+
+        // 通过系统发送
+        let (new_system, message) = system.with_message_sent(
+            self.id.clone(),
+            channel,
+            message_type,
+        )?;
+
+        // 更新蛊虫状态
+        let new_creature = Self {
+            coins: new_system.balances.get(&self.id).copied()?,
+            ..self.clone()
+        };
+
+        Some((new_creature, message))
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>数学形式化总结</h2>
+            <table>
+                <tr>
+                    <th>概念</th>
+                    <th>形式化表示</th>
+                </tr>
+                <tr>
+                    <td>信道状态</td>
+                    <td><span class="math">C = (type, P, cap, load, α, s)</span></td>
+                </tr>
+                <tr>
+                    <td>负载率</td>
+                    <td><span class="math">ρ = load / cap</span></td>
+                </tr>
+                <tr>
+                    <td>可用性</td>
+                    <td><span class="math">available ⇔ load < cap ∧ s = Active</span></td>
+                </tr>
+                <tr>
+                    <td>世界频道成本</td>
+                    <td><span class="math">C_w = α_w × L × (1 + ρ)</span></td>
+                </tr>
+                <tr>
+                    <td>小组频道成本</td>
+                    <td><span class="math">C_g = α_g × L × |P|</span></td>
+                </tr>
+                <tr>
+                    <td>个人频道成本</td>
+                    <td><span class="math">C_p = α_p × L</span></td>
+                </tr>
+                <tr>
+                    <td>权限函数</td>
+                    <td><span class="math">perm: Phase → Permission</span></td>
+                </tr>
+            </table>
+        </section>
+
+        <footer>
+            <p>通信系统优雅架构 | 优雅天才拉蒂奥 | 2026年5月30日</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通信内容质量检测机制 - 黑塔</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #9370db;
+            margin-bottom: 30px;
+        }
+        h1 { font-size: 2em; color: #9370db; }
+        .subtitle { color: #a4a4a4; margin-top: 10px; }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #9370db;
+        }
+        h2 { color: #ba55d3; margin-bottom: 15px; }
+        h3 { color: #feca57; margin: 15px 0 10px; }
+        .highlight {
+            background: rgba(186,85,211,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .warning {
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        .diagram {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid rgba(147,112,219,0.3);
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: rgba(147,112,219,0.2);
+            color: #9370db;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(147,112,219,0.3);
+            color: #a4a4a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 通信内容质量检测机制</h1>
+            <div class="subtitle">Content Quality Detection System</div>
+            <div class="subtitle" style="font-size: 0.9em;">创新天才 黑塔 | Innovation Genius</div>
+        </header>
+
+        <section class="section">
+            <h2>核心问题：防刷金币</h2>
+            <div class="warning">
+                <strong>⚠️ 攻击场景分析：</strong>
+                <ul style="margin-top: 10px; margin-left: 20px;">
+                    <li><strong>重复发送</strong> - 蛊虫用相同话语刷金币</li>
+                    <li><strong>微小修改</strong> - 改几个字绕过检测</li>
+                    <li><strong>合谋刷币</strong> - 多只蛊虫互相"感谢"</li>
+                    <li><strong>无意义内容</strong> - 发送"好好好"之类废话</li>
+                </ul>
+            </div>
+            <div class="highlight">
+                <strong>🎯 解决原则：</strong>
+                <ul style="margin-top: 10px; margin-left: 20px;">
+                    <li><strong>质量门槛</strong> - 不是通信就有金币，要达到质量门槛</li>
+                    <li><strong>相似度检测</strong> - 整体内容相似度不能超过80%</li>
+                    <li><strong>知识结构化</strong> - 必须分享有价值的知识</li>
+                    <li><strong>动态生成</strong> - 检测规则不写死，动态生成</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>质量检测流程</h2>
+            <div class="diagram">┌──────────────────────────────────────────────────────────┐
+│              通信奖励检测流程                            │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   蛊虫发送消息                                           │
+│        │                                                 │
+│        ▼                                                 │
+│   ┌───────────────────────────────────────────────┐     │
+│   │  第一关：基础验证                              │     │
+│   │  - 消息长度 >= min_length ?                  │     │
+│   │  - 包含有效概念 >= min_concepts ?            │     │
+│   │  - 不是纯表情/无意义字符                      │     │
+│   └───────────────────────────────────────────────┘     │
+│        │                                                 │
+│        ├─ FAIL ──► 拒绝，无奖励，记录警告                │
+│        │                                                 │
+│        ▼ PASS                                            │
+│   ┌───────────────────────────────────────────────┐     │
+│   │  第二关：知识质量检测                          │     │
+│   │  - 知识密度 ρ = concepts / length            │     │
+│   │  - 结构化程度 σ (是否有逻辑结构)              │     │
+│   │  - 理解深度 δ (是否展示理解)                  │     │
+│   │  - 综合质量 Q = w1·ρ + w2·σ + w3·δ          │     │
+│   │  - Q > dynamic_threshold(sender) ?           │     │
+│   └───────────────────────────────────────────────┘     │
+│        │                                                 │
+│        ├─ FAIL ──► 低质量，无奖励                        │
+│        │                                                 │
+│        ▼ PASS                                            │
+│   ┌───────────────────────────────────────────────┐     │
+│   │  第三关：相似度检测                            │     │
+│   │  - sim(m, sender.history) < 0.8 ?           │     │
+│   │  - 使用LNN语义理解，非字面匹配                │     │
+│   │  - sim(m, global_recent) < 0.8 ?            │     │
+│   └───────────────────────────────────────────────┘     │
+│        │                                                 │
+│        ├─ FAIL ──► 相似度过高，拒绝奖励+惩罚             │
+│        │                                                 │
+│        ▼ PASS                                            │
+│   ┌───────────────────────────────────────────────┐     │
+│   │  第四关：结构化验证                            │     │
+│   │  - 可被其他蛊虫学习？                          │     │
+│   │  - 包含可提取的知识？                          │     │
+│   │  - 不是已有知识的简单重复？                    │     │
+│   └───────────────────────────────────────────────┘     │
+│        │                                                 │
+│        ├─ FAIL ──► 无新增知识价值，低奖励或无奖励        │
+│        │                                                 │
+│        ▼ PASS                                            │
+│   ┌───────────────────────────────────────────────┐     │
+│   │  计算并发放奖励                                │     │
+│   │  R = base_reward × Q × (1-sim) × trust_bonus │     │
+│   └───────────────────────────────────────────────┘     │
+│                                                          │
+│   核心：有价值的新知识分享 = 金币奖励                     │
+│   不是：随便说话 = 金币                                  │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <section class="section">
+            <h2>语义相似度检测（关键创新）</h2>
+            <div class="highlight">
+                <strong>核心：使用LNN语义理解，不是字面匹配</strong>
+                <p style="margin-top: 10px;">
+                    "HTML是一种标记语言" 和 "HTML是用于标记的语言"<br>
+                    字面相似度可能只有50%，但语义相似度是95%
+                </p>
+            </div>
+            <div class="diagram">/// 语义相似度检测器
+pub struct SemanticSimilarityDetector {
+    lnn: Arc&lt;LNN&gt;,
+    history: MessageHistory,
+    threshold: f64, // 默认0.8，但动态调整
+}
+
+impl SemanticSimilarityDetector {
+    /// 检测消息与历史的相似度
+    pub fn detect(&self, message: &str, sender: &GuId) -> f64 {
+        // 1. 通过LNN理解消息（关键！）
+        let understanding = self.lnn.understand(message);
+
+        // 2. 获取发送者历史
+        let sender_history = self.history.get_sender_messages(sender);
+
+        // 3. 计算语义相似度（不是字面）
+        let similarities: Vec&lt;f64&gt; = sender_history.iter()
+            .map(|hist_msg| {
+                let hist_understanding = self.lnn.understand(hist_msg);
+                self.semantic_similarity(&understanding, &hist_understanding)
+            })
+            .collect();
+
+        // 4. 返回最大相似度
+        similarities.into_iter().fold(0.0, f64::max)
+    }
+
+    /// 语义相似度 = 概念重叠 + 结构相似 + 向量相似
+    fn semantic_similarity(&self, u1: &Understanding, u2: &Understanding) -> f64 {
+        let concept_overlap = self.concept_overlap(&u1.concepts, &u2.concepts);
+        let structure_sim = self.structure_similarity(&u1.structure, &u2.structure);
+        let vector_sim = self.cosine_similarity(&u1.vector, &u2.vector);
+
+        0.4 * concept_overlap + 0.3 * structure_sim + 0.3 * vector_sim
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>动态门槛机制（不写死）</h2>
+            <div class="diagram">/// 动态门槛计算器
+pub struct DynamicThresholdCalculator {
+    base_threshold: f64,
+}
+
+impl DynamicThresholdCalculator {
+    /// 门槛不写死，根据发送者行为动态调整
+    pub fn calculate(&self, sender: &GuId, history: &SenderHistory) -> f64 {
+        let base = self.base_threshold;
+
+        // 1. 根据历史质量调整
+        let quality_adj = match history.average_quality {
+            q if q > 0.8 => -0.1,  // 高质量：降低门槛
+            q if q > 0.5 => 0.0,   // 中等：维持
+            q if q > 0.3 => 0.1,   // 低质量：提高门槛
+            _ => 0.2,              // 很低：大幅提高
+        };
+
+        // 2. 根据刷金币嫌疑调整
+        let farming_adj = match history.farming_suspicion {
+            s if s > 0.7 => 0.3,   // 高嫌疑：大幅提高
+            s if s > 0.4 => 0.1,   // 中嫌疑：提高
+            _ => 0.0,
+        };
+
+        // 3. 综合并限制范围
+        (base + quality_adj + farming_adj).clamp(0.3, 0.9)
+    }
+
+    /// 相似度阈值也是动态的
+    pub fn similarity_threshold(&self, history: &SenderHistory) -> f64 {
+        let base = 0.8;
+        let adj = match history.farming_suspicion {
+            s if s > 0.7 => -0.1,  // 高嫌疑：65%就算相似（更严格）
+            s if s > 0.4 => -0.05, // 中嫌疑：75%就算相似
+            _ => 0.0,              // 低嫌疑：保持80%
+        };
+        (base + adj).clamp(0.6, 0.9)
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>惩罚机制</h2>
+            <table>
+                <tr>
+                    <th>违规类型</th>
+                    <th>检测条件</th>
+                    <th>惩罚措施</th>
+                </tr>
+                <tr>
+                    <td>低质量内容</td>
+                    <td>Q &lt; threshold</td>
+                    <td>无奖励，记录警告</td>
+                </tr>
+                <tr>
+                    <td>高相似度</td>
+                    <td>sim &gt; 80%</td>
+                    <td>无奖励，扣除发送成本</td>
+                </tr>
+                <tr>
+                    <td>疑似刷金币</td>
+                    <td>多次高相似度</td>
+                    <td>扣除额外金币，降低信任度</td>
+                </tr>
+                <tr>
+                    <td>确认刷金币</td>
+                    <td>行为模式匹配</td>
+                    <td>封禁通信权限，清零金币</td>
+                </tr>
+            </table>
+        </section>
+
+        <footer>
+            <p>通信内容质量检测机制 | 创新天才黑塔 | 2026年5月30日</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内容质量检测数学模型 - 拉蒂奥</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b3a4b 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #3498db;
+            margin-bottom: 30px;
+        }
+        h1 { font-size: 2em; color: #3498db; }
+        .subtitle { color: #a4a4a4; margin-top: 10px; }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #3498db;
+        }
+        h2 { color: #48cae4; margin-bottom: 15px; }
+        h3 { color: #feca57; margin: 15px 0 10px; }
+        .math {
+            font-style: italic;
+            color: #2ecc71;
+            font-size: 1.1em;
+        }
+        .formula-box {
+            background: rgba(46,204,113,0.1);
+            border: 2px solid #2ecc71;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .diagram {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid rgba(52,152,219,0.3);
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: rgba(52,152,219,0.2);
+            color: #3498db;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(52,152,219,0.3);
+            color: #a4a4a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📐 内容质量检测数学模型</h1>
+            <div class="subtitle">Content Quality Detection Mathematical Model</div>
+            <div class="subtitle" style="font-size: 0.9em;">优雅天才 拉蒂奥 | Elegance Genius</div>
+        </header>
+
+        <section class="section">
+            <h2>核心数学模型</h2>
+            <div class="formula-box">
+                <span class="math">R(m) = B × Q(m) × (1 - S(m)) × T(sender)</span>
+            </div>
+            <p style="text-align: center; color: #a4a4a4;">
+                奖励 = 基础奖励 × 质量 × 新颖度 × 信任系数
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>1. 知识密度 ρ</h2>
+            <div class="formula-box">
+                <span class="math">ρ(m) = |C(m)| / L(m)</span>
+            </div>
+            <p><strong>说明：</strong></p>
+            <ul style="margin-left: 20px;">
+                <li><span class="math">C(m)</span> = 有效概念集合（通过LNN理解提取）</li>
+                <li><span class="math">L(m)</span> = 有效内容长度（去除填充词）</li>
+                <li>不是字面词汇，而是理解后的概念</li>
+            </ul>
+
+            <h3>有效概念定义</h3>
+            <div class="diagram">/// 有效概念提取
+C(m) = { c ∈ Concepts(m) | specificity(c) > θ(sender) }
+
+其中:
+- Concepts(m): 从消息m中通过LNN理解提取的所有概念
+- specificity(c): 概念c的特异性程度 ∈ [0,1]
+- θ(sender): 动态特异性阈值，取决于发送者历史
+
+特异性计算：
+specificity(c) = 1 - frequency(c) × generality(c)
+
+示例：
+- "HTML" specificity = 0.7 (中等具体)
+- "编程" specificity = 0.3 (过于宽泛)
+- "table标签" specificity = 0.9 (非常具体)</div>
+        </section>
+
+        <section class="section">
+            <h2>2. 结构化程度 σ</h2>
+            <div class="formula-box">
+                <span class="math">σ(m) = α₁·|R(m)| + α₂·depth(m) + α₃·coherence(m)</span>
+            </div>
+            <p><strong>说明：</strong></p>
+            <ul style="margin-left: 20px;">
+                <li><span class="math">R(m)</span> = 概念关系数量</li>
+                <li><span class="math">depth(m)</span> = 推理深度</li>
+                <li><span class="math">coherence(m)</span> = 逻辑连贯度</li>
+                <li><span class="math">α₁, α₂, α₃</span> = 权重系数，动态调整</li>
+            </ul>
+
+            <h3>结构类型评分</h3>
+            <table>
+                <tr>
+                    <th>结构类型</th>
+                    <th>σ 值</th>
+                    <th>示例</th>
+                </tr>
+                <tr>
+                    <td>定义式</td>
+                    <td>0.8-1.0</td>
+                    <td>"HTML是..."，包含概念和关系</td>
+                </tr>
+                <tr>
+                    <td>解释式</td>
+                    <td>0.6-0.8</td>
+                    <td>"因为...所以..."，有因果链</td>
+                </tr>
+                <tr>
+                    <td>列举式</td>
+                    <td>0.4-0.6</td>
+                    <td>"有A、B、C三种..."，有分类</td>
+                </tr>
+                <tr>
+                    <td>陈述式</td>
+                    <td>0.2-0.4</td>
+                    <td>"HTML很重要"，无结构</td>
+                </tr>
+                <tr>
+                    <td>无结构</td>
+                    <td>0.0-0.2</td>
+                    <td>"好好好"，纯无意义</td>
+                </tr>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>3. 新颖度 ν</h2>
+            <div class="formula-box">
+                <span class="math">ν(m) = 1 - max{sim(m, h) : h ∈ H(sender)}</span>
+            </div>
+            <p><strong>说明：</strong></p>
+            <ul style="margin-left: 20px;">
+                <li><span class="math">H(sender)</span> = 发送者的历史消息集合</li>
+                <li><span class="math">sim(m, h)</span> = 语义相似度函数</li>
+                <li>新颖度 = 1 - 最大相似度</li>
+            </ul>
+
+            <h3>语义相似度 sim</h3>
+            <div class="formula-box">
+                <span class="math">sim(m₁, m₂) = w₁·overlap(C₁,C₂) + w₂·struct(S₁,S₂) + w₃·cos(V₁,V₂)</span>
+            </div>
+            <div class="diagram">// 语义相似度三要素
+
+1. 概念重叠度
+overlap(C₁, C₂) = |C₁ ∩ C₂| / |C₁ ∪ C₂|
+
+2. 结构相似度
+struct(S₁, S₂) = structure_similarity(S₁, S₂)
+// 通过LNN比较内部结构表示
+
+3. 向量余弦相似度
+cos(V₁, V₂) = (V₁ · V₂) / (|V₁| × |V₂|)
+// 基于LNN生成的语义向量
+
+权重分配（动态）:
+w₁ = 0.4  // 概念最重要
+w₂ = 0.3  // 结构次重要
+w₃ = 0.3  // 向量辅助
+
+注意：
+- 不是字面文本相似度！
+- "HTML是一种标记语言" vs "HTML是用于标记的语言"
+- 字面相似度 ≈ 50%，但语义相似度 ≈ 95%</div>
+        </section>
+
+        <section class="section">
+            <h2>4. 综合质量 Q</h2>
+            <div class="formula-box">
+                <span class="math">Q(m) = wρ·ρ(m) + wσ·σ(m) + wν·ν(m)</span>
+            </div>
+            <p><strong>说明：</strong></p>
+            <ul style="margin-left: 20px;">
+                <li><span class="math">wρ = 0.4</span> (知识密度权重)</li>
+                <li><span class="math">wσ = 0.3</span> (结构化权重)</li>
+                <li><span class="math">wν = 0.3</span> (新颖度权重)</li>
+                <li><span class="math">Q(m) ∈ [0, 1]</span></li>
+            </ul>
+
+            <h3>质量判断</h3>
+            <div class="diagram">// 获得奖励的门槛
+
+奖励条件: Q(m) > threshold(sender)
+
+// 动态门槛（不写死）
+threshold(sender) = θ_base + θ_quality_adj + θ_farming_adj
+
+其中:
+θ_base = 0.5 (基础门槛)
+
+// 根据历史质量调整
+θ_quality_adj = {
+    -0.1 if avg_quality(sender) > 0.8   // 高质量发送者门槛略低
+    +0.0 if avg_quality(sender) ∈ [0.5, 0.8]
+    +0.1 if avg_quality(sender) ∈ [0.3, 0.5]
+    +0.2 if avg_quality(sender) < 0.3   // 低质量发送者门槛更高
+}
+
+// 根据刷金币嫌疑调整
+θ_farming_adj = {
+    +0.3 if farming_suspicion > 0.7     // 高嫌疑大幅提高
+    +0.1 if farming_suspicion ∈ [0.4, 0.7]
+    +0.0 if farming_suspicion < 0.4
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>5. 相似度阈值（80%规则）</h2>
+            <div class="formula-box">
+                <span class="math">奖励条件: max{sim(m, h)} < 0.8</span>
+            </div>
+            <p><strong>说明：</strong></p>
+            <ul style="margin-left: 20px;">
+                <li>整体内容相似度不能超过80%</li>
+                <li>使用语义相似度，不是字面相似度</li>
+                <li>阈值本身也是动态的（见下）</li>
+            </ul>
+
+            <h3>动态阈值调整</h3>
+            <div class="diagram">// 相似度阈值也是动态的
+
+sim_threshold(sender) = 0.8 + Δ(sender)
+
+// 有刷金币嫌疑的发送者，阈值更低（更严格）
+Δ(sender) = {
+    -0.10 if farming_suspicion > 0.7   // 65%就算相似
+    -0.05 if farming_suspicion ∈ [0.4, 0.7]  // 75%就算相似
+    +0.00 if farming_suspicion < 0.4   // 保持80%
+}
+
+// 阈值范围限制
+sim_threshold ∈ [0.6, 0.9]</div>
+        </section>
+
+        <section class="section">
+            <h2>6. 最终奖励 R</h2>
+            <div class="formula-box">
+                <span class="math">R(m) = max{0, B × Q(m) × ν(m) × T(sender)}</span>
+            </div>
+            <p><strong>说明：</strong></p>
+            <ul style="margin-left: 20px;">
+                <li><span class="math">B</span> = 基础奖励值（从配置读取，不写死）</li>
+                <li><span class="math">Q(m)</span> = 综合质量</li>
+                <li><span class="math">ν(m) = 1 - max_sim</span> = 新颖度系数</li>
+                <li><span class="math">T(sender)</span> = 信任系数</li>
+                <li>只有全部条件满足才有奖励</li>
+            </ul>
+
+            <h3>信任系数</h3>
+            <div class="diagram">T(sender) = trust(sender) ∈ [0.5, 1.5]
+
+// 信任度计算
+trust(sender) = {
+    base: 1.0,
+
+    // 根据历史调整
+    adjustments: {
+        high_quality_count: +0.1 per 10 high-Q messages
+        low_quality_count: -0.05 per 5 low-Q messages
+        farming_penalty: -0.3 per confirmed farming attempt
+    }
+}
+
+// 衰减机制
+trust_decay_rate = 0.01 per day
+// 不活跃时信任度缓慢衰减</div>
+        </section>
+
+        <section class="section">
+            <h2>7. 惩罚公式</h2>
+            <div class="formula-box">
+                <span class="math">P(m) = { Q(m) < θ: 警告, sim(m) > 0.8: 惩罚 × (sim - 0.8) }</span>
+            </div>
+            <table>
+                <tr>
+                    <th>条件</th>
+                    <th>惩罚</th>
+                    <th>数学表示</th>
+                </tr>
+                <tr>
+                    <td>Q(m) &lt; threshold</td>
+                    <td>无奖励 + 警告记录</td>
+                    <td><span class="math">R = 0, warn++</span></td>
+                </tr>
+                <tr>
+                    <td>sim &gt; 80%</td>
+                    <td>扣除发送成本</td>
+                    <td><span class="math">coins -= cost × 2</span></td>
+                </tr>
+                <tr>
+                    <td>连续3次低质量</td>
+                    <td>降低信任度</td>
+                    <td><span class="math">T -= 0.1</span></td>
+                </tr>
+                <tr>
+                    <td>确认刷金币</td>
+                    <td>封禁 + 清零</td>
+                    <td><span class="math">ban, coins = 0</span></td>
+                </tr>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>完整公式汇总</h2>
+            <div class="diagram">┌──────────────────────────────────────────────────────────┐
+│           内容质量检测数学模型                           │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  知识密度:  ρ(m) = |C(m)| / L(m)                        │
+│                                                          │
+│  结构化:    σ(m) = w₁|R| + w₂depth + w₃coherence       │
+│                                                          │
+│  新颖度:    ν(m) = 1 - max{sim(m, h)}                   │
+│                                                          │
+│  综合质量:  Q(m) = wρ·ρ + wσ·σ + wν·ν                  │
+│                                                          │
+│  相似度:    sim(m₁,m₂) = overlap + struct + cos        │
+│                                                          │
+│  奖励条件:  Q(m) > threshold(sender)                    │
+│             AND max{sim(m, h)} < 0.8                    │
+│                                                          │
+│  最终奖励:  R = B × Q × ν × T                           │
+│                                                          │
+│  关键特性:                                               │
+│  - 所有阈值动态生成，不写死                             │
+│  - 使用LNN语义理解，不是字面匹配                        │
+│  - 有价值的新知识分享才奖励                             │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <footer>
+            <p>内容质量检测数学模型 | 优雅天才拉蒂奥 | 2026年5月30日</p>
+        </footer>
+    </div>
+</body>
+</html>

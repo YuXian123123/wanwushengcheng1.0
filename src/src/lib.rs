@@ -46,6 +46,7 @@ pub mod safety;
 pub mod language;
 pub mod reasoning;
 pub mod creature;
+pub mod economy;
 
 // 重导出配置类型
 pub use config::GlobalConfig;
@@ -64,4 +65,4 @@ pub use language::{ConceptSpace, ConceptLevel, Encoder, Decoder};
 pub use reasoning::{GuReasoningCore, InferenceResult, InferenceType};
 
 // 重导出蛊虫类型
-pub use creature::{GuCreature, Ability, Lifecycle, MetaCognition, ResourcePool, Trait};
+pub use creature::{GuCreature, Ability, Lifecycle, MetaCognition, ResourcePool};

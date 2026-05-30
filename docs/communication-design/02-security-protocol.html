@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通信系统安全协议 - 螺丝咕姆</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a2e;
+        }
+        .container {
+            background-color: #16213e;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            padding: 30px;
+            color: #e4e4e4;
+        }
+        h1, h2, h3 { color: #feca57; }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #27ae60;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #27ae60;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #0d0d1a;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            white-space: pre;
+        }
+        code { font-family: 'Consolas', monospace; color: #2ecc71; }
+        .warning {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .safe {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #3a3a5a;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #2a2a4a;
+            color: #feca57;
+        }
+        .subtitle { color: #a4a4a4; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ 通信系统安全协议</h1>
+        <p class="subtitle">安全天才 螺丝咕姆 | Communication Security Protocol</p>
+
+        <h2>核心安全原则</h2>
+        <div class="safe">
+            <strong>🎯 安全第一：所有通信必须验证，无例外</strong>
+            <ul style="margin-top: 10px;">
+                <li><strong>零信任原则</strong> - 不信任任何未验证的信号</li>
+                <li><strong>最小权限</strong> - 通信权限按需分配</li>
+                <li><strong>审计追踪</strong> - 所有通信可追溯</li>
+                <li><strong>隔离防护</strong> - 信道之间严格隔离</li>
+            </ul>
+        </div>
+
+        <h2>消息真实性验证</h2>
+        <pre><code>/// 消息验证器
+pub struct MessageValidator {
+    rules: Vec&lt;ValidationRule&gt;,
+    history: MessageHistory,
+}
+
+impl MessageValidator {
+    /// 四层验证机制
+    pub fn validate(&self, signal: &ResonanceSignal) -> ValidationResult {
+        // 第一层：身份验证
+        let identity_check = self.verify_identity(signal)?;
+        if !identity_check.passed {
+            return ValidationResult::Reject("身份验证失败");
+        }
+
+        // 第二层：内容完整性
+        let integrity_check = self.verify_integrity(signal)?;
+        if !integrity_check.passed {
+            return ValidationResult::Reject("内容完整性验证失败");
+        }
+
+        // 第三层：时序有效性
+        let time_check = self.verify_timestamp(signal)?;
+        if !time_check.passed {
+            return ValidationResult::Reject("消息已过期");
+        }
+
+        // 第四层：行为合法性
+        let behavior_check = self.verify_behavior(signal)?;
+        if !behavior_check.passed {
+            return ValidationResult::Reject("行为异常");
+        }
+
+        ValidationResult::Accept {
+            confidence: identity_check.confidence
+                      * integrity_check.confidence
+                      * time_check.confidence
+                      * behavior_check.confidence,
+        }
+    }
+}</code></pre>
+
+        <h2>防欺骗机制</h2>
+        <pre><code>┌──────────────────────────────────────────────────────────┐
+│                    防欺骗体系                             │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   攻击类型              防御机制                          │
+│   ────────────────────────────────────────────────────  │
+│   身份伪造   ──►   LNN共振指纹验证                       │
+│   消息篡改   ──►   语义哈希校验                          │
+│   重放攻击   ──►   时间戳+随机数验证                     │
+│   拒绝服务   ──►   通信频率限制+成本门槛                 │
+│   社交工程   ──►   信任度评估+行为分析                   │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</code></pre>
+
+        <h3>LNN共振指纹</h3>
+        <pre><code>/// LNN共振指纹生成
+pub fn generate_resonance_fingerprint(lnn: &LNN) -> Fingerprint {
+    let topology_hash = hash_topology(&lnn.connections);
+    let weight_pattern = extract_weight_pattern(&lnn.weights);
+    let response_signature = lnn.unique_response();
+
+    Fingerprint {
+        topology_hash,
+        weight_pattern,
+        response_signature,
+        generated_at: now(),
+        expires_at: now() + 3600, // 1小时有效期
+    }
+}
+
+/// 验证发送者身份
+pub fn verify_sender(
+    signal: &ResonanceSignal,
+    claimed_fingerprint: &Fingerprint,
+) -> bool {
+    // 1. 检查指纹是否过期
+    if claimed_fingerprint.expires_at < now() {
+        return false;
+    }
+
+    // 2. 验证共振模式是否匹配
+    let expected_pattern = calculate_expected_pattern(&signal.source);
+    if signal.pattern != expected_pattern {
+        return false;
+    }
+
+    // 3. 验证响应签名
+    signal.response_signature == claimed_fingerprint.response_signature
+}</code></pre>
+
+        <h2>信道隔离与权限控制</h2>
+        <table>
+            <tr>
+                <th>信道类型</th>
+                <th>访问权限</th>
+                <th>隔离级别</th>
+                <th>审计要求</th>
+            </tr>
+            <tr>
+                <td>世界频道</td>
+                <td>所有蛊虫</td>
+                <td>公开但验证</td>
+                <td>全量记录</td>
+            </tr>
+            <tr>
+                <td>小组频道</td>
+                <td>组成员</td>
+                <td>组内隔离</td>
+                <td>组内记录</td>
+            </tr>
+            <tr>
+                <td>个人频道</td>
+                <td>双方验证</td>
+                <td>点对点加密</td>
+                <td>双方记录</td>
+            </tr>
+        </table>
+
+        <h3>权限矩阵</h3>
+        <pre><code>/// 通信权限定义
+pub struct CommunicationPermission {
+    pub world_broadcast: bool,
+    pub create_group: bool,
+    pub send_private: bool,
+    pub rate_limit: RateLimit,
+}
+
+impl CommunicationPermission {
+    /// 根据蛊虫状态动态调整权限
+    pub fn from_creature(gu: &GuCreature) -> Self {
+        Self {
+            // 只有成熟期以上可以广播
+            world_broadcast: gu.lifecycle.stage >= LifeStage::Adult,
+            // 成长期以上可以创建小组
+            create_group: gu.lifecycle.stage >= LifeStage::Larva,
+            // 所有蛊虫可以私信
+            send_private: true,
+            // 根据金币余额调整频率
+            rate_limit: RateLimit::from_coins(gu.coins),
+        }
+    }
+}</code></pre>
+
+        <h2>通信审计与监控</h2>
+        <div class="warning">
+            <strong>⚠️ 审计要求：</strong>
+            <ul style="margin-top: 10px;">
+                <li>所有世界频道消息必须记录</li>
+                <li>异常通信模式触发警报</li>
+                <li>审计日志保留至少7天</li>
+                <li>定期进行安全审计</li>
+            </ul>
+        </div>
+
+        <pre><code>/// 通信审计系统
+pub struct CommunicationAudit {
+    message_log: Vec&lt;AuditRecord&gt;,
+    anomaly_detector: AnomalyDetector,
+    alert_system: AlertSystem,
+}
+
+impl CommunicationAudit {
+    /// 记录通信
+    pub fn log(&mut self, signal: &ResonanceSignal, result: &ValidationResult) {
+        self.message_log.push(AuditRecord {
+            signal_id: signal.id,
+            source: signal.source.clone(),
+            channel: signal.channel,
+            timestamp: now(),
+            validation_result: result.clone(),
+        });
+
+        // 检测异常
+        if let Some(anomaly) = self.anomaly_detector.detect(signal) {
+            self.alert_system.raise_alert(anomaly);
+        }
+    }
+}</code></pre>
+
+        <h2>安全检查清单</h2>
+        <div class="safe">
+            <strong>✅ 通信前必须验证：</strong>
+            <ul style="margin-top: 10px;">
+                <li>发送者身份已验证</li>
+                <li>消息内容完整</li>
+                <li>时序有效</li>
+                <li>行为正常</li>
+                <li>权限足够</li>
+            </ul>
+        </div>
+
+        <footer style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid #3a3a5a; color: #a4a4a4;">
+            <p>通信系统安全协议 | 安全天才螺丝咕姆 | 2026年5月30日</p>
+        </footer>
+    </div>
+</body>
+</html>

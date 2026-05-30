@@ -17,7 +17,7 @@ pub enum Effect {
 }
 
 /// 伤害类型
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum DamageType {
     Physical,
     Fire,
@@ -28,7 +28,7 @@ pub enum DamageType {
 }
 
 /// 增益类型
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum BuffType {
     Strength,
     Agility,
@@ -38,7 +38,7 @@ pub enum BuffType {
 }
 
 /// 减益类型
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum DebuffType {
     Weakness,
     Slow,

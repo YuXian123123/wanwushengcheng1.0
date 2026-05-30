@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经济系统设计 - 万物生成器</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        .principle {
+            background-color: #e8f4fc;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .design-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .design-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .design-card:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .design-card h3 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+        }
+        .design-card.innovation h3 { border-color: #9b59b6; color: #9b59b6; }
+        .design-card.security h3 { border-color: #e74c3c; color: #e74c3c; }
+        .design-card.elegant h3 { border-color: #27ae60; color: #27ae60; }
+        .design-card ul {
+            padding-left: 20px;
+        }
+        .design-card li {
+            margin-bottom: 8px;
+        }
+        .arrow {
+            font-size: 1.5em;
+            text-align: center;
+            margin: 20px 0;
+            color: #3498db;
+        }
+        .flow-diagram {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .flow-step {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            color: white;
+        }
+        .flow-step.pressure { background-color: #e74c3c; }
+        .flow-step.desire { background-color: #f39c12; }
+        .flow-step.coins { background-color: #f1c40f; color: #333; }
+        .flow-step.ability { background-color: #2ecc71; }
+        .flow-step.evolution { background-color: #9b59b6; }
+        .formula-preview {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .nav-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .nav-links a {
+            color: #3498db;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .nav-links a:hover {
+            background-color: #3498db;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>经济系统设计 - 万物生成器</h1>
+
+        <div class="principle">
+            <strong>核心原则：</strong>通过生存压力驱动欲望，以金币为媒介实现能力进化，
+            形成物竞天择、适者生存的智能生态系统。
+        </div>
+
+        <h2>设计概览</h2>
+        <div class="flow-diagram">
+            <div class="flow-step pressure">生存压力</div>
+            →
+            <div class="flow-step desire">欲望激发</div>
+            →
+            <div class="flow-step coins">金币获取</div>
+            →
+            <div class="flow-step ability">能力提升</div>
+            →
+            <div class="flow-step evolution">进化适应</div>
+        </div>
+
+        <h2>三大设计模块</h2>
+        <div class="design-grid">
+            <div class="design-card innovation">
+                <h3>🧪 黑塔 - 创新架构</h3>
+                <p><a href="01-innovation-architecture.html">查看详细设计 →</a></p>
+                <ul>
+                    <li>经济循环机制</li>
+                    <li>市场动态模型</li>
+                    <li>生存压力传导</li>
+                    <li>欲望驱动进化</li>
+                </ul>
+                <div class="formula-preview">
+                    P(t) = P₀ × e^(k·t) × (1 - coins/c₀)
+                </div>
+            </div>
+
+            <div class="design-card security">
+                <h3>🔒 螺丝咕姆 - 安全协议</h3>
+                <p><a href="02-security-protocol.html">查看详细设计 →</a></p>
+                <ul>
+                    <li>内容质量检测</li>
+                    <li>相似度检测（≤80%）</li>
+                    <li>行为模式分析</li>
+                    <li>信任评分系统</li>
+                    <li>审计追踪</li>
+                </ul>
+                <div class="formula-preview">
+                    T = T₀ × (1 + α·trust - β·freq)
+                </div>
+            </div>
+
+            <div class="design-card elegant">
+                <h3>📐 拉蒂奥 - 优雅公式</h3>
+                <p><a href="03-elegant-formula.html">查看详细设计 →</a></p>
+                <ul>
+                    <li>货币公式</li>
+                    <li>定价公式</li>
+                    <li>交易公式</li>
+                    <li>生存公式</li>
+                    <li>奖励公式</li>
+                </ul>
+                <div class="formula-preview">
+                    Value = Base × Quality × Novelty
+                </div>
+            </div>
+        </div>
+
+        <h2>防刷金币机制</h2>
+        <div class="principle">
+            <strong>五层防护：</strong>
+            内容质量 → 相似度检测 → 行为分析 → 信任评分 → 审计追踪
+        </div>
+        <p>
+            系统通过五层防护机制防止刷金币行为，每层都有动态阈值和验证公式。
+            相似度检测要求内容相似度不超过80%，阈值基于发送者历史动态调整。
+        </p>
+
+        <h2>物竞天择原则</h2>
+        <ul>
+            <li><strong>无寿命延长限制：</strong>蛊虫有自然寿命，无法无限延长</li>
+            <li><strong>生存压力传导：</strong>压力随时间指数增长</li>
+            <li><strong>自然选择：</strong>优胜劣汰，适者生存</li>
+            <li><strong>欲望驱动：</strong>金币欲望推动能力进化</li>
+        </ul>
+
+        <div class="nav-links">
+            <a href="../communication-design/00-index.html">← 通信系统设计</a>
+            <a href="../index.html">项目概览 →</a>
+        </div>
+    </div>
+</body>
+</html>
