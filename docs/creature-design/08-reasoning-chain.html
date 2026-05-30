@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推理链形式化 - 推理核心</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #e74c3c;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .math {
+            text-align: center;
+            font-style: italic;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fce8e8;
+            border-radius: 5px;
+        }
+        .principle {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .example {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>推理链形式化 - 推理核心</h1>
+        
+        <h2>形式化定义</h2>
+        <div class="principle">
+            <strong>核心思想：</strong>推理链是逻辑步骤的有序序列，每步都由前提推导出结论，并保持语义连贯性。
+        </div>
+        
+        <div class="math">
+            推理链 <em>ℛ = ⟨s₁, s₂, ..., sₙ⟩</em>，其中每个步骤 <em>sᵢ = (Pᵢ, Rᵢ, Cᵢ)</em><br>
+            • <em>Pᵢ</em> : 前提集合<br>
+            • <em>Rᵢ</em> : 推理规则<br>
+            • <em>Cᵢ</em> : 得出的结论
+        </div>
+        
+        <h2>数据结构实现</h2>
+        <pre><code>// 推理步骤：单个逻辑推理单元
+pub struct ReasoningStep {
+    // 前提条件
+    premises: Vec&lt;String&gt;,
+    
+    // 应用的推理规则
+    rule: InferenceRule,
+    
+    // 推导出的结论
+    conclusion: String,
+    
+    // 步骤置信度
+    confidence: f64,
+    
+    // 关联的概念
+    concepts: Vec&lt;String&gt;,
+}
+
+// 推理规则：逻辑变换
+pub enum InferenceRule {
+    Deduction,     // 演绎推理
+    Induction,     // 归纳推理
+    Abduction,     // 溯因推理
+    Analogy,       // 类比推理
+    Constraint,    // 约束传播
+}
+
+// 完整推理链
+pub struct ReasoningChain {
+    // 推理步骤序列
+    steps: Vec&lt;ReasoningStep&gt;,
+    
+    // 初始假设
+    hypothesis: String,
+    
+    // 最终结论
+    final_conclusion: String,
+    
+    // 整体置信度
+    overall_confidence: f64,
+    
+    // 计算成本
+    computational_cost: f64,
+}</code></pre>
+        
+        <h2>数学性质</h2>
+        <ul>
+            <li><strong>连贯性：</strong>∀i∈[1,n-1], Cᵢ ∈ Pᵢ₊₁</li>
+            <li><strong>单调性：</strong>confidence(sᵢ₊₁) ≤ confidence(sᵢ)</li>
+            <li><strong>成本累积：</strong>computational_cost = Σ cost(sᵢ)</li>
+        </ul>
+        
+        <h2>实际应用示例</h2>
+        <div class="example">
+            <strong>问题：</strong>如果所有哺乳动物都有脊椎，鲸鱼是哺乳动物，那么鲸鱼有脊椎吗？
+            
+            <pre><code>推理链 ℛ = ⟨s₁, s₂, s₃⟩
+s₁: 
+  premises = ["∀x(Mammal(x) → Vertebrate(x))", "Mammal(Whale)"]
+  rule = Deduction
+  conclusion = "Vertebrate(Whale)"
+  confidence = 0.95
+
+s₂:
+  premises = ["Vertebrate(Whale)", "Vertebrate(x) → HasSpine(x)"]
+  rule = Deduction
+  conclusion = "HasSpine(Whale)"
+  confidence = 0.92
+
+s₃:
+  premises = ["HasSpine(Whale)", "Spine(x) → StrongSupport(x)"]
+  rule = Deduction
+  conclusion = "StrongSupport(Whale)"
+  confidence = 0.90</code></pre>
+        </div>
+        
+        <h2>链的优化与剪枝</h2>
+        <p>为了保持推理效率，我们需要对推理链进行优化：</p>
+        <ol>
+            <li><strong>冗余消除：</strong>移除对最终结论无贡献的步骤</li>
+            <li><strong>置信度传播：</strong>使用贝叶斯规则更新链的置信度</li>
+            <li><strong>成本效益分析：</strong>在置信度和计算成本间权衡</li>
+        </ol>
+        
+        <div class="math">
+            链置信度计算：<em>Conf(ℛ) = πᵢ₌₁ⁿ confidence(sᵢ)</em><br>
+            效益评估：<em>Utility(ℛ) = Conf(ℛ) / computational_cost</em>
+        </div>
+    </div>
+</body>
+</html>

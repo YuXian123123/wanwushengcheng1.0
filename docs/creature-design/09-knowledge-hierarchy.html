@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识层次组织 - 推理核心</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #9b59b6;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #9b59b6;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #9b59b6;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .math {
+            text-align: center;
+            font-style: italic;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5e8fc;
+            border-radius: 5px;
+        }
+        .principle {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .hierarchy {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>知识层次组织 - 推理核心</h1>
+        
+        <h2>分层知识模型</h2>
+        <div class="principle">
+            <strong>组织原则：</strong>知识按抽象层次组织，从具体事实到抽象原理，形成可计算的层次结构。
+        </div>
+        
+        <div class="math">
+            知识层次 <em>H = ⟨F, C, P, M⟩</em>，其中：<br>
+            • <em>F</em> : 事实层 (具体观测)<br>
+            • <em>C</em> : 概念层 (范畴抽象)<br>
+            • <em>P</em> : 原理层 (通用规律)<br>
+            • <em>M</em> : 元知识层 (关于知识的知识)
+        </div>
+        
+        <h2>层次结构实现</h2>
+        <pre><code>// 知识层次枚举
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum KnowledgeLevel {
+    Factual,    // 事实层
+    Conceptual, // 概念层
+    Principle,  // 原理层
+    Meta,       // 元知识层
+}
+
+// 分层知识节点
+pub struct HierarchicalKnowledge {
+    // 知识内容
+    content: String,
+    
+    // 知识层次
+    level: KnowledgeLevel,
+    
+    // 抽象层级 (0为最具体)
+    abstraction_level: u32,
+    
+    // 依赖的知识节点
+    dependencies: Vec&lt;KnowledgeId&gt;,
+    
+    // 泛化知识节点
+    generalizations: Vec&lt;KnowledgeId&gt;,
+    
+    // 置信度
+    confidence: f64,
+}
+
+// 知识图谱：层次化知识网络
+pub struct HierarchicalKnowledgeGraph {
+    // 知识节点
+    nodes: HashMap&lt;KnowledgeId, HierarchicalKnowledge&gt;,
+    
+    // 层内连接
+    intra_level_edges: HashMap&lt;KnowledgeLevel, Graph&lt;KnowledgeId, Relation&gt;&gt;,
+    
+    // 层间连接
+    inter_level_edges: Graph&lt;(KnowledgeId, KnowledgeLevel), InterLevelRelation&gt;,
+}
+
+// 层间关系类型
+pub enum InterLevelRelation {
+    InstanceOf,     // 实例关系
+    SubConceptOf,   // 子概念关系
+    SpecialCaseOf,  // 特例关系
+    DescribedBy,    // 被描述关系
+}</code></pre>
+        
+        <h2>层次提升与泛化</h2>
+        <div class="hierarchy">
+            <strong>知识提炼过程：</strong>通过模式识别和抽象，将低层知识提升到高层
+        </div>
+        
+        <div class="math">
+            提升操作 <em>_lift : F ∪ C ∪ P → C ∪ P ∪ M_</em><br>
+            泛化操作 <em>_generalize : Hᵢ → Hⱼ, i < j_</em>
+        </div>
+        
+        <h2>层次间交互</h2>
+        <ol>
+            <li><strong>自下而上：</strong>事实归纳为概念，概念抽象为原理</li>
+            <li><strong>自上而下：</strong>原理指导事实解释，概念约束实例生成</li>
+            <li><strong>横向关联：</strong>同层知识通过相似性、类比等方式连接</li>
+        </ol>
+        
+        <h2>具体实现示例</h2>
+        <pre><code>// 示例：动物知识体系
+// 事实层
+F1: "Sparrow is a bird with feathers"
+F2: "Eagle is a bird with feathers"
+F3: "Penguin is a bird but cannot fly"
+
+// 概念层 (通过提升得到)
+C1: "Bird(x) → HasFeathers(x)"
+C2: "FlyingBird(x) ⊂ Bird(x)"
+C3: "FlightlessBird(x) ⊂ Bird(x)"
+
+// 原理层 (进一步抽象)
+P1: "∀x(∀i(Characteristicsᵢ(x) → Class(x)))"
+P2: "Exceptions(x) ⊂ Class(x) ∧ ¬TypicalBehavior(x)"
+
+// 元知识层
+M1: "Abstraction creates information loss but improves reasoning efficiency"
+M2: "Exception handling requires maintaining both general rules and specific cases"</code></pre>
+        
+        <h2>计算优势</h2>
+        <ul>
+            <li><strong>效率提升：</strong>高层知识减少重复计算</li>
+            <li><strong>泛化能力：</strong>抽象知识适用于更多场景</li>
+            <li><strong>可解释性：</strong>层次结构提供清晰的推理路径</li>
+            <li><strong>可维护性：</strong>各层独立演化，降低耦合</li>
+        </ul>
+        
+        <h2>质量保证</h2>
+        <p>为确保知识层次的质量，我们定义以下不变量：</p>
+        <ul>
+            <li><strong>层次一致性：</strong>高层知识不能与低层事实冲突</li>
+            <li><strong>覆盖完整性：</strong>所有低层知识应被高层知识覆盖</li>
+            <li><strong>抽象正确性：</strong>泛化过程保持语义正确性</li>
+        </ul>
+    </div>
+</body>
+</html>

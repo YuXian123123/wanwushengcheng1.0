@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推理结果验证机制 - 安全天才螺丝咕姆</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a2e;
+        }
+        .container {
+            background-color: #16213e;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            padding: 30px;
+            color: #e4e4e4;
+        }
+        h1, h2, h3 {
+            color: #feca57;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #27ae60;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #0d0d1a;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #2ecc71;
+        }
+        .warning {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .safe {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .test-case {
+            background-color: rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>推理结果验证机制</h1>
+        <p style="text-align: center; color: #a4a4a4;">安全天才 螺丝咕姆 | Security Validation</p>
+
+        <h2>验证框架</h2>
+        <pre><code>// 推理验证器
+pub struct InferenceValidator {
+    // 最小置信度阈值
+    min_confidence: f64,
+    // 逻辑一致性检查器
+    logic_checker: LogicConsistencyChecker,
+    // 语义相关性检查器
+    semantic_checker: SemanticRelevanceChecker,
+}</code></pre>
+
+        <h2>四层验证机制</h2>
+        <div class="safe">
+            <strong>Layer 1: 置信度验证</strong>
+            <ul>
+                <li>阈值检查：confidence >= min_confidence</li>
+                <li>默认阈值：0.5（可配置）</li>
+                <li>动态调整：根据历史准确率调整</li>
+            </ul>
+        </div>
+
+        <div class="safe">
+            <strong>Layer 2: 逻辑一致性验证</strong>
+            <ul>
+                <li>前提-结论逻辑检查</li>
+                <li>矛盾检测</li>
+                <li>推理路径有效性验证</li>
+            </ul>
+        </div>
+
+        <div class="safe">
+            <strong>Layer 3: 语义相关性验证</strong>
+            <ul>
+                <li>输入输出语义关联度检查</li>
+                <li>概念激活路径合理性</li>
+                <li>无关联概念过滤</li>
+            </ul>
+        </div>
+
+        <div class="safe">
+            <strong>Layer 4: 历史一致性验证</strong>
+            <ul>
+                <li>与历史推理结果的冲突检测</li>
+                <li>时间一致性检查</li>
+                <li>知识库一致性检查</li>
+            </ul>
+        </div>
+
+        <h2>验证流程</h2>
+        <pre><code>pub fn validate_inference(&self, result: &InferenceResult) -> ValidationResult {
+    // 1. 置信度检查
+    if result.confidence < self.min_confidence {
+        return ValidationResult::LowConfidence;
+    }
+
+    // 2. 逻辑一致性检查
+    if !self.logic_checker.check(&result.chain) {
+        return ValidationResult::LogicalInconsistency;
+    }
+
+    // 3. 语义相关性检查
+    if !self.semantic_checker.check(&result.activated_concepts) {
+        return ValidationResult::IrrelevantSemantics;
+    }
+
+    // 4. 历史一致性检查
+    if self.has_conflict_with_history(result) {
+        return ValidationResult::HistoricalConflict;
+    }
+
+    ValidationResult::Valid
+}</code></pre>
+
+        <h2>测试用例</h2>
+        <div class="test-case">
+            <strong>TEST-V1: 低置信度拒绝</strong>
+            <p>输入：confidence = 0.3 的推理结果</p>
+            <p>期望：返回 LowConfidence</p>
+        </div>
+        <div class="test-case">
+            <strong>TEST-V2: 逻辑矛盾检测</strong>
+            <p>输入：前提"A是B" + 结论"A不是B"</p>
+            <p>期望：返回 LogicalInconsistency</p>
+        </div>
+        <div class="test-case">
+            <strong>TEST-V3: 语义无关检测</strong>
+            <p>输入：激活概念["水果"], 输出结论关于"汽车"</p>
+            <p>期望：返回 IrrelevantSemantics</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认知市场经济系统 - 黑塔</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #feca57;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 2em;
+            color: #feca57;
+        }
+        .subtitle { color: #a4a4a4; margin-top: 10px; }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #feca57;
+        }
+        h2 { color: #ff6b6b; margin-bottom: 15px; }
+        h3 { color: #feca57; margin: 15px 0 10px; }
+        .highlight {
+            background: rgba(254,202,87,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .diagram {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre;
+        }
+        ul { margin-left: 20px; }
+        li { margin: 8px 0; }
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #2ecc71;
+        }
+        .concept-tag {
+            display: inline-block;
+            background: rgba(254,202,87,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid rgba(254,202,87,0.3);
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: rgba(254,202,87,0.2);
+            color: #feca57;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(254,202,87,0.3);
+            color: #a4a4a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>认知市场经济系统 (CMS)</h1>
+            <div class="subtitle">Cognitive Market System</div>
+            <div class="subtitle" style="font-size: 0.9em;">创新天才 黑塔 | Innovation Genius</div>
+        </header>
+
+        <section class="section">
+            <h2>核心概念</h2>
+            <p>认知市场经济系统是一种基于市场经济原理的分布式认知资源分配系统。通过模拟市场机制（供需、价格、竞争），实现认知资源（注意力、计算力、知识）的自主优化配置。</p>
+
+            <div class="highlight">
+                <strong>突破性创新：</strong>CMS将经济学原理引入认知系统，通过市场机制自动训练蛊虫的推理能力。正确推理获得奖励，错误推理受到惩罚，从而实现"通过经济活动训练推理"的设计目标。
+            </div>
+
+            <p style="margin-top: 15px;">
+                <span class="concept-tag">认知币</span>
+                <span class="concept-tag">注意力市场</span>
+                <span class="concept-tag">知识期货</span>
+                <span class="concept-tag">动态定价</span>
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>经济模型</h2>
+            <table>
+                <tr>
+                    <th>经济要素</th>
+                    <th>认知对应</th>
+                    <th>市场机制</th>
+                </tr>
+                <tr>
+                    <td>货币</td>
+                    <td>认知币 (CC)</td>
+                    <td>学习获得，推理消费</td>
+                </tr>
+                <tr>
+                    <td>商品</td>
+                    <td>知识、推理服务</td>
+                    <td>供需定价，自由交易</td>
+                </tr>
+                <tr>
+                    <td>价格</td>
+                    <td>认知价值</td>
+                    <td>市场动态调节</td>
+                </tr>
+                <tr>
+                    <td>投资</td>
+                    <td>深度学习投入</td>
+                    <td>预期收益驱动</td>
+                </tr>
+                <tr>
+                    <td>期货</td>
+                    <td>知识期货</td>
+                    <td>锁定未来认知收益</td>
+                </tr>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>架构图解</h2>
+            <div class="diagram">┌──────────────────────────────────────────────────────────┐
+│                    CMS 认知市场架构                         │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│   │  知识生产者  │    │  知识消费者  │    │  市场监管者  │  │
+│   │  (蛊虫A)    │    │  (蛊虫B)    │    │  (共识层)   │  │
+│   └──────┬──────┘    └──────┬──────┘    └──────┬──────┘  │
+│          │                  │                  │         │
+│          └─────────────────┬┴──────────────────┘         │
+│                            │                             │
+│                     ┌──────▼──────┐                       │
+│                     │  认知市场   │                       │
+│                     │  交易引擎   │                       │
+│                     └──────┬──────┘                       │
+│                            │                             │
+│       ┌────────────────────┼────────────────────┐        │
+│       │                    │                    │        │
+│       ▼                    ▼                    ▼        │
+│   [注意力市场]       [知识交易市场]      [推理服务市场]   │
+│   - 注意力拍卖       - 知识买卖         - 推理任务竞标   │
+│   - 焦点分配         - 价格发现         - 质量评估       │
+│   - 价值评估         - 版权保护         - 收益分配       │
+│                                                            │
+└──────────────────────────────────────────────────────────┘</div>
+
+            <h3>核心机制</h3>
+            <ul>
+                <li><strong>认知币获取：</strong>学习知识、正确推理、完成任务</li>
+                <li><strong>认知币消费：</strong>购买知识、请求推理、使用计算资源</li>
+                <li><strong>动态定价：</strong>基于供需关系自动调整认知资源价格</li>
+                <li><strong>竞争机制：</strong>多个蛊虫竞争任务，最优者获得奖励</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>训练推理能力</h2>
+            <p>CMS的核心目标是通过经济活动训练蛊虫的推理能力：</p>
+
+            <div class="diagram">// 推理任务定价模型
+task_price(difficulty, urgency) =
+    base_price × difficulty_multiplier × urgency_multiplier
+
+// 推理奖励计算
+reward(result) =
+    task_price × accuracy(result) ×
+    (1 + bonus_for_speed) × (1 + bonus_for_novelty)
+
+// 推理惩罚
+penalty(result) =
+    task_price × (1 - accuracy(result)) × penalty_rate
+
+// 学习投入决策
+should_learn(knowledge, cost) =
+    expected_future_value(knowledge) > cost × learning_threshold</div>
+
+            <h3>训练循环</h3>
+            <ol>
+                <li>蛊虫评估自身能力，决定学习哪些知识</li>
+                <li>投入认知币购买学习资源</li>
+                <li>参与推理任务竞争</li>
+                <li>正确推理获得奖励，错误推理受到惩罚</li>
+                <li>根据收益调整学习策略</li>
+                <li>持续迭代，提升推理能力</li>
+            </ol>
+        </section>
+
+        <section class="section">
+            <h2>实现要点</h2>
+            <ul>
+                <li><strong>认知币系统：</strong>实现安全的认知币发行、转账、余额管理</li>
+                <li><strong>市场交易引擎：</strong>支持实时匹配买卖双方的交易引擎</li>
+                <li><strong>动态定价算法：</strong>基于供需和质量的动态定价算法</li>
+                <li><strong>任务竞标机制：</strong>支持多蛊虫竞争的任务竞标系统</li>
+                <li><strong>收益分配：</strong>公平透明的收益分配机制</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>创新优势</h2>
+            <ul>
+                <li>自主驱动：蛊虫主动学习提升能力</li>
+                <li>资源优化：市场自动分配认知资源</li>
+                <li>质量保证：竞争机制筛选最优推理</li>
+                <li>持续进化：经济激励驱动持续改进</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>认知市场经济系统 | 创新天才黑塔 | 2026年5月30日</p>
+        </footer>
+    </div>
+</body>
+</html>

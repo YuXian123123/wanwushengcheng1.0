@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蛊虫推理核心设计 - 天才理事会决议</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #feca57;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 2.2em;
+            background: linear-gradient(90deg, #feca57, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .council-members {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .member {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 150px;
+        }
+        .member.black-tower { background: rgba(106,13,173,0.3); border: 1px solid #9370db; }
+        .member.screwllum { background: rgba(39,174,96,0.2); border: 1px solid #27ae60; }
+        .member.latio { background: rgba(52,152,219,0.2); border: 1px solid #3498db; }
+        .member h3 { color: #feca57; margin-bottom: 5px; }
+        .member p { font-size: 0.9em; color: #a4a4a4; }
+
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #feca57;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(254,202,87,0.3);
+        }
+
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .doc-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #feca57;
+            transition: transform 0.2s;
+        }
+        .doc-card:hover { transform: translateX(5px); }
+        .doc-card.black-tower { border-left-color: #9370db; }
+        .doc-card.screwllum { border-left-color: #27ae60; }
+        .doc-card.latio { border-left-color: #3498db; }
+        .doc-card h4 { color: #feca57; margin-bottom: 8px; }
+        .doc-card p { font-size: 0.9em; color: #a4a4a4; }
+        .doc-card a { color: #3498db; text-decoration: none; }
+        .doc-card a:hover { text-decoration: underline; }
+
+        .consensus {
+            background: rgba(39,174,96,0.1);
+            border: 1px solid #27ae60;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .consensus h3 { color: #27ae60; margin-bottom: 15px; }
+
+        .diagram {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(254,202,87,0.3);
+            color: #a4a4a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 蛊虫推理核心设计</h1>
+            <p style="margin-top: 10px; color: #a4a4a4;">天才理事会决议文档 | 2026年5月30日</p>
+
+            <div class="council-members">
+                <div class="member black-tower">
+                    <h3>黑塔</h3>
+                    <p>创新天才</p>
+                    <p>突破性思维</p>
+                </div>
+                <div class="member screwllum">
+                    <h3>螺丝咕姆</h3>
+                    <p>安全天才</p>
+                    <p>零容忍未验证</p>
+                </div>
+                <div class="member latio">
+                    <h3>拉蒂奥</h3>
+                    <p>优雅天才</p>
+                    <p>代码美学</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- 当前状态 -->
+        <section class="section">
+            <h2>📊 当前实现状态</h2>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                    已实现架构                                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   [RecursiveLearner] ──→ [ConceptSpace] ──→ [GuReasoningCore]│
+│        │                       │                   │         │
+│        ▼                       ▼                   ▼         │
+│   知识文档解析            概念向量存储         四种推理类型   │
+│   HTML: 127概念           256维向量            演绎: 0.80   │
+│   Python: 204概念         相似度计算           归纳: 0.84   │
+│   C: 51概念               层次管理             类比: 0.91   │
+│                                                 因果: 0.60   │
+└─────────────────────────────────────────────────────────────┘
+            </div>
+        </section>
+
+        <!-- 设计文档 -->
+        <section class="section">
+            <h2>📁 设计文档索引</h2>
+
+            <h3 style="color: #9370db; margin: 15px 0;">黑塔（创新）设计</h3>
+            <div class="doc-grid">
+                <div class="doc-card black-tower">
+                    <h4>01. 动态概念编织网络</h4>
+                    <p>DCWN架构：实时概念连接重组和自适应学习机制</p>
+                    <a href="01-dcwn-architecture.html">查看详情 →</a>
+                </div>
+                <div class="doc-card black-tower">
+                    <h4>02. 语义共振理解机制</h4>
+                    <p>SRU机制：模拟量子共振的语义理解范式</p>
+                    <a href="02-semantic-resonance.html">查看详情 →</a>
+                </div>
+                <div class="doc-card black-tower">
+                    <h4>03. 认知市场经济系统</h4>
+                    <p>CMS系统：基于市场经济的认知资源分配</p>
+                    <a href="03-cognitive-market.html">查看详情 →</a>
+                </div>
+            </div>
+
+            <h3 style="color: #27ae60; margin: 15px 0;">螺丝咕姆（安全）设计</h3>
+            <div class="doc-grid">
+                <div class="doc-card screwllum">
+                    <h4>04. 推理结果验证机制</h4>
+                    <p>四层验证：置信度、逻辑一致性、语义相关性、历史一致性</p>
+                    <a href="04-inference-validation.html">查看详情 →</a>
+                </div>
+                <div class="doc-card screwllum">
+                    <h4>05. 向量漂移检测</h4>
+                    <p>检测与纠正：锚点纠正、弹性约束、周期性校准</p>
+                    <a href="05-vector-drift-detection.html">查看详情 →</a>
+                </div>
+                <div class="doc-card screwllum">
+                    <h4>06. 安全协作协议</h4>
+                    <p>多蛊虫协作：签名验证、共识机制、异常隔离</p>
+                    <a href="06-collaboration-protocol.html">查看详情 →</a>
+                </div>
+            </div>
+
+            <h3 style="color: #3498db; margin: 15px 0;">拉蒂奥（优雅）设计</h3>
+            <div class="doc-grid">
+                <div class="doc-card latio">
+                    <h4>07. 优雅数据结构设计</h4>
+                    <p>数学形式化：推理核心的优雅数据结构定义</p>
+                    <a href="07-elegant-structure.html">查看详情 →</a>
+                </div>
+                <div class="doc-card latio">
+                    <h4>08. 推理链形式化</h4>
+                    <p>推理步骤：形式化的推理链表示和验证</p>
+                    <a href="08-reasoning-chain.html">查看详情 →</a>
+                </div>
+                <div class="doc-card latio">
+                    <h4>09. 知识层次组织</h4>
+                    <p>分层模型：事实层、概念层、原理层、元知识层</p>
+                    <a href="09-knowledge-hierarchy.html">查看详情 →</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 天才理事会共识 -->
+        <section class="consensus">
+            <h3>⚖️ 天才理事会共识决议</h3>
+
+            <h4 style="color: #feca57; margin: 10px 0;">1. 推理核心架构</h4>
+            <p>采用黑塔提出的<strong>动态概念编织网络(DCWN)</strong>作为基础架构，结合拉蒂奥的<strong>优雅数据结构</strong>确保代码质量，由螺丝咕姆的<strong>安全验证机制</strong>保障可靠性。</p>
+
+            <h4 style="color: #feca57; margin: 10px 0;">2. 理解机制</h4>
+            <p>采用<strong>语义共振理解机制(SRU)</strong>替代传统文本解析，实现真正的语义理解。通过多维度语义共振（语言、概念、经验、情感）实现深度理解。</p>
+
+            <h4 style="color: #feca57; margin: 10px 0;">3. 经济训练</h4>
+            <p>采用<strong>认知市场经济系统(CMS)</strong>训练推理能力：
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>学习知识 → 获得认知币</li>
+                <li>执行任务 → 消费认知币</li>
+                <li>正确推理 → 获得奖励</li>
+                <li>错误推理 → 扣除惩罚</li>
+            </ul>
+            </p>
+
+            <h4 style="color: #feca57; margin: 10px 0;">4. 安全边界</h4>
+            <p>严格执行螺丝咕姆的<strong>四层验证机制</strong>：
+            <ol style="margin-left: 20px; margin-top: 10px;">
+                <li>置信度验证：confidence >= 0.5</li>
+                <li>逻辑一致性验证：无矛盾</li>
+                <li>语义相关性验证：输入输出相关</li>
+                <li>历史一致性验证：与历史无冲突</li>
+            </ol>
+            </p>
+        </section>
+
+        <!-- 下一步行动 -->
+        <section class="section">
+            <h2>🎯 下一步行动</h2>
+            <ul style="margin-left: 20px;">
+                <li><strong>Phase 1:</strong> 实现语义共振理解机制 (SRU)</li>
+                <li><strong>Phase 2:</strong> 完善认知市场经济系统 (CMS)</li>
+                <li><strong>Phase 3:</strong> 实现四层验证机制</li>
+                <li><strong>Phase 4:</strong> 多蛊虫协作协议</li>
+                <li><strong>Phase 5:</strong> 世界神经网络集成测试</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>蛊虫推理核心设计 v1.0 | 天才理事会 | 2026年5月30日</p>
+            <p style="margin-top: 10px; color: #27ae60;">✅ 9份设计文档完成 | 架构确定 | 待实现</p>
+        </footer>
+    </div>
+</body>
+</html>

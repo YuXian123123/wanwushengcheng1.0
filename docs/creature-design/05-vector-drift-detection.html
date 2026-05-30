@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>向量漂移检测 - 安全天才螺丝咕姆</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a2e;
+        }
+        .container {
+            background-color: #16213e;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            padding: 30px;
+            color: #e4e4e4;
+        }
+        h1, h2, h3 {
+            color: #feca57;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #27ae60;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #0d0d1a;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #2ecc71;
+        }
+        .warning {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .safe {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>向量漂移检测与纠正</h1>
+        <p style="text-align: center; color: #a4a4a4;">安全天才 螺丝咕姆 | Vector Drift Detection</p>
+
+        <h2>问题描述</h2>
+        <div class="warning">
+            <strong>风险：</strong>概念向量在多次学习更新后可能发生漂移，导致：
+            <ul>
+                <li>语义偏离：向量不再代表原始概念</li>
+                <li>相似度失真：概念间关系变得不准确</li>
+                <li>推理错误：基于漂移向量的推理结果不可靠</li>
+            </ul>
+        </div>
+
+        <h2>检测机制</h2>
+        <pre><code>pub struct VectorDriftDetector {
+    // 最大允许漂移距离
+    max_drift_distance: f64,
+    // 历史向量快照
+    vector_snapshots: HashMap&lt;String, Vec&lt;ConceptVector&gt;&gt;,
+    // 漂移计数器
+    drift_counters: HashMap&lt;String, u32&gt;,
+}
+
+impl VectorDriftDetector {
+    /// 检测向量漂移
+    pub fn detect_drift(&self, concept_id: &str, current: &ConceptVector) -> DriftStatus {
+        // 获取原始向量
+        let original = self.get_original_vector(concept_id);
+
+        // 计算漂移距离
+        let drift_distance = original.cosine_distance(current);
+
+        if drift_distance > self.max_drift_distance {
+            DriftStatus::ExcessiveDrift {
+                distance: drift_distance,
+                threshold: self.max_drift_distance,
+            }
+        } else if drift_distance > self.max_drift_distance * 0.7 {
+            DriftStatus::Warning {
+                distance: drift_distance,
+            }
+        } else {
+            DriftStatus::Normal
+        }
+    }
+}</code></pre>
+
+        <h2>纠正机制</h2>
+        <div class="safe">
+            <strong>策略1：锚点纠正</strong>
+            <p>保留原始向量作为锚点，当漂移超过阈值时回拉</p>
+        </div>
+        <div class="safe">
+            <strong>策略2：弹性约束</strong>
+            <p>在学习过程中施加弹性约束，限制单次更新幅度</p>
+        </div>
+        <div class="safe">
+            <strong>策略3：周期性校准</strong>
+            <p>定期检查所有向量，对异常向量进行重新校准</p>
+        </div>
+
+        <h2>安全边界</h2>
+        <pre><code>// 配置参数
+pub struct DriftConfig {
+    // 最大漂移距离：0.3（语义相似度不低于0.7）
+    pub max_drift_distance: f64,
+    // 单次更新最大幅度：0.05
+    pub max_update_magnitude: f64,
+    // 校准周期：每1000次更新
+    pub calibration_interval: u32,
+    // 触发纠正的漂移次数阈值：5次
+    pub drift_count_threshold: u32,
+}</code></pre>
+
+        <h2>测试用例</h2>
+        <div class="safe">
+            <strong>TEST-D1: 漂移检测</strong>
+            <p>给定：向量漂移0.4，阈值0.3</p>
+            <p>期望：返回 ExcessiveDrift</p>
+        </div>
+        <div class="safe">
+            <strong>TEST-D2: 纠正验证</strong>
+            <p>给定：触发纠正的漂移向量</p>
+            <p>期望：纠正后漂移距离 < 0.3</p>
+        </div>
+    </div>
+</body>
+</html>

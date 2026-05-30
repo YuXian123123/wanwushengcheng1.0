@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全协作协议 - 安全天才螺丝咕姆</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a2e;
+        }
+        .container {
+            background-color: #16213e;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            padding: 30px;
+            color: #e4e4e4;
+        }
+        h1, h2, h3 {
+            color: #feca57;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #27ae60;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #0d0d1a;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #2ecc71;
+        }
+        .warning {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .safe {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #3a3a5a;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #2a2a4a;
+            color: #feca57;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>安全协作协议</h1>
+        <p style="text-align: center; color: #a4a4a4;">安全天才 螺丝咕姆 | Collaboration Protocol</p>
+
+        <h2>多蛊虫推理协作架构</h2>
+        <pre><code>     [蛊虫A]          [蛊虫B]          [蛊虫C]
+        │                │                │
+        └──────┬─────────┴───────┬────────┘
+               │                 │
+        [共识层]            [安全网关]
+               │                 │
+        ┌──────┴─────────────────┴──────┐
+        │      安全协作协议层           │
+        │  - 消息验证                   │
+        │  - 签名认证                   │
+        │  - 权限控制                   │
+        └───────────────────────────────┘</code></pre>
+
+        <h2>协作协议规则</h2>
+        <table>
+            <tr>
+                <th>规则</th>
+                <th>描述</th>
+                <th>安全级别</th>
+            </tr>
+            <tr>
+                <td>R1</td>
+                <td>所有跨蛊虫消息必须签名验证</td>
+                <td>Critical</td>
+            </tr>
+            <tr>
+                <td>R2</td>
+                <td>核心概念修改需多蛊虫共识</td>
+                <td>Critical</td>
+            </tr>
+            <tr>
+                <td>R3</td>
+                <td>推理结果传播需置信度检查</td>
+                <td>High</td>
+            </tr>
+            <tr>
+                <td>R4</td>
+                <td>异常蛊虫自动隔离</td>
+                <td>High</td>
+            </tr>
+            <tr>
+                <td>R5</td>
+                <td>知识更新需版本控制</td>
+                <td>Medium</td>
+            </tr>
+        </table>
+
+        <h2>共识机制</h2>
+        <div class="safe">
+            <strong>投票权重计算</strong>
+            <pre><code>权重 = 基础权重 × 历史准确率 × 领域专业度
+
+// 基础权重：1.0
+// 历史准确率：过去100次推理的正确率
+// 领域专业度：相关概念数量 / 总概念数量</code></pre>
+        </div>
+
+        <h2>异常检测与隔离</h2>
+        <div class="warning">
+            <strong>异常行为定义：</strong>
+            <ul>
+                <li>推理置信度持续低于阈值</li>
+                <li>向量漂移频率异常</li>
+                <li>投票模式偏离群体</li>
+                <li>通信延迟或丢包率异常</li>
+            </ul>
+        </div>
+
+        <h2>协议实现</h2>
+        <pre><code>pub struct CollaborationProtocol {
+    // 蛊虫注册表
+    registry: HashMap&lt;GuId, GuProfile&gt;,
+    // 消息签名验证器
+    verifier: MessageVerifier,
+    // 共识管理器
+    consensus: ConsensusManager,
+    // 异常检测器
+    anomaly_detector: AnomalyDetector,
+}
+
+impl CollaborationProtocol {
+    /// 处理跨蛊虫推理请求
+    pub fn handle_request(&mut self, request: CollaborationRequest) -> Result&lt;CollaborationResponse, ProtocolError&gt; {
+        // 1. 验证发送者身份
+        self.verifier.verify(&request)?;
+
+        // 2. 检查权限
+        self.check_permission(&request.sender, &request.action)?;
+
+        // 3. 验证请求内容
+        self.validate_content(&request.content)?;
+
+        // 4. 执行协作推理
+        let result = self.execute_collaborative_reasoning(request)?;
+
+        // 5. 达成共识
+        self.consensus.reach_consensus(&result)?;
+
+        Ok(result)
+    }
+}</code></pre>
+    </div>
+</body>
+</html>

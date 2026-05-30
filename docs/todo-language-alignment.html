@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自然语言对齐 - 任务清单</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #feca57;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 2.2em;
+            background: linear-gradient(90deg, #feca57, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .progress-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(254,202,87,0.3);
+        }
+        .progress-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 30px;
+            margin: 15px 0;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            height: 100%;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.3s ease;
+        }
+        .phase {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #feca57;
+        }
+        .phase.completed { border-left-color: #27ae60; }
+        .phase.in-progress { border-left-color: #f39c12; }
+        .phase.pending { border-left-color: #7f8c8d; }
+        .phase h2 {
+            color: #feca57;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .phase.completed h2 { color: #27ae60; }
+        .phase.in-progress h2 { color: #f39c12; }
+        .task-list { list-style: none; }
+        .task {
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+        .task:hover { background: rgba(255,255,255,0.1); }
+        .task.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+            background: rgba(39,174,96,0.15);
+        }
+        .task.in-progress {
+            background: rgba(243,156,18,0.1);
+            border: 1px solid #f39c12;
+        }
+        .checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #feca57;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .task.completed .checkbox {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
+        .task.completed .checkbox::after {
+            content: "✓";
+            color: white;
+            font-size: 14px;
+        }
+        .task-content { flex: 1; }
+        .task-title { font-weight: 500; }
+        .task-desc { font-size: 0.85em; color: #a4a4a4; margin-top: 4px; }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            margin-left: 8px;
+        }
+        .tag-core { background: #e74c3c; color: white; }
+        .tag-feature { background: #3498db; color: white; }
+        .tag-security { background: #9b59b6; color: white; }
+        .tag-rust { background: #f39c12; color: white; }
+        .tag-config { background: #1abc9c; color: white; }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status-pending { background: #7f8c8d; color: white; }
+        .status-in-progress { background: #f39c12; color: white; }
+        .status-completed { background: #27ae60; color: white; }
+        .priority-critical {
+            background: rgba(231,76,60,0.1);
+            border-left: 3px solid #e74c3c;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .fix-section {
+            background: rgba(39,174,96,0.1);
+            border-left: 3px solid #27ae60;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        .fix-section h4 { color: #27ae60; margin-bottom: 10px; }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(254,202,87,0.3);
+            color: #a4a4a4;
+        }
+        .file-link { color: #3498db; text-decoration: none; }
+        .file-link:hover { text-decoration: underline; }
+        .update-log {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+        .update-log li { margin: 5px 0; color: #a4a4a4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗣️ 自然语言对齐实现任务</h1>
+            <p style="margin-top: 10px; color: #a4a4a4;">蛊虫通信基础 | 最高优先级 | 天才理事会执行</p>
+        </header>
+
+        <!-- 重要性说明 -->
+        <section class="priority-critical">
+            <strong>🔴 最高优先级</strong> - 这是蛊虫系统的"基础中的基础"，没有自然语言对齐，蛊虫无法理解世界，一切活动都没有意义。
+        </section>
+
+        <!-- 硬编码修复记录 -->
+        <section class="fix-section">
+            <h4>✅ 硬编码问题修复 (2024-05-30)</h4>
+            <p>发现问题：违反 <code>coding-style.md</code> 中的"没有硬编码值"规则</p>
+            <p><strong>修复方案：</strong></p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>创建 <code>src/config/</code> 配置系统模块（6个配置文件）</li>
+                <li>所有数值参数通过 <code>GlobalConfig</code> 管理</li>
+                <li>支持文件加载/保存 (TOML格式)</li>
+                <li>参数验证和边界检查</li>
+                <li>创建硬编码检测脚本 <code>scripts/detect_hardcoding.py</code></li>
+                <li>更新 <code>CLAUDE.md</code> 明确禁止硬编码</li>
+            </ul>
+        </section>
+
+        <!-- 总体进度 -->
+        <section class="progress-section">
+            <h3 style="color: #feca57; margin-bottom: 10px;">📊 总体进度</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 100%;">100% 完成</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+                <span>总任务: 26</span>
+                <span>已完成: 26</span>
+                <span>进行中: 0</span>
+                <span>待开始: 0</span>
+            </div>
+            <div class="update-log">
+                <strong>最近更新:</strong>
+                <ul>
+                    <li>✅ Phase 0 设计验证方案完成</li>
+                    <li>✅ Phase 1 概念空间核心结构完成</li>
+                    <li>✅ Phase 2 编码器完成（分词、嵌入、消歧、对齐）</li>
+                    <li>✅ Phase 3 解码器完成（意图、规划、生成）</li>
+                    <li>✅ Phase 4 共识机制完成（投票、冲突解决）</li>
+                    <li>✅ Phase 5 上下文管理完成</li>
+                    <li>✅ Phase 6 集成测试完成（螺丝咕姆验证方案）</li>
+                    <li>✅ 配置系统创建完成，解决硬编码问题</li>
+                    <li>✅ Phase 7 递归学习完成（能力自生长）</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Phase 0: 设计验证 -->
+        <section class="phase completed" id="phase-design">
+            <h2><span class="status-badge status-completed">已完成</span> Phase 0: 设计验证（螺丝咕姆）</h2>
+            <ul class="task-list">
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">设计语言对齐验证方案 <span class="tag tag-security">安全</span></div>
+                        <div class="task-desc">概念对齐正确性、编码解码一致性、共识机制有效性</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">定义安全边界测试</div>
+                        <div class="task-desc">概念修改权限、向量范围、共识阈值</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">创建配置系统 <span class="tag tag-config">配置</span></div>
+                        <div class="task-desc">避免硬编码，所有参数可配置</div>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Phase 1: 概念空间 -->
+        <section class="phase completed" id="phase-concept">
+            <h2><span class="status-badge status-completed">已完成</span> Phase 1: 概念空间 <span class="tag tag-rust">Rust</span></h2>
+            <ul class="task-list">
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现Concept数据结构 <span class="tag tag-core">核心</span></div>
+                        <div class="task-desc">概念ID、名称、向量、层级关系、共识状态</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现ConceptVector向量操作</div>
+                        <div class="task-desc">高维向量(配置驱动)、相似度计算、归一化</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现ConceptSpace概念空间 <span class="tag tag-core">核心</span></div>
+                        <div class="task-desc">概念存储、查询、层级管理</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现向量局部学习规则</div>
+                        <div class="task-desc">关联规则、区分规则、继承规则（非梯度下降）</div>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Phase 2: 编码器 -->
+        <section class="phase completed" id="phase-encoder">
+            <h2><span class="status-badge status-completed">已完成</span> Phase 2: 编码器 <span class="tag tag-rust">Rust</span></h2>
+            <ul class="task-list">
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现Tokenizer分词器 <span class="tag tag-core">核心</span></div>
+                        <div class="task-desc">中文分词、英文分词、混合文本处理</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现词嵌入</div>
+                        <div class="task-desc">词到向量的映射、位置编码</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现上下文消歧</div>
+                        <div class="task-desc">多义词处理、上下文向量、概念选择</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现Encoder完整编码流程 <span class="tag tag-core">核心</span></div>
+                        <div class="task-desc">分词→嵌入→消歧→概念对齐→内部表示</div>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Phase 3: 解码器 -->
+        <section class="phase completed" id="phase-decoder">
+            <h2><span class="status-badge status-completed">已完成</span> Phase 3: 解码器 <span class="tag tag-rust">Rust</span></h2>
+            <ul class="task-list">
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现意图解析</div>
+                        <div class="task-desc">从LNN输出解析意图类型</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现概念规划</div>
+                        <div class="task-desc">选择要表达的概念序列</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现语言生成</div>
+                        <div class="task-desc">概念→词汇→句子，风格适应</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现Decoder完整解码流程 <span class="tag tag-core">核心</span></div>
+                        <div class="task-desc">内部表示→意图→概念→自然语言</div>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Phase 4: 共识机制 -->
+        <section class="phase completed" id="phase-consensus">
+            <h2><span class="status-badge status-completed">已完成</span> Phase 4: 共识机制 <span class="tag tag-rust">Rust</span></h2>
+            <ul class="task-list">
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现投票机制 <span class="tag tag-security">安全</span></div>
+                        <div class="task-desc">投票权重计算、阈值判断(配置驱动)</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现冲突解决</div>
+                        <div class="task-desc">上下文分离、概念细化、版本化</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现ConsensusManager共识管理器 <span class="tag tag-core">核心</span></div>
+                        <div class="task-desc">提案→讨论→投票→决议流程</div>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Phase 5: 上下文管理 -->
+        <section class="phase completed" id="phase-context">
+            <h2><span class="status-badge status-completed">已完成</span> Phase 5: 上下文管理 <span class="tag tag-rust">Rust</span></h2>
+            <ul class="task-list">
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现Context上下文结构</div>
+                        <div class="task-desc">会话、任务、关系、世界四种上下文</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现ContextManager上下文管理器</div>
+                        <div class="task-desc">上下文构建、指代消解、注意力掩码</div>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Phase 6: 测试验证 -->
+        <section class="phase completed" id="phase-test">
+            <h2><span class="status-badge status-completed">已完成</span> Phase 6: 测试验证</h2>
+            <ul class="task-list">
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">编写单元测试 <span class="tag tag-core">核心</span></div>
+                        <div class="task-desc">概念操作、编码解码、向量学习 | 94个测试全部通过 ✅</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">编写集成测试 <span class="tag tag-security">螺丝咕姆验证</span></div>
+                        <div class="task-desc">安全边界测试(5) + 功能测试(7) + 性能测试(3) + 冲突测试(2) + E2E测试(2) = 20个测试全部通过 ✅</div>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Phase 7: 递归学习 -->
+        <section class="phase completed" id="phase-recursive">
+            <h2><span class="status-badge status-completed">已完成</span> Phase 7: 递归学习 <span class="tag tag-feature">特性</span></h2>
+            <ul class="task-list">
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">实现递归学习器 <span class="tag tag-core">核心</span></div>
+                        <div class="task-desc">从知识文档递归学习，构建概念层次结构 | RecursiveLearner ✅</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">知识文档解析</div>
+                        <div class="task-desc">提取代码块、关键概念、标题结构 | KnowledgeDocument ✅</div>
+                    </div>
+                </li>
+                <li class="task completed">
+                    <div class="checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">能力自生长测试</div>
+                        <div class="task-desc">HTML: 127概念, 57代码示例 | Python: 204概念 | C: 51概念 ✅</div>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 文件结构 -->
+        <section class="progress-section">
+            <h3 style="color: #feca57; margin-bottom: 15px;">📁 当前文件结构</h3>
+            <pre style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; overflow-x: auto;">
+src/src/
+├── config/              # ✅ 配置系统
+│   ├── mod.rs           # 全局配置
+│   ├── concept.rs       # 概念配置
+│   ├── learning.rs      # 学习配置
+│   ├── consensus.rs     # 共识配置
+│   ├── context.rs       # 上下文配置
+│   └── tokenizer.rs     # 分词器配置
+├── learning/            # ✅ 学习模块
+│   ├── mod.rs           # 模块入口
+│   ├── rules.rs         # 学习规则
+│   └── recursive.rs     # 递归学习器 (新增)
+├── language/
+│   ├── mod.rs           # ✅ 模块入口
+│   ├── concept/         # ✅ 概念空间
+│   │   ├── mod.rs
+│   │   ├── types.rs     # Concept, ConceptVector (配置驱动)
+│   │   ├── space.rs     # ConceptSpace
+│   │   └── learning.rs  # 向量学习规则
+│   ├── encoder/         # ✅ 编码器
+│   │   ├── mod.rs       # Encoder (完整流程)
+│   │   ├── tokenizer.rs # 分词器
+│   │   ├── embedding.rs # 词嵌入
+│   │   ├── disambiguator.rs # 上下文消歧
+│   │   └── aligner.rs   # 概念对齐
+│   ├── decoder/         # ✅ 解码器
+│   │   ├── mod.rs       # Decoder
+│   │   ├── intent.rs    # 意图解析
+│   │   ├── planner.rs   # 概念规划
+│   │   └── generator.rs # 语言生成
+│   ├── consensus/       # ✅ 共识机制
+│   │   ├── mod.rs       # ConsensusManager
+│   │   └── resolve.rs   # 冲突解决
+│   └── context/         # ✅ 上下文
+│       └── mod.rs       # Context, ContextManager
+
+config/
+└── default.toml         # ✅ 默认配置文件
+
+scripts/
+└── detect_hardcoding.py # ✅ 硬编码检测工具
+
+CLAUDE.md                # ✅ 项目规则 (禁止硬编码)</pre>
+        </section>
+
+        <footer>
+            <p>自然语言对齐任务清单 v1.4 | 更新时间: 2024-05-30</p>
+            <p>执行: 黑塔(创新) | 验证: 螺丝咕姆(安全) | 审查: 拉蒂奥(优雅)</p>
+            <p style="margin-top: 10px; color: #27ae60;">✅ 全部完成 | 94单元测试 + 20集成测试 + 9能力测试 = 123个测试全部通过 | 编译成功</p>
+            <p style="margin-top: 5px; color: #3498db;">🧠 能力自生长验证: HTML(127概念) + Python(204概念) + C(51概念) = 382概念自动学习</p>
+        </footer>
+    </div>
+</body>
+</html>

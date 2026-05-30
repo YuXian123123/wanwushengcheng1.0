@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>优雅数据结构设计 - 推理核心</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .math {
+            text-align: center;
+            font-style: italic;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e8f4fc;
+            border-radius: 5px;
+        }
+        .principle {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>优雅数据结构设计 - 推理核心</h1>
+        
+        <h2>设计理念</h2>
+        <div class="principle">
+            <strong>优雅原则：</strong>数据结构应体现数学本质，而非实现细节。每个字段都应有明确的数学意义和不变量。
+        </div>
+        
+        <h2>核心数据结构</h2>
+        <pre><code>// 优雅的推理核心结构
+pub struct GuReasoningCore {
+    // 概念空间：知识的拓扑表示
+    concept_space: Arc&lt;RwLock&lt;ConceptSpace&gt;&gt;,
+    
+    // 逻辑神经网络：推理引擎
+    lnn: LNN,
+    
+    // 概念到神经元的映射：语义到计算的桥梁
+    concept_to_neuron: HashMap&lt;String, String&gt;,
+    
+    // 认知资源：推理的经济学
+    coins: f64,
+    
+    // 推理历史：认知轨迹
+    reasoning_history: Vec&lt;InferenceResult&gt;,
+}
+
+// 概念空间：知识的拓扑结构
+pub struct ConceptSpace {
+    // 概念节点集合
+    concepts: HashMap&lt;String, ConceptNode&gt;,
+    
+    // 概念间的关系网络
+    relations: Graph&lt;String, ConceptRelation&gt;,
+    
+    // 空间度量：概念间的语义距离
+    metric: SemanticMetric,
+}
+
+// 概念节点：语义单元
+pub struct ConceptNode {
+    // 概念标识
+    id: String,
+    
+    // 语义向量表示
+    embedding: Vec&lt;f64&gt;,
+    
+    // 置信度
+    confidence: f64,
+    
+    // 时间戳
+    timestamp: u64,
+}
+
+// 推理结果：认知的输出
+pub struct InferenceResult {
+    // 推理路径
+    chain: Vec&lt;ReasoningStep&gt;,
+    
+    // 结论
+    conclusion: String,
+    
+    // 置信度
+    confidence: f64,
+    
+    // 消耗的认知资源
+    cost: f64,
+}</code></pre>
+        
+        <h2>数学形式化</h2>
+        <div class="math">
+            设 <em>C</em> 为概念空间，<em>c ∈ C</em> 为概念节点，<em>R</em> 为关系集合。<br>
+            推理核心 <em>ℛ = (C, R, 𝒩, μ, ℋ)</em>，其中：<br>
+            • <em>𝒩</em> : 逻辑神经网络<br>
+            • <em>μ</em> : 概念到神经元的映射<br>
+            • <em>ℋ</em> : 推理历史轨迹
+        </div>
+        
+        <h2>不变量约束</h2>
+        <ul>
+            <li><strong>一致性：</strong>∀c∈C, 0 ≤ confidence(c) ≤ 1</li>
+            <li><strong>资源守恒：</strong>coins ≥ 0</li>
+            <li><strong>历史单调性：</strong>ℋ随时间单调增长</li>
+        </ul>
+        
+        <h2>设计优势</h2>
+        <ol>
+            <li><strong>数学清晰性：</strong>每个组件都有明确的数学定义</li>
+            <li><strong>认知经济学：</strong>coins字段体现推理成本</li>
+            <li><strong>轨迹可追溯：</strong>完整保存推理历史</li>
+            <li><strong>语义桥梁：</strong>概念与神经元的显式映射</li>
+        </ol>
+    </div>
+</body>
+</html>
