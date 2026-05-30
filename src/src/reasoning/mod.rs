@@ -23,7 +23,19 @@ pub use crate::core::{LNN, LNNState, NeuronType, PlasticityRule};
 pub use crate::language::concept::{ConceptSpace, ConceptLevel};
 pub use crate::config::GlobalConfig;
 
-// 拉蒂奥优雅结构模块
+// ============== 黑塔创新模块 ==============
+pub mod dcwn;
+pub mod sru;
+pub mod cms;
+
+pub use dcwn::{DynamicConceptWeavingNetwork, ConceptNode, WeaveConnection, WeaveConfig};
+pub use sru::{SemanticResonanceUnderstanding, ConceptWave, ResonanceResult, SruConfig};
+pub use cms::{
+    CognitiveMarketSystem, MarketConfig, KnowledgeProduct,
+    InferenceTask, Transaction, TransactionType,
+};
+
+// ============== 拉蒂奥优雅结构模块 ==============
 pub mod core_elegant;
 pub mod chain;
 pub mod hierarchy;
@@ -32,7 +44,7 @@ pub use core_elegant::{GuReasoningCore as ElegantReasoningCore, InferenceResult,
 pub use chain::{ReasoningChain, ReasoningStep, ReasoningRule, ChainBuilder};
 pub use hierarchy::{KnowledgeHierarchy, KnowledgeNode, KnowledgeLevel as KLevel, KnowledgeSource};
 
-// 螺丝咕姆安全模块
+// ============== 螺丝咕姆安全模块 ==============
 pub mod validation;
 pub mod drift;
 pub mod protocol;
@@ -77,6 +89,8 @@ pub struct GuReasoningCore {
     reasoning_history: Vec<LegacyInferenceResult>,
     /// 验证器
     validator: InferenceValidator,
+    /// 认知市场
+    market: CognitiveMarketSystem,
 }
 
 impl GuReasoningCore {
@@ -91,6 +105,7 @@ impl GuReasoningCore {
             coins: 0.0,
             reasoning_history: Vec::new(),
             validator: InferenceValidator::new(),
+            market: CognitiveMarketSystem::new(MarketConfig::default()),
         }
     }
 
@@ -149,7 +164,7 @@ impl GuReasoningCore {
         let mut activated_concepts = Vec::new();
 
         for concept_id in input_concepts {
-            if let Some(neuron_id) = self.concept_to_neuron.get(*concept_id) {
+            if let Some(_neuron_id) = self.concept_to_neuron.get(*concept_id) {
                 reasoning_path.push(format!("激活概念: {}", concept_id));
                 activated_concepts.push(concept_id.to_string());
             }
@@ -396,5 +411,12 @@ mod tests {
 
         let results = validator.validate("input", "output", 0.9, &[]);
         assert!(validator.is_valid(&results));
+    }
+
+    #[test]
+    fn test_cognitive_market() {
+        let mut market = CognitiveMarketSystem::new(MarketConfig::default());
+        market.register_gu("test_gu".to_string());
+        assert_eq!(market.balance("test_gu"), 100.0);
     }
 }
