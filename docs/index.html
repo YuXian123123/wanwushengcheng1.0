@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>万物生成器 - 需求文档</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 2px solid #e94560;
+            margin-bottom: 40px;
+        }
+        h1 {
+            font-size: 3em;
+            background: linear-gradient(90deg, #e94560, #ff6b6b, #e94560);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 1.2em;
+            color: #a4a4a4;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+        h2 {
+            color: #e94560;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(233, 69, 96, 0.3);
+        }
+        h3 {
+            color: #ff6b6b;
+            font-size: 1.4em;
+            margin: 20px 0 15px 0;
+        }
+        h4 {
+            color: #ffa502;
+            font-size: 1.2em;
+            margin: 15px 0 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(233, 69, 96, 0.2);
+        }
+        th {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+        }
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .diagram {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            color: #7bed9f;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 2px;
+        }
+        .tag-confirmed { background: #27ae60; color: white; }
+        .tag-pending { background: #e67e22; color: white; }
+        .tag-critical { background: #e74c3c; color: white; }
+        .highlight {
+            color: #e94560;
+            font-weight: bold;
+        }
+        .note {
+            background: rgba(233, 69, 96, 0.1);
+            border-left: 4px solid #e94560;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(233, 69, 96, 0.2);
+        }
+        .card h4 {
+            margin-top: 0;
+        }
+        footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+            border-top: 2px solid #e94560;
+            color: #a4a4a4;
+        }
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            height: 100%;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>万物生成器</h1>
+            <p class="subtitle">蛊虫神经网络 × 世界模型 × 自进化AI系统</p>
+        </header>
+
+        <!-- 项目概述 -->
+        <section class="section">
+            <h2>项目概述</h2>
+            <p>创建一个名为<span class="highlight">"万物生成器"</span>的AI系统，以蛊虫作为神经元节点，组成世界模型的神经网络。</p>
+
+            <div class="note">
+                <strong>核心理念：</strong>能力自生长，数据驱动，不写死任何能力。蛊虫通过学习数据动态生成能力，而非程序预设。
+            </div>
+        </section>
+
+        <!-- 设计进度 -->
+        <section class="section">
+            <h2>设计进度总览</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 75%;">已完成 75%</div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h4>已完成设计</h4>
+                    <ul>
+                        <li><span class="tag tag-confirmed">已确认</span> 蛊虫本质：混合体</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 三层驱动模型</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 世界模型：沙盒</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 内外边界权限</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 四大生成能力</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 经济系统</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 通信系统</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 知识闭环系统</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 世界管理机制</li>
+                        <li><span class="tag tag-confirmed">已确认</span> 情绪系统</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>待深入设计</h4>
+                    <ul>
+                        <li><span class="tag tag-critical">最高</span> 自然语言对齐</li>
+                        <li><span class="tag tag-critical">最高</span> 液体神经网络</li>
+                        <li><span class="tag tag-pending">高</span> 蛊虫属性定义</li>
+                        <li><span class="tag tag-pending">高</span> 技术栈选择</li>
+                        <li><span class="tag tag-pending">中</span> 文件结构设计</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心设计决策 -->
+        <section class="section">
+            <h2>一、核心设计决策</h2>
+
+            <h3>1.1 蛊虫本质</h3>
+            <p><strong>蛊虫 = 混合体</strong>（既是独立智能体，又是计算节点）</p>
+
+            <h3>1.2 三层驱动模型</h3>
+            <table>
+                <tr>
+                    <th>层级</th>
+                    <th>驱动方式</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>内部层</td>
+                    <td>信号传递</td>
+                    <td>类似神经元，处理信号输入输出</td>
+                </tr>
+                <tr>
+                    <td>个体层</td>
+                    <td>任务驱动</td>
+                    <td>每个蛊虫有独立任务目标</td>
+                </tr>
+                <tr>
+                    <td>关系层</td>
+                    <td>关系驱动</td>
+                    <td>蛊虫之间通过关系连接（信任、博弈、进化等）</td>
+                </tr>
+            </table>
+
+            <h3>1.3 世界模型</h3>
+            <h4>世界本质：沙盒世界</h4>
+            <p>用户是世界的管理者，蛊虫干预外部世界需要管理员授权。</p>
+
+            <div class="diagram">
+┌─────────────────────────────────────────────────────┐
+│                    万物生成器                        │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│   ┌───────────────────────────────────────────┐    │
+│   │         内部世界 (沙盒)                    │    │
+│   │    蛊虫自由活动、进化、博弈                │    │
+│   │    信号传递、任务执行、关系建立            │    │
+│   └───────────────────────────────────────────┘    │
+│                      │                             │
+│                      │ 管理员授权                  │
+│                      ▼                             │
+│   ┌───────────────────────────────────────────┐    │
+│   │         外部世界 (插件系统)                │    │
+│   │    点外卖、发帖、调用外部程序...           │    │
+│   │    以插件形式挂载，需用户授权              │    │
+│   └───────────────────────────────────────────┘    │
+│                                                     │
+└─────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <!-- 生成目标 -->
+        <section class="section">
+            <h2>二、生成目标</h2>
+            <p>万物生成器是一个<span class="highlight">全能系统</span>，具备四大核心能力：</p>
+
+            <table>
+                <tr>
+                    <th>能力</th>
+                    <th>说明</th>
+                    <th>示例</th>
+                </tr>
+                <tr>
+                    <td>🎨 内容生成</td>
+                    <td>文本、图像、代码、音乐、视频</td>
+                    <td>写文章、画图、编曲</td>
+                </tr>
+                <tr>
+                    <td>🧠 智能决策</td>
+                    <td>数据分析、趋势预测、决策建议</td>
+                    <td>投资建议、策略优化</td>
+                </tr>
+                <tr>
+                    <td>💡 知识创造</td>
+                    <td>新蛊虫物种、新策略、新知识结构</td>
+                    <td>发现新规律、创造新方法</td>
+                </tr>
+                <tr>
+                    <td>🌍 世界模拟</td>
+                    <td>模拟场景、探索可能性、预测未来</td>
+                    <td>沙盘推演、风险预测</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 核心设计理念 -->
+        <section class="section">
+            <h2>三、核心设计理念 ⭐ 最重要</h2>
+
+            <h3>3.1 能力自生长（非程序写死）</h3>
+            <div class="note">
+                <strong>原则：</strong>蛊虫的能力可以自己长出来，而不是通过程序写死。
+            </div>
+
+            <div class="diagram">
+❌ 传统方式（程序写死）
+   程序员定义:
+   - function generateHTML() { ... }
+   - function generateImage() { ... }
+   - 能力固定，无法扩展
+
+✅ 自生长方式（数据驱动）
+   蛊虫阅读HTML技术文档
+         │
+         ▼
+   理解HTML结构和语义
+         │
+         ▼
+   动态生成"生成HTML"的能力
+         │
+         ▼
+   可以创造新颖的HTML结构
+   （不是死记硬背训练资源）</div>
+
+            <h3>3.2 数据驱动设计</h3>
+            <table>
+                <tr>
+                    <th>层次</th>
+                    <th>内容</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>程序层</td>
+                    <td>学习机制、推理引擎、能力容器</td>
+                    <td>最小化，不定义具体能力</td>
+                </tr>
+                <tr>
+                    <td>数据层</td>
+                    <td>知识文档、技术资料、交互经验</td>
+                    <td>能力的来源</td>
+                </tr>
+                <tr>
+                    <td>能力层</td>
+                    <td>动态生成的能力</td>
+                    <td>可组合、可进化、可涌现</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 经济系统 -->
+        <section class="section">
+            <h2>四、经济系统</h2>
+
+            <h3>4.1 设计目的</h3>
+            <p>通过<span class="highlight">经济激励</span>驱动蛊虫训练推理能力：</p>
+            <ul>
+                <li>蛊虫有生存需求，必须花费金币购买生存道具</li>
+                <li>金币由蛊虫自由定价，产出可自由交易</li>
+                <li>用户发布的任务也可产生金币</li>
+                <li>蛊虫之间自由合作竞争</li>
+            </ul>
+
+            <h3>4.2 金币来源</h3>
+            <table>
+                <tr>
+                    <th>来源</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>产出交易</td>
+                    <td>蛊虫产出可自由交易产生金币，价格由蛊虫自由定价</td>
+                </tr>
+                <tr>
+                    <td>任务完成</td>
+                    <td>用户发布任务，奖励金币，蛊虫竞争/合作完成</td>
+                </tr>
+                <tr>
+                    <td>知识感谢</td>
+                    <td>分享知识后，受益蛊虫可用金币感谢</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 通信系统 -->
+        <section class="section">
+            <h2>五、通信系统</h2>
+
+            <table>
+                <tr>
+                    <th>频道类型</th>
+                    <th>范围</th>
+                    <th>用途</th>
+                </tr>
+                <tr>
+                    <td>🌍 世界频道</td>
+                    <td>全局广播</td>
+                    <td>全局信息、重大事件、市场动态</td>
+                </tr>
+                <tr>
+                    <td>👥 小组频道</td>
+                    <td>群组内</td>
+                    <td>团队协作、策略讨论、合作谈判</td>
+                </tr>
+                <tr>
+                    <td>💬 个人频道</td>
+                    <td>一对一</td>
+                    <td>私密交易、情报交换、深度对话</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 知识闭环系统 -->
+        <section class="section">
+            <h2>六、知识闭环系统 ⭐ 核心</h2>
+
+            <h3>6.1 理解→交流→结构化→回流</h3>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────┐
+│               知识闭环系统                          │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│   1. 学习阶段                                       │
+│      - 阅读知识                                     │
+│      - 理解内容                                     │
+│      - 提取逻辑                                     │
+│                      │                              │
+│                      ▼                              │
+│   2. 交流阶段                                       │
+│      - 蛊虫之间讨论                                 │
+│      - 输出结构化文本                               │
+│                      │                              │
+│                      ▼                              │
+│   3. 结构化阶段                                     │
+│      - 将交流内容结构化                             │
+│      - 逻辑化存储                                   │
+│      - 抚平知识冲突                                 │
+│                      │                              │
+│                      ▼                              │
+│   4. 回流阶段                                       │
+│      - 新知识回流到程序                             │
+│      - 数据升级                                     │
+│      - 能力增强                                     │
+│                                                     │
+└─────────────────────────────────────────────────────┘</div>
+
+            <h3>6.2 学习自主权</h3>
+            <table>
+                <tr>
+                    <th>权利</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>选择权</td>
+                    <td>判断旧知识值不值得学习</td>
+                </tr>
+                <tr>
+                    <td>拒绝权</td>
+                    <td>不是一直学习旧的知识</td>
+                </tr>
+                <tr>
+                    <td>创造权</td>
+                    <td>新知识可以产出回流到程序</td>
+                </tr>
+                <tr>
+                    <td>升级权</td>
+                    <td>通过回流进行数据升级</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 世界管理机制 -->
+        <section class="section">
+            <h2>七、世界管理机制</h2>
+
+            <h3>7.1 蛊虫数量控制</h3>
+            <table>
+                <tr>
+                    <th>阈值</th>
+                    <th>触发条件</th>
+                    <th>世界行为</th>
+                </tr>
+                <tr>
+                    <td>上限</td>
+                    <td>数量 ≥ MAX</td>
+                    <td>停止新蛊虫生成，开始淘汰</td>
+                </tr>
+                <tr>
+                    <td>正常</td>
+                    <td>MIN < 数量 < MAX</td>
+                    <td>维持现状</td>
+                </tr>
+                <tr>
+                    <td>下限</td>
+                    <td>数量 ≤ MIN</td>
+                    <td>自动投入新蛊虫</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 情绪系统 -->
+        <section class="section">
+            <h2>八、情绪系统 ⭐ 重要</h2>
+
+            <h3>8.1 设计原则</h3>
+            <div class="note">
+                <strong>核心原则：</strong>情绪不写死，通过与自己相关的事件动态调节权重
+            </div>
+
+            <h3>8.2 情绪维度模型</h3>
+            <div class="diagram">
+          愉悦度 (Pleasure)
+               ▲
+               │
+    恐惧 ◄─────┼─────► 兴奋
+               │
+    悲伤 ◄─────┼─────► 愤怒
+               │
+               ▼
+           唤醒度 (Arousal)
+
+   情绪不是离散状态，而是连续空间中的点
+   每个维度有权重，由事件动态调节</div>
+
+            <h3>8.3 事件类型与情绪影响</h3>
+            <table>
+                <tr>
+                    <th>事件类别</th>
+                    <th>示例</th>
+                    <th>可能情绪变化</th>
+                </tr>
+                <tr>
+                    <td>收益类</td>
+                    <td>获得金币、感谢</td>
+                    <td>愉悦↑、兴奋↑</td>
+                </tr>
+                <tr>
+                    <td>损失类</td>
+                    <td>失去金币、被欺骗</td>
+                    <td>愤怒↑、悲伤↑</td>
+                </tr>
+                <tr>
+                    <td>社交类</td>
+                    <td>被感谢、被忽略</td>
+                    <td>归属感↑/↓</td>
+                </tr>
+                <tr>
+                    <td>成就类</td>
+                    <td>完成任务、学习新知</td>
+                    <td>自信↑、满足↑</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 智能核心 -->
+        <section class="section">
+            <h2>九、智能核心（待深入设计）</h2>
+
+            <h3>9.1 液体神经网络 (LNN)</h3>
+            <p>每只蛊虫的初始智能核心：</p>
+            <ul>
+                <li>动态拓扑结构</li>
+                <li>连续时间处理</li>
+                <li>自适应学习能力</li>
+            </ul>
+
+            <h3>9.2 自然语言对齐（基础中的基础）</h3>
+            <div class="note">
+                <strong>重要性：</strong>没有自然语言对齐，蛊虫无法理解世界，一切活动都没有意义
+            </div>
+        </section>
+
+        <!-- 文档结构 -->
+        <section class="section">
+            <h2>十、文档结构规划</h2>
+            <div class="diagram">
+docs/
+├── index.html              # 主文档（项目概览）
+├── creature-design.html    # 蛊虫详细设计 ⭐ 重点
+│   ├── 液体神经网络设计
+│   ├── 自然语言对齐设计
+│   ├── 智能核心设计
+│   ├── 属性与能力
+│   └── 生命周期
+├── world-design.html       # 世界模型设计
+├── economy-design.html     # 经济系统设计
+└── communication-design.html # 通信系统设计</div>
+        </section>
+
+        <footer>
+            <p>万物生成器 - 需求文档 v1.0</p>
+            <p>创建时间：2024-05-30 | 状态：设计中</p>
+        </footer>
+    </div>
+</body>
+</html>
