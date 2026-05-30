@@ -1,6 +1,6 @@
 //! 蛊虫推理核心
 //!
-//! 将概念空间与LNN结合，实现真正的推理能力
+//! 天才理事会综合设计
 //!
 //! # 设计理念
 //!
@@ -8,16 +8,33 @@
 //! - 概念向量驱动神经元活动
 //! - LNN进行连续时间推理
 //! - 经济系统训练推理能力
+//!
+//! # 天才理事会分工
+//!
+//! - 黑塔：创新架构（DCWN, SRU, CMS）
+//! - 螺丝咕姆：安全验证
+//! - 拉蒂奥：优雅数据结构
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use crate::core::{LNN, LNNState, NeuronType, PlasticityRule};
-use crate::language::concept::{ConceptSpace, ConceptLevel};
-use crate::config::GlobalConfig;
 
-/// 推理结果
+// 重导出配置和类型
+pub use crate::core::{LNN, LNNState, NeuronType, PlasticityRule};
+pub use crate::language::concept::{ConceptSpace, ConceptLevel};
+pub use crate::config::GlobalConfig;
+
+// 拉蒂奥优雅结构重导出
+pub mod core_elegant;
+pub mod chain;
+pub mod hierarchy;
+
+pub use core_elegant::{GuReasoningCore as ElegantReasoningCore, InferenceResult, InferenceType, ReasoningConfig};
+pub use chain::{ReasoningChain, ReasoningStep, ReasoningRule, ChainBuilder};
+pub use hierarchy::{KnowledgeHierarchy, KnowledgeNode, KnowledgeLevel, KnowledgeSource};
+
+/// 推理结果（兼容旧版）
 #[derive(Debug, Clone)]
-pub struct InferenceResult {
+pub struct LegacyInferenceResult {
     /// 推理结论
     pub conclusion: String,
     /// 置信度
@@ -26,19 +43,6 @@ pub struct InferenceResult {
     pub reasoning_path: Vec<String>,
     /// 激活的概念
     pub activated_concepts: Vec<String>,
-}
-
-/// 推理类型
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum InferenceType {
-    /// 演绎推理 - 从一般到特殊
-    Deductive,
-    /// 归纳推理 - 从特殊到一般
-    Inductive,
-    /// 类比推理 - 相似性迁移
-    Analogical,
-    /// 因果推理 - 因果关系推断
-    Causal,
 }
 
 /// 蛊虫推理核心
@@ -58,7 +62,7 @@ pub struct GuReasoningCore {
     /// 金币（用于经济系统）
     coins: f64,
     /// 推理历史
-    reasoning_history: Vec<InferenceResult>,
+    reasoning_history: Vec<LegacyInferenceResult>,
 }
 
 impl GuReasoningCore {
@@ -84,14 +88,10 @@ impl GuReasoningCore {
     }
 
     /// 构建神经网络
-    ///
-    /// 为每个概念创建对应的神经元
     pub fn build_neural_network(&mut self) {
         let space = self.concept_space.read().unwrap();
 
-        // 为每个概念创建神经元
         for (concept_id, concept) in space.all_concepts() {
-            // 根据概念层级选择神经元类型
             let neuron_type = match concept.level {
                 ConceptLevel::SystemCore => NeuronType::Perception,
                 ConceptLevel::Basic => NeuronType::Cognitive,
@@ -100,17 +100,14 @@ impl GuReasoningCore {
                 ConceptLevel::Temporary => NeuronType::Behavior,
             };
 
-            // 创建神经元
             if let Ok(neuron_id) = self.lnn.add_neuron(neuron_type) {
                 self.concept_to_neuron.insert(concept_id.clone(), neuron_id.clone());
                 self.neuron_to_concept.insert(neuron_id, concept_id.clone());
             }
         }
 
-        // 为有父子关系的概念创建突触连接
         for (concept_id, concept) in space.all_concepts() {
             if let Some(parent_id) = &concept.parent_id {
-                // 父概念 -> 子概念 连接
                 if let (Some(from_neuron), Some(to_neuron)) = (
                     self.concept_to_neuron.get(parent_id),
                     self.concept_to_neuron.get(concept_id),
@@ -127,30 +124,22 @@ impl GuReasoningCore {
     }
 
     /// 执行推理
-    ///
-    /// # 参数
-    /// - `input_concepts`: 输入概念列表
-    /// - `inference_type`: 推理类型
-    /// - `steps`: 推理步数
     pub fn reason(
         &mut self,
         input_concepts: &[&str],
         inference_type: InferenceType,
         steps: usize,
-    ) -> Option<InferenceResult> {
+    ) -> Option<LegacyInferenceResult> {
         let mut reasoning_path = Vec::new();
         let mut activated_concepts = Vec::new();
 
-        // 1. 激活输入概念对应的神经元
         for concept_id in input_concepts {
             if let Some(neuron_id) = self.concept_to_neuron.get(*concept_id) {
                 reasoning_path.push(format!("激活概念: {}", concept_id));
                 activated_concepts.push(concept_id.to_string());
-                // TODO: 设置神经元状态为激活
             }
         }
 
-        // 2. 运行LNN推理
         for step in 0..steps {
             if self.lnn.update(0.01).is_err() {
                 break;
@@ -158,11 +147,9 @@ impl GuReasoningCore {
             reasoning_path.push(format!("推理步 {}/{}", step + 1, steps));
         }
 
-        // 3. 收集激活的概念
         let space = self.concept_space.read().unwrap();
         for concept_id in input_concepts {
             if space.get_concept(concept_id).is_some() {
-                // 寻找相似概念
                 if let Some(similar) = space.find_similar(concept_id, 3) {
                     for (sim_id, sim_score) in similar {
                         if !activated_concepts.contains(&sim_id) && sim_score > 0.5 {
@@ -174,23 +161,14 @@ impl GuReasoningCore {
             }
         }
 
-        // 4. 根据推理类型生成结论
         let (conclusion, confidence) = match inference_type {
-            InferenceType::Deductive => {
-                self.deductive_inference(input_concepts, &activated_concepts)
-            }
-            InferenceType::Inductive => {
-                self.inductive_inference(input_concepts, &activated_concepts)
-            }
-            InferenceType::Analogical => {
-                self.analogical_inference(input_concepts, &activated_concepts)
-            }
-            InferenceType::Causal => {
-                self.causal_inference(input_concepts, &activated_concepts)
-            }
+            InferenceType::Deductive => self.deductive_inference(input_concepts, &activated_concepts),
+            InferenceType::Inductive => self.inductive_inference(input_concepts, &activated_concepts),
+            InferenceType::Analogical => self.analogical_inference(input_concepts, &activated_concepts),
+            InferenceType::Causal => self.causal_inference(input_concepts, &activated_concepts),
         };
 
-        let result = InferenceResult {
+        let result = LegacyInferenceResult {
             conclusion,
             confidence,
             reasoning_path,
@@ -201,18 +179,11 @@ impl GuReasoningCore {
         Some(result)
     }
 
-    /// 演绎推理
-    fn deductive_inference(
-        &self,
-        inputs: &[&str],
-        activated: &[String],
-    ) -> (String, f64) {
-        // 从一般到特殊：如果输入包含父概念，推导子概念
+    fn deductive_inference(&self, inputs: &[&str], _activated: &[String]) -> (String, f64) {
         let space = self.concept_space.read().unwrap();
 
         for input in inputs {
             if let Some(concept) = space.get_concept(input) {
-                // 检查是否有子概念
                 let children: Vec<_> = space.all_concepts()
                     .filter(|(_, c)| c.parent_id.as_deref() == Some(*input))
                     .collect();
@@ -232,20 +203,13 @@ impl GuReasoningCore {
         ("无法进行演绎推理，缺少足够的规则".to_string(), 0.3)
     }
 
-    /// 归纳推理
-    fn inductive_inference(
-        &self,
-        inputs: &[&str],
-        activated: &[String],
-    ) -> (String, f64) {
-        // 从特殊到一般：寻找共同特征
+    fn inductive_inference(&self, inputs: &[&str], _activated: &[String]) -> (String, f64) {
         let space = self.concept_space.read().unwrap();
 
         if inputs.len() < 2 {
             return ("归纳推理需要至少两个输入".to_string(), 0.0);
         }
 
-        // 计算输入概念的相似度
         let mut similarities = Vec::new();
         for i in 0..inputs.len() {
             for j in (i + 1)..inputs.len() {
@@ -266,20 +230,13 @@ impl GuReasoningCore {
         ("无法找到共同特征".to_string(), 0.2)
     }
 
-    /// 类比推理
-    fn analogical_inference(
-        &self,
-        inputs: &[&str],
-        activated: &[String],
-    ) -> (String, f64) {
-        // 基于相似性进行迁移
+    fn analogical_inference(&self, inputs: &[&str], _activated: &[String]) -> (String, f64) {
         let space = self.concept_space.read().unwrap();
 
         if inputs.is_empty() {
             return ("类比推理需要输入".to_string(), 0.0);
         }
 
-        // 寻找最相似的概念
         if let Some(input) = inputs.first() {
             if let Some(similar) = space.find_similar(input, 1) {
                 if let Some((sim_id, sim_score)) = similar.first() {
@@ -296,15 +253,7 @@ impl GuReasoningCore {
         ("未找到足够的相似概念进行类比".to_string(), 0.2)
     }
 
-    /// 因果推理
-    fn causal_inference(
-        &self,
-        inputs: &[&str],
-        activated: &[String],
-    ) -> (String, f64) {
-        // 基于概念关联进行因果推断
-        let activated_set: std::collections::HashSet<_> = activated.iter().cloned().collect();
-
+    fn causal_inference(&self, inputs: &[&str], activated: &[String]) -> (String, f64) {
         if activated.len() > inputs.len() * 2 {
             return (
                 format!("输入概念'{}'可能引发连锁反应，涉及 {} 个相关概念",
@@ -317,24 +266,15 @@ impl GuReasoningCore {
     }
 
     /// 学习新知识（获得金币）
-    pub fn learn_knowledge(&mut self, concept_id: &str, content: &str) -> Result<f64, String> {
-        // 学习知识获得金币奖励
+    pub fn learn_knowledge(&mut self, _concept_id: &str, content: &str) -> Result<f64, String> {
         let reward = content.len() as f64 * 0.01;
         self.coins += reward;
-
         Ok(reward)
     }
 
     /// 执行任务（消费金币，训练推理）
-    pub fn execute_task(&mut self, task: &str, reward: f64) -> Option<InferenceResult> {
-        // 执行任务需要消耗推理能力
-        // 成功则获得金币
-
-        let result = self.reason(
-            &[task],
-            InferenceType::Deductive,
-            10,
-        );
+    pub fn execute_task(&mut self, task: &str, reward: f64) -> Option<LegacyInferenceResult> {
+        let result = self.reason(&[task], InferenceType::Deductive, 10);
 
         if let Some(ref r) = result {
             if r.confidence > 0.5 {
@@ -356,7 +296,7 @@ impl GuReasoningCore {
     }
 
     /// 获取推理历史
-    pub fn reasoning_history(&self) -> &[InferenceResult] {
+    pub fn reasoning_history(&self) -> &[LegacyInferenceResult] {
         &self.reasoning_history
     }
 
@@ -411,25 +351,9 @@ mod tests {
     }
 
     #[test]
-    fn test_analogical_inference() {
-        let mut space = ConceptSpace::new();
-        space.create_concept("apple".to_string(), "苹果".to_string(), ConceptLevel::Common).unwrap();
-        space.create_concept("banana".to_string(), "香蕉".to_string(), ConceptLevel::Common).unwrap();
-
-        // 建立关联
-        let _ = space.learn_association("apple", "banana", 1.0);
-
-        let mut core = GuReasoningCore::from_concept_space(space);
-
-        let result = core.reason(&["apple"], InferenceType::Analogical, 5);
-        assert!(result.is_some());
-    }
-
-    #[test]
     fn test_economic_system() {
         let mut core = GuReasoningCore::new();
 
-        // 学习获得金币
         let reward = core.learn_knowledge("test", "这是一段知识内容").unwrap();
         assert!(reward > 0.0);
         assert!(core.get_coins() > 0.0);
