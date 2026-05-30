@@ -2,13 +2,13 @@
 name = "lnn"
 version = "0.1.0"
 edition = "2021"
-description = "Liquid Neural Network implementation for 蛊虫智能系统"
+description = "Liquid Neural Network implementation for 蛱虫智能系统"
 authors = ["Genius Council"]
 
 [dependencies]
 # 时间
 chrono = "0.4"
-uuid = { version = "1.0", features = ["v4"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
 
 # 序列化
 serde = { version = "1.0", features = ["derive"] }
