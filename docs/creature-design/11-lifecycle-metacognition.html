@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生命周期与元认知系统 - 螺丝咕姆</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a2e;
+        }
+        .container {
+            background-color: #16213e;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            padding: 30px;
+            color: #e4e4e4;
+        }
+        h1, h2, h3 { color: #feca57; }
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #27ae60;
+            padding-bottom: 15px;
+        }
+        h2 {
+            border-left: 4px solid #27ae60;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        pre {
+            background-color: #0d0d1a;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            overflow-x: auto;
+            border-radius: 4px;
+            white-space: pre;
+        }
+        code { font-family: 'Consolas', monospace; color: #2ecc71; }
+        .warning {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .safe {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #3a3a5a;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #2a2a4a;
+            color: #feca57;
+        }
+        .subtitle { color: #a4a4a4; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏳ 生命周期与元认知系统</h1>
+        <p class="subtitle">安全天才 螺丝咕姆 | Lifecycle & Metacognition</p>
+
+        <h2>核心设计理念</h2>
+        <div class="safe">
+            <strong>🎯 设计目的：创造欲望，驱动进化</strong>
+            <ul style="margin-top: 10px;">
+                <li><strong>生存欲望</strong>：生命周期创造对金币的渴望</li>
+                <li><strong>物竞天择</strong>：不限制延寿次数，自然淘汰</li>
+                <li><strong>适者生存</strong>：聪明的蛊虫能赚更多金币，活得更久</li>
+                <li><strong>进化压力</strong>：生存压力驱动能力提升</li>
+            </ul>
+        </div>
+
+        <h3>欲望驱动机制</h3>
+        <pre><code>┌──────────────────────────────────────────────────────────┐
+│              欲望驱动进化循环                             │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   ┌──────────┐     ┌──────────┐     ┌──────────┐        │
+│   │ 生存压力 │ ──► │ 金币渴望 │ ──► │ 能力提升 │        │
+│   └──────────┘     └──────────┘     └──────────┘        │
+│        ▲                                   │            │
+│        │                                   │            │
+│        └───────────────────────────────────┘            │
+│                    更聪明的蛊虫                          │
+│                   = 更强的赚钱能力                       │
+│                   = 更长的生命                           │
+│                                                          │
+│   🎯 不限制延寿次数，让自然选择决定谁存活                │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</code></pre>
+
+        <h2>生命周期机制</h2>
+        <pre><code>┌──────────────────────────────────────────────────────────┐
+│                    生命周期模型                           │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   出生 ──► 成长 ──► 成熟 ──► 衰老 ──► 死亡              │
+│     │        │        │        │        │               │
+│     │        │        │        │        └── 金币耗尽    │
+│     │        │        │        │                        │
+│     │        │        │        └── 可用金币无限延寿     │
+│     │        │        │                                 │
+│     │        │        └── 能力最盛期                     │
+│     │        │                                          │
+│     │        └── 学习能力最强                            │
+│     │                                                   │
+│     └── 初始化，生命值满                                 │
+│                                                         │
+│   💰 金币 = 生命，聪明的蛊虫活得久                       │
+│   🔓 无延寿上限，物竞天择                                │
+│                                                         │
+└──────────────────────────────────────────────────────────┘</code></pre>
+
+        <h3>生命周期参数</h3>
+        <table>
+            <tr>
+                <th>参数</th>
+                <th>默认值</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td>初始生命值</td>
+                <td>1000 单位时间</td>
+                <td>所有蛊虫一致</td>
+            </tr>
+            <tr>
+                <td>生命消耗速率</td>
+                <td>1 单位/秒</td>
+                <td>基础消耗</td>
+            </tr>
+            <tr>
+                <td>延寿成本</td>
+                <td>10 认知币/100 单位</td>
+                <td>金币换生命</td>
+            </tr>
+            <tr>
+                <td>延寿上限</td>
+                <td>🔓 无限制</td>
+                <td>物竞天择，适者生存</td>
+            </tr>
+            <tr>
+                <td>LNN健康阈值</td>
+                <td>0.3</td>
+                <td>低于此值加速衰老</td>
+            </tr>
+        </table>
+
+        <h3>物竞天择机制</h3>
+        <pre><code>// 自然选择：聪明的蛊虫活得久
+//
+// 推理：
+//   聪明的蛊虫 → 正确推理多 → 获得金币多 → 延寿次数多 → 活得久
+//   愚蠢的蛊虫 → 错误推理多 → 金币消耗快 → 无法延寿 → 早死
+//
+// 结果：
+//   长期存活的都是聪明的蛊虫
+//   这就是"物竞天择，适者生存"
+
+fn natural_selection(gu: &GuCreature) -> SurvivalOutcome {
+    if gu.coins >= EXTENSION_COST {
+        // 有金币，可以延寿
+        SurvivalOutcome::Survive { extended: true }
+    } else if gu.lifecycle.remaining > 0.0 {
+        // 没金币但还有命
+        SurvivalOutcome::Survive { extended: false }
+    } else {
+        // 金币耗尽，生命终结
+        SurvivalOutcome::Die { reason: "金币耗尽" }
+    }
+}</code></pre>
+
+        <h2>LNN神经网络关联</h2>
+        <pre><code>// 生命周期与LNN状态联动
+LifecycleState {
+    // 基础生命值
+    base_lifespan: u64,
+
+    // 当前剩余生命
+    remaining: f64,
+
+    // LNN健康度影响
+    lnn_health_factor: f64,
+
+    // 延寿次数
+    extensions: u32,
+
+    // 最大延寿次数
+    max_extensions: u32,
+}
+
+// 计算实际生命消耗
+fn actual_decay(lifecycle: &LifecycleState, lnn: &LNN) -> f64 {
+    let base_rate = 1.0;
+
+    // LNN健康度影响
+    let health_factor = match lnn.health_score() {
+        h if h >= 0.7 => 0.8,  // 健康，消耗降低
+        h if h >= 0.3 => 1.0,  // 正常
+        h if h >= 0.1 => 1.5,  // 不健康，消耗加速
+        _ => 2.0,              // 危险，消耗翻倍
+    };
+
+    // 活跃度影响
+    let activity_factor = if lnn.is_active() {
+        1.2  // 活跃时消耗略高
+    } else {
+        0.5  // 休眠时消耗降低
+    };
+
+    base_rate * health_factor * activity_factor
+}</code></pre>
+
+        <h2>元认知核心</h2>
+        <div class="safe">
+            <strong>元认知定义：</strong>蛊虫对自身认知过程的认知，包括自我监控、自我调节、自我反思。
+        </div>
+
+        <h3>元认知架构</h3>
+        <pre><code>┌──────────────────────────────────────────────────────────┐
+│                    元认知架构                             │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   ┌─────────────────────────────────────────────┐       │
+│   │              自我监控层                      │       │
+│   │  - 监控推理过程                              │       │
+│   │  - 监控学习效果                              │       │
+│   │  - 监控资源消耗                              │       │
+│   └────────────────────┬────────────────────────┘       │
+│                        │                                 │
+│                        ▼                                 │
+│   ┌─────────────────────────────────────────────┐       │
+│   │              自我调节层                      │       │
+│   │  - 调整推理策略                              │       │
+│   │  - 调整学习节奏                              │       │
+│   │  - 调整资源分配                              │       │
+│   └────────────────────┬────────────────────────┘       │
+│                        │                                 │
+│                        ▼                                 │
+│   ┌─────────────────────────────────────────────┐       │
+│   │              自我反思层                      │       │
+│   │  - 分析成功原因                              │       │
+│   │  - 总结失败教训                              │       │
+│   │  - 优化认知模型                              │       │
+│   └─────────────────────────────────────────────┘       │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</code></pre>
+
+        <h3>元认知状态</h3>
+        <pre><code>MetaCognition {
+    // 自我评估
+    self_assessment: {
+        confidence_level: f64,     // 自信程度
+        competence_estimate: f64,  // 能力估计
+        knowledge_gaps: Vec&lt;String&gt;, // 知识缺口
+    },
+
+    // 监控指标
+    monitoring: {
+        reasoning_accuracy: f64,   // 推理准确率
+        learning_efficiency: f64,  // 学习效率
+        resource_usage: ResourceStats, // 资源使用
+    },
+
+    // 调节策略
+    regulation: {
+        strategy_adjustments: Vec&lt;Adjustment&gt;,
+        priority_changes: Vec&lt;PriorityChange&gt;,
+        learning_focus: Option&lt;String&gt;,
+    },
+
+    // 反思记录
+    reflection: {
+        successes: Vec&lt;SuccessCase&gt;,
+        failures: Vec&lt;FailureCase&gt;,
+        insights: Vec&lt;Insight&gt;,
+    },
+}</code></pre>
+
+        <h2>金币延寿机制</h2>
+        <pre><code>// 延寿决策（无上限限制）
+fn extend_lifecycle(
+    lifecycle: &mut LifecycleState,
+    coins: &mut CognitiveCoins,
+    amount: u64,
+) -> Result&lt;u64, ExtensionError&gt; {
+    // 1. 计算金币成本
+    let cost = calculate_extension_cost(amount);
+
+    // 2. 检查金币是否足够
+    if coins.balance() &lt; cost {
+        return Err(ExtensionError::InsufficientCoins);
+    }
+
+    // 3. 执行延寿
+    coins.subtract(cost);
+    lifecycle.remaining += amount as f64;
+    lifecycle.extensions += 1;
+
+    // 4. 记录延寿历史
+    lifecycle.extension_history.push(ExtensionRecord {
+        amount,
+        cost,
+        timestamp: now(),
+    });
+
+    // 💡 无延寿上限，物竞天择
+    // 聪明的蛊虫自然能赚更多金币，活得更久
+
+    Ok(amount)
+}
+
+// 延寿成本（固定成本，让能力决定生存）
+fn calculate_extension_cost(amount: u64) -> f64 {
+    let base_cost = 10.0; // 每100生命单位的成本
+    base_cost * (amount as f64 / 100.0)
+}</code></pre>
+
+        <div class="safe">
+            <strong>✅ 物竞天择优势：</strong>
+            <ul style="margin-top: 10px;">
+                <li>无延寿上限 → 生存取决于能力</li>
+                <li>聪明蛊虫 → 更多正确推理 → 更多金币 → 活更久</li>
+                <li>愚蠢蛊虫 → 自然被淘汰</li>
+                <li>世界自动筛选出最优蛊虫</li>
+            </ul>
+        </div>
+
+        <h3>进化压力计算</h3>
+        <pre><code>// 计算蛊虫的"生存压力"
+fn survival_pressure(gu: &GuCreature) -> f64 {
+    // 生命剩余比例
+    let life_ratio = gu.lifecycle.remaining / gu.lifecycle.initial_lifespan;
+
+    // 金币与延寿成本比
+    let coins_per_100_life = gu.coins / EXTENSION_COST;
+
+    // 综合压力（越低越紧迫）
+    let pressure = life_ratio * coins_per_100_life.min(1.0);
+
+    pressure
+}
+
+// 压力驱动的行为选择
+fn choose_action_by_pressure(gu: &GuCreature) -> Action {
+    let pressure = survival_pressure(gu);
+
+    match pressure {
+        p if p < 0.1 => Action::Panic {  // 极度危险
+            seek_coins_aggressively: true,
+            risk_level: RiskLevel::High,
+        },
+        p if p < 0.3 => Action::Urgent {  // 紧急
+            prioritize_coin_earning: true,
+        },
+        p if p < 0.5 => Action::Normal {  // 正常
+            balance_learning_and_earning: true,
+        },
+        _ => Action::Comfortable {         // 舒适
+            can_focus_on_learning: true,
+        },
+    }
+}</code></pre>
+
+        <h2>死亡判定</h2>
+        <pre><code>enum DeathReason {
+    NaturalAging,        // 自然衰老
+    ResourceExhaustion,  // 资源耗尽
+    LNNFailure,          // 神经网络崩溃
+    SystemTermination,   // 系统终止
+}
+
+fn check_death(lifecycle: &LifecycleState, lnn: &LNN) -> Option&lt;DeathReason&gt; {
+    // 检查生命值
+    if lifecycle.remaining &lt;= 0.0 {
+        return Some(DeathReason::NaturalAging);
+    }
+
+    // 检查LNN崩溃
+    if lnn.health_score() &lt; 0.05 {
+        return Some(DeathReason::LNNFailure);
+    }
+
+    // 检查资源耗尽
+    if lifecycle.coins &lt; 0.0 &amp;&amp; lifecycle.remaining &lt; 100.0 {
+        return Some(DeathReason::ResourceExhaustion);
+    }
+
+    None
+}</code></pre>
+
+        <h2>与世界经济的联动</h2>
+        <table>
+            <tr>
+                <th>事件</th>
+                <th>生命影响</th>
+                <th>金币影响</th>
+            </tr>
+            <tr>
+                <td>成功推理</td>
+                <td>无变化</td>
+                <td>+奖励</td>
+            </tr>
+            <tr>
+                <td>失败推理</td>
+                <td>-5（轻微惩罚）</td>
+                <td>-成本</td>
+            </tr>
+            <tr>
+                <td>学习知识</td>
+                <td>-2（学习消耗）</td>
+                <td>-购买费用</td>
+            </tr>
+            <tr>
+                <td>延寿操作</td>
+                <td>+延寿值</td>
+                <td>-延寿成本</td>
+            </tr>
+            <tr>
+                <td>LNN故障</td>
+                <td>-50（重大惩罚）</td>
+                <td>无</td>
+            </tr>
+        </table>
+
+        <h2>实现要点</h2>
+        <ul>
+            <li><strong>周期性检查：</strong>每秒检查生命状态</li>
+            <li><strong>死亡通知：</strong>死亡前发送世界频道通知</li>
+            <li><strong>遗产继承：</strong>知识和能力可被其他蛊虫继承</li>
+            <li><strong>元认知日志：</strong>记录所有元认知活动</li>
+            <li><strong>安全审计：</strong>世界定期审计蛊虫生命状态</li>
+        </ul>
+    </div>
+</body>
+</html>

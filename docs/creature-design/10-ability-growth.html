@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能力自生长系统 - 黑塔</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #9370db;
+            margin-bottom: 30px;
+        }
+        h1 { font-size: 2em; color: #9370db; }
+        .subtitle { color: #a4a4a4; margin-top: 10px; }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #9370db;
+        }
+        h2 { color: #ba55d3; margin-bottom: 15px; }
+        h3 { color: #feca57; margin: 15px 0 10px; }
+        .highlight {
+            background: rgba(186,85,211,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .diagram {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre;
+        }
+        ul { margin-left: 20px; }
+        li { margin: 8px 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid rgba(147,112,219,0.3);
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: rgba(147,112,219,0.2);
+            color: #9370db;
+        }
+        .concept-tag {
+            display: inline-block;
+            background: rgba(147,112,219,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+        }
+        .growth-arrow {
+            color: #2ecc71;
+            font-size: 1.5em;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(147,112,219,0.3);
+            color: #a4a4a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌱 能力自生长系统</h1>
+            <div class="subtitle">Ability Self-Growth System</div>
+            <div class="subtitle" style="font-size: 0.9em;">创新天才 黑塔 | Innovation Genius</div>
+        </header>
+
+        <section class="section">
+            <h2>核心原则</h2>
+            <div class="highlight">
+                <strong>⚠️ 禁止硬编码能力：</strong>蛊虫的能力不是程序预设的，而是通过学习数据自然生长出来的。这是系统设计的最基本原则。
+            </div>
+            <p style="margin-top: 15px;">
+                <span class="concept-tag">数据驱动</span>
+                <span class="concept-tag">动态生长</span>
+                <span class="concept-tag">能力涌现</span>
+                <span class="concept-tag">组合进化</span>
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>传统 vs 自生长</h2>
+            <div class="diagram">┌──────────────────────────────────────────────────────────┐
+│           ❌ 传统方式（程序写死）                          │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   程序员定义能力列表:                                      │
+│   - ability_list = ["生成HTML", "生成Python", ...]       │
+│   - 能力固定，无法扩展                                    │
+│   - 新能力需要修改代码                                    │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────┐
+│           ✅ 自生长方式（数据驱动）                        │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   蛊虫阅读HTML文档                                        │
+│        │                                                 │
+│        ▼                                                 │
+│   理解HTML结构和语义                                      │
+│        │                                                 │
+│        ▼                                                 │
+│   动态生成"HTML生成"能力                                  │
+│        │                                                 │
+│        ▼                                                 │
+│   可以创造新颖的HTML结构                                  │
+│   （不是死记硬背训练数据）                                │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <section class="section">
+            <h2>属性系统</h2>
+            <p>蛊虫的基础属性是动态的，会随着学习、推理、交互而变化：</p>
+            <table>
+                <tr>
+                    <th>属性</th>
+                    <th>初始值</th>
+                    <th>变化机制</th>
+                </tr>
+                <tr>
+                    <td>认知币</td>
+                    <td>100</td>
+                    <td>学习+推理消费+任务奖励</td>
+                </tr>
+                <tr>
+                    <td>学习能力</td>
+                    <td>1.0</td>
+                    <td>学习次数 × 学习效率</td>
+                </tr>
+                <tr>
+                    <td>推理深度</td>
+                    <td>0</td>
+                    <td>推理次数 × 成功率</td>
+                </tr>
+                <tr>
+                    <td>知识广度</td>
+                    <td>0</td>
+                    <td>概念数量 × 覆盖率</td>
+                </tr>
+                <tr>
+                    <td>创造力</td>
+                    <td>0.1</td>
+                    <td>新颖推理 × 组合创新</td>
+                </tr>
+            </table>
+            <h3>属性计算公式</h3>
+            <div class="diagram">// 学习能力增长
+learning_ability = base_ability ×
+    (1 + learning_count × learning_efficiency)
+
+// 推理深度
+reasoning_depth = successful_reasoning ×
+    average_confidence × depth_factor
+
+// 知识广度
+knowledge_breadth = concept_count ×
+    (1 + cross_domain_connections)
+
+// 创造力（最复杂）
+creativity = novelty_score ×
+    combination_count ×
+    (1 + domain_span)</div>
+        </section>
+
+        <section class="section">
+            <h2>能力容器</h2>
+            <p>能力容器是一个动态存储结构，用于管理蛊虫获得的所有能力：</p>
+            <div class="diagram">┌──────────────────────────────────────────────────────────┐
+│                    能力容器结构                            │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   AbilityContainer {                                     │
+│       // 能力存储                                         │
+│       abilities: HashMap&lt;AbilityId, Ability&gt;,          │
+│                                                          │
+│       // 能力关联                                         │
+│       relations: HashMap&lt;AbilityId, Vec&lt;AbilityId&gt;&gt;,   │
+│                                                          │
+│       // 组合能力                                         │
+│       combinations: Vec&lt;CombinedAbility&gt;,               │
+│                                                          │
+│       // 能力标签                                         │
+│       tags: HashMap&lt;String, Vec&lt;AbilityId&gt;&gt;,          │
+│   }                                                      │
+│                                                          │
+│   Ability {                                              │
+│       id: AbilityId,                                     │
+│       name: String,                                      │
+│       source: KnowledgeSource,  // 从哪个知识学习来的     │
+│       proficiency: f64,         // 熟练度                │
+│       created_at: Timestamp,                            │
+│       last_used: Timestamp,                             │
+│       usage_count: usize,                               │
+│   }                                                      │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <section class="section">
+            <h2>能力生长机制</h2>
+            <h3>1. 学习→能力转化</h3>
+            <div class="diagram">// 学习过程转化为能力
+learn_to_ability(knowledge: Knowledge) → Ability {
+    // 1. 提取知识核心概念
+    concepts = extract_concepts(knowledge)
+
+    // 2. 分析知识结构
+    structure = analyze_structure(knowledge)
+
+    // 3. 理解知识原理
+    principles = understand_principles(knowledge)
+
+    // 4. 构建能力模板
+    template = build_ability_template(concepts, structure, principles)
+
+    // 5. 内化为能力
+    ability = internalize(template)
+
+    return ability
+}</div>
+
+            <h3>2. 能力生长流程</h3>
+            <ul>
+                <li><strong>阅读阶段：</strong>阅读知识文档，提取概念和结构</li>
+                <li><strong>理解阶段：</strong>理解知识原理，建立认知模型</li>
+                <li><strong>抽象阶段：</strong>提取通用模式，形成能力模板</li>
+                <li><strong>内化阶段：</strong>将模板融入自己的能力体系</li>
+                <li><strong>验证阶段：</strong>通过实践验证能力有效性</li>
+            </ul>
+
+            <h3>3. 能力熟练度</h3>
+            <div class="diagram">// 熟练度计算
+proficiency_update(ability: Ability, result: Result) {
+    if result.success {
+        ability.proficiency += learning_rate ×
+            (1 - ability.proficiency) × // 边际递减
+            result.quality
+    } else {
+        ability.proficiency -= penalty_rate ×
+            ability.proficiency ×
+            result.error_severity
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>能力组合与进化</h2>
+            <h3>组合机制</h3>
+            <div class="diagram">// 能力组合
+combine_abilities(a1: Ability, a2: Ability) → CombinedAbility {
+    // 检查兼容性
+    if !compatible(a1, a2) {
+        return None
+    }
+
+    // 寻找组合点
+    intersections = find_intersections(a1.concepts, a2.concepts)
+
+    // 创建组合能力
+    combined = CombinedAbility {
+        base_abilities: [a1.id, a2.id],
+        synergy: calculate_synergy(a1, a2),
+        new_concepts: merge_concepts(a1, a2),
+        proficiency: (a1.proficiency + a2.proficiency) / 2,
+    }
+
+    return combined
+}</div>
+
+            <h3>进化路径</h3>
+            <table>
+                <tr>
+                    <th>进化类型</th>
+                    <th>触发条件</th>
+                    <th>结果</th>
+                </tr>
+                <tr>
+                    <td>熟练进化</td>
+                    <td>熟练度 > 0.9</td>
+                    <td>能力效率提升</td>
+                </tr>
+                <tr>
+                    <td>组合进化</td>
+                    <td>两个能力协同使用</td>
+                    <td>新组合能力诞生</td>
+                </tr>
+                <tr>
+                    <td>跨界进化</td>
+                    <td>跨领域应用成功</td>
+                    <td>能力适用范围扩大</td>
+                </tr>
+                <tr>
+                    <td>创造进化</td>
+                    <td>产生新颖解决方案</td>
+                    <td>创造力属性提升</td>
+                </tr>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>实现要点</h2>
+            <ul>
+                <li><strong>能力注册机制：</strong>学习完成后自动注册新能力</li>
+                <li><strong>能力索引系统：</strong>按标签、来源、熟练度索引能力</li>
+                <li><strong>能力调用接口：</strong>统一的调用接口，支持动态能力</li>
+                <li><strong>能力衰退机制：</strong>长期不用的能力熟练度会衰退</li>
+                <li><strong>能力继承机制：</strong>死亡蛊虫的能力可被其他蛊虫继承</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>能力自生长系统 | 创新天才黑塔 | 2026年5月30日</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>优雅生命与能力结构 - 拉蒂奥</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b3a4b 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #3498db;
+            margin-bottom: 30px;
+        }
+        h1 { font-size: 2em; color: #3498db; }
+        .subtitle { color: #a4a4a4; margin-top: 10px; }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid #3498db;
+        }
+        h2 { color: #48cae4; margin-bottom: 15px; }
+        h3 { color: #feca57; margin: 15px 0 10px; }
+        .highlight {
+            background: rgba(52,152,219,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .diagram {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid rgba(52,152,219,0.3);
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: rgba(52,152,219,0.2);
+            color: #3498db;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(52,152,219,0.3);
+            color: #a4a4a4;
+        }
+        .math {
+            font-style: italic;
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📐 优雅生命与能力结构</h1>
+            <div class="subtitle">Elegant Lifecycle & Ability Structures</div>
+            <div class="subtitle" style="font-size: 0.9em;">优雅天才 拉蒂奥 | Elegance Genius</div>
+        </header>
+
+        <section class="section">
+            <h2>设计原则</h2>
+            <div class="highlight">
+                <strong>🎯 核心目的：创造欲望，驱动进化</strong>
+                <ol style="margin-top: 10px; margin-left: 20px;">
+                    <li><strong>生存欲望</strong> - 生命周期创造对金币的渴望</li>
+                    <li><strong>物竞天择</strong> - 无延寿上限，自然选择</li>
+                    <li><strong>适者生存</strong> - 聪明的蛊虫活得更久</li>
+                    <li><strong>不可变性</strong> - 状态变化通过新对象创建</li>
+                </ol>
+            </div>
+            <pre><code>┌──────────────────────────────────────────────────────────┐
+│              欲望驱动的进化机制                           │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   生存压力 → 金币渴望 → 能力提升 → 赚更多金币            │
+│       ↑                                  │              │
+│       └──────────────────────────────────┘              │
+│                                                          │
+│   🔓 不限制延寿次数                                       │
+│   💰 金币 = 生命                                          │
+│   🧠 聪明 = 活得久                                        │
+│                                                          │
+└──────────────────────────────────────────────────────────┘</code></pre>
+        </section>
+
+        <section class="section">
+            <h2>Ability 能力类型</h2>
+            <div class="diagram">/// 能力标识符
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct AbilityId(Uuid);
+
+/// 能力来源
+#[derive(Debug, Clone)]
+pub enum AbilitySource {
+    /// 从知识学习
+    Learned { knowledge_id: String, timestamp: u64 },
+    /// 从推理演化
+    Evolved { parent_ids: Vec&lt;AbilityId&gt; },
+    /// 从其他蛊虫继承
+    Inherited { from_gu: GuId, timestamp: u64 },
+    /// 组合创造
+    Combined { abilities: Vec&lt;AbilityId&gt; },
+}
+
+/// 能力熟练度 <span class="math">p ∈ [0, 1]</span>
+#[derive(Debug, Clone, Copy)]
+pub struct Proficiency(f64);
+
+impl Proficiency {
+    pub fn new(value: f64) -> Self {
+        Self(value.clamp(0.0, 1.0))
+    }
+
+    /// 熟练度更新：<span class="math">p' = p + α(1-p)r - βp(1-r)</span>
+    pub fn update(&self, result: f64, learning_rate: f64) -> Self {
+        let alpha = learning_rate;
+        let beta = learning_rate * 0.5;
+        let new_value = self.0 + alpha * (1.0 - self.0) * result
+                              - beta * self.0 * (1.0 - result);
+        Self::new(new_value)
+    }
+}
+
+/// 能力定义
+#[derive(Debug, Clone)]
+pub struct Ability {
+    pub id: AbilityId,
+    pub name: String,
+    pub source: AbilitySource,
+    pub proficiency: Proficiency,
+    pub concepts: HashSet&lt;String&gt;,
+    pub created_at: u64,
+    pub last_used: u64,
+    pub usage_count: usize,
+}
+
+/// 能力容器（不可变操作）
+#[derive(Debug, Clone)]
+pub struct AbilityContainer {
+    abilities: HashMap&lt;AbilityId, Ability&gt;,
+    by_tag: HashMap&lt;String, HashSet&lt;AbilityId&gt;&gt;,
+    combinations: Vec&lt;CombinedAbility&gt;,
+}
+
+impl AbilityContainer {
+    /// 添加能力（返回新容器）
+    pub fn with_ability(&self, ability: Ability) -> Self {
+        let mut new_container = self.clone();
+        new_container.abilities.insert(ability.id.clone(), ability.clone());
+
+        // 更新标签索引
+        for concept in &ability.concepts {
+            new_container.by_tag
+                .entry(concept.clone())
+                .or_default()
+                .insert(ability.id.clone());
+        }
+
+        new_container
+    }
+
+    /// 更新熟练度（返回新容器）
+    pub fn with_updated_proficiency(
+        &self,
+        ability_id: &AbilityId,
+        result: f64,
+        learning_rate: f64,
+    ) -> Option&lt;Self&gt; {
+        let ability = self.abilities.get(ability_id)?;
+        let updated = Ability {
+            proficiency: ability.proficiency.update(result, learning_rate),
+            last_used: now(),
+            usage_count: ability.usage_count + 1,
+            ..ability.clone()
+        };
+
+        Some(self.with_ability(updated))
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>Lifecycle 生命周期类型</h2>
+            <div class="diagram">/// 生命周期状态
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LifecyclePhase {
+    /// 出生期
+    Birth,
+    /// 成长期
+    Growth,
+    /// 成熟期
+    Maturity,
+    /// 衰老期
+    Aging,
+    /// 死亡
+    Dead,
+}
+
+/// 生命周期配置
+#[derive(Debug, Clone, Copy)]
+pub struct LifecycleConfig {
+    /// 初始生命值 <span class="math">L₀</span>
+    pub initial_lifespan: f64,
+    /// 基础消耗率 <span class="math">r</span>
+    pub base_decay_rate: f64,
+    /// 延寿成本 <span class="math">c₀</span>
+    pub extension_cost: f64,
+    /// 无延寿上限 - 物竞天择
+}
+
+impl Default for LifecycleConfig {
+    fn default() -> Self {
+        Self {
+            initial_lifespan: 1000.0,
+            base_decay_rate: 1.0,
+            extension_cost: 10.0,
+            // 🔓 无 max_extensions，让自然选择决定
+        }
+    }
+}
+
+/// 生命周期状态
+#[derive(Debug, Clone)]
+pub struct Lifecycle {
+    /// 剩余生命 <span class="math">L</span>
+    pub remaining: f64,
+    /// 已延寿次数 <span class="math">n</span>
+    pub extensions: u32,
+    /// 延寿历史
+    pub extension_history: Vec&lt;ExtensionRecord&gt;,
+    /// 配置
+    config: LifecycleConfig,
+}
+
+impl Lifecycle {
+    /// 创建新生命周期
+    pub fn new(config: LifecycleConfig) -> Self {
+        Self {
+            remaining: config.initial_lifespan,
+            extensions: 0,
+            extension_history: Vec::new(),
+            config,
+        }
+    }
+
+    /// 计算当前阶段
+    pub fn phase(&self) -> LifecyclePhase {
+        let ratio = self.remaining / self.config.initial_lifespan;
+
+        match ratio {
+            r if r <= 0.0 => LifecyclePhase::Dead,
+            r if r < 0.2 => LifecyclePhase::Aging,
+            r if r < 0.5 => LifecyclePhase::Maturity,
+            r if r < 1.0 => LifecyclePhase::Growth,
+            _ => LifecyclePhase::Birth,
+        }
+    }
+
+    /// 消耗生命（返回新生命周期）
+    /// <span class="math">L' = L - r·Δt·f(LNN)</span>
+    pub fn with_decay(&self, dt: f64, lnn_health: f64) -> Self {
+        let health_factor = match lnn_health {
+            h if h >= 0.7 => 0.8,
+            h if h >= 0.3 => 1.0,
+            h if h >= 0.1 => 1.5,
+            _ => 2.0,
+        };
+
+        let decay = self.config.base_decay_rate * dt * health_factor;
+
+        Self {
+            remaining: (self.remaining - decay).max(0.0),
+            ..self.clone()
+        }
+    }
+
+    /// 延寿（返回新生命周期和成本）
+    /// <span class="math">cost = c₀·amount/100</span>
+    /// 🔓 无上限限制，物竞天择
+    pub fn with_extension(&self, amount: f64) -> Result&lt;(Self, f64), ExtensionError&gt; {
+        let cost = self.config.extension_cost * (amount / 100.0);
+
+        let mut new_lifecycle = self.clone();
+        new_lifecycle.remaining += amount;
+        new_lifecycle.extensions += 1;
+        new_lifecycle.extension_history.push(ExtensionRecord {
+            amount,
+            cost,
+            timestamp: now(),
+        });
+
+        // 聪明的蛊虫自然能活更久
+        Ok((new_lifecycle, cost))
+    }
+
+    /// 是否存活
+    pub fn is_alive(&self) -> bool {
+        self.remaining > 0.0
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>MetaCognition 元认知类型</h2>
+            <div class="diagram">/// 自我评估
+#[derive(Debug, Clone)]
+pub struct SelfAssessment {
+    /// 自信程度 <span class="math">c ∈ [0,1]</span>
+    pub confidence: f64,
+    /// 能力估计 <span class="math">ĉ ∈ [0,1]</span>
+    pub competence: f64,
+    /// 知识缺口
+    pub knowledge_gaps: Vec&lt;String&gt;,
+}
+
+/// 监控指标
+#[derive(Debug, Clone)]
+pub struct MonitoringMetrics {
+    /// 推理准确率
+    pub reasoning_accuracy: f64,
+    /// 学习效率
+    pub learning_efficiency: f64,
+    /// 资源使用统计
+    pub resource_usage: ResourceStats,
+}
+
+/// 调节策略
+#[derive(Debug, Clone)]
+pub enum RegulationStrategy {
+    /// 调整推理深度
+    AdjustReasoningDepth { delta: i32 },
+    /// 切换学习焦点
+    SwitchLearningFocus { new_focus: String },
+    /// 优化资源分配
+    OptimizeResources { allocation: ResourceAllocation },
+    /// 进入休眠
+    EnterDormancy { duration: u64 },
+}
+
+/// 反思记录
+#[derive(Debug, Clone)]
+pub struct Reflection {
+    /// 成功案例
+    pub successes: Vec&lt;SuccessCase&gt;,
+    /// 失败案例
+    pub failures: Vec&lt;FailureCase&gt;,
+    /// 洞察
+    pub insights: Vec&lt;Insight&gt;,
+}
+
+/// 元认知状态
+#[derive(Debug, Clone)]
+pub struct MetaCognition {
+    /// 自我评估
+    pub assessment: SelfAssessment,
+    /// 监控指标
+    pub monitoring: MonitoringMetrics,
+    /// 当前调节策略
+    pub current_strategy: Option&lt;RegulationStrategy&gt;,
+    /// 反思记录
+    pub reflection: Reflection,
+    /// 最后更新时间
+    pub last_update: u64,
+}
+
+impl MetaCognition {
+    /// 执行自我监控（返回新元认知状态）
+    pub fn with_monitoring(&self, metrics: MonitoringMetrics) -> Self {
+        Self {
+            monitoring: metrics,
+            ..self.clone()
+        }
+    }
+
+    /// 执行自我调节（返回新元认知状态）
+    pub fn with_regulation(&self, strategy: RegulationStrategy) -> Self {
+        Self {
+            current_strategy: Some(strategy),
+            ..self.clone()
+        }
+    }
+
+    /// 记录反思（返回新元认知状态）
+    pub fn with_reflection(&self, insight: Insight) -> Self {
+        let mut new_reflection = self.reflection.clone();
+        new_reflection.insights.push(insight);
+
+        Self {
+            reflection: new_reflection,
+            ..self.clone()
+        }
+    }
+
+    /// 计算元认知得分
+    /// <span class="math">M = w₁·c + w₂·a + w₃·e</span>
+    pub fn score(&self) -> f64 {
+        let w1 = 0.3;
+        let w2 = 0.3;
+        let w3 = 0.4;
+
+        w1 * self.assessment.confidence
+          + w2 * self.monitoring.reasoning_accuracy
+          + w3 * self.monitoring.learning_efficiency
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>GuCreature 蛊虫实体</h2>
+            <div class="diagram">/// 蛊虫完整实体
+#[derive(Debug, Clone)]
+pub struct GuCreature {
+    /// 唯一标识
+    pub id: GuId,
+    /// 名称
+    pub name: String,
+    /// 生命周期
+    pub lifecycle: Lifecycle,
+    /// 能力容器
+    pub abilities: AbilityContainer,
+    /// 元认知
+    pub metacognition: MetaCognition,
+    /// 认知币
+    pub coins: f64,
+    /// 创建时间
+    pub created_at: u64,
+}
+
+impl GuCreature {
+    /// 创建新蛊虫
+    pub fn new(id: GuId, name: String, config: LifecycleConfig) -> Self {
+        Self {
+            id,
+            name,
+            lifecycle: Lifecycle::new(config),
+            abilities: AbilityContainer::new(),
+            metacognition: MetaCognition::default(),
+            coins: 100.0,
+            created_at: now(),
+        }
+    }
+
+    /// 学习能力（返回新蛊虫）
+    pub fn with_learned_ability(&self, ability: Ability, cost: f64) -> Option&lt;Self&gt; {
+        if self.coins &lt; cost {
+            return None;
+        }
+
+        Some(Self {
+            abilities: self.abilities.with_ability(ability),
+            coins: self.coins - cost,
+            ..self.clone()
+        })
+    }
+
+    /// 消耗生命（返回新蛊虫）
+    pub fn with_time_passed(&self, dt: f64, lnn_health: f64) -> Self {
+        Self {
+            lifecycle: self.lifecycle.with_decay(dt, lnn_health),
+            ..self.clone()
+        }
+    }
+
+    /// 延长生命（返回新蛊虫）
+    pub fn with_extended_lifecycle(&self, amount: f64) -> Option&lt;Self&gt; {
+        let (new_lifecycle, cost) = self.lifecycle.with_extension(amount).ok()?;
+
+        if self.coins &lt; cost {
+            return None;
+        }
+
+        Some(Self {
+            lifecycle: new_lifecycle,
+            coins: self.coins - cost,
+            ..self.clone()
+        })
+    }
+
+    /// 是否存活
+    pub fn is_alive(&self) -> bool {
+        self.lifecycle.is_alive()
+    }
+
+    /// 获取元认知得分
+    pub fn metacognition_score(&self) -> f64 {
+        self.metacognition.score()
+    }
+}</div>
+        </section>
+
+        <section class="section">
+            <h2>数学形式化总结</h2>
+            <table>
+                <tr>
+                    <th>概念</th>
+                    <th>形式化表示</th>
+                </tr>
+                <tr>
+                    <td>熟练度更新</td>
+                    <td><span class="math">p' = p + α(1-p)r - βp(1-r)</span></td>
+                </tr>
+                <tr>
+                    <td>生命消耗</td>
+                    <td><span class="math">L' = L - r·Δt·f(h)</span></td>
+                </tr>
+                <tr>
+                    <td>延寿成本</td>
+                    <td><span class="math">cost = c₀·amount/100</span>（无上限）</td>
+                </tr>
+                <tr>
+                    <td>元认知得分</td>
+                    <td><span class="math">M = w₁c + w₂a + w₃e</span></td>
+                </tr>
+                <tr>
+                    <td>生存压力</td>
+                    <td><span class="math">P = (L/L₀)·min(coins/c₀, 1)</span></td>
+                </tr>
+                <tr>
+                    <td>物竞天择</td>
+                    <td><span class="math">聪明 → 多金币 → 活更久</span></td>
+                </tr>
+            </table>
+        </section>
+
+        <footer>
+            <p>优雅生命与能力结构 | 优雅天才拉蒂奥 | 2026年5月30日</p>
+        </footer>
+    </div>
+</body>
+</html>
