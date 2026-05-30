@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git config *)",
+      "Bash(git commit -m 'feat: 初始化项目，添加万物生成器需求文档 *)",
+      "Bash(git commit -m 'feat: 创建项目源代码目录结构 *)",
+      "Bash(mkdir tests *)",
+      "Bash(echo '# 测试目录 *)",
+      "Bash(git commit -m 'feat: 创建测试目录结构 *)",
+      "Bash(git commit -m 'feat: 添加安全改进建议文档 *)",
+      "Bash(mkdir docs/architecture)",
+      "Bash(echo '# 系统架构设计文档 *)",
+      "Bash(git commit -m 'feat: 创建系统架构设计文档目录 *)",
+      "Bash(git commit -m 'feat: 创建蛊虫详细设计文档目录 *)",
+      "Bash(git commit -m 'feat: 创建世界模型设计文档目录 *)",
+      "Bash(git commit -m 'feat: 创建经济系统设计文档目录 *)"
+    ]
+  }
+}

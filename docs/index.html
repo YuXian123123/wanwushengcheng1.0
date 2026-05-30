@@ -170,7 +170,7 @@
         <section class="section">
             <h2>设计进度总览</h2>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: 75%;">已完成 75%</div>
+                <div class="progress-fill" style="width: 85%;">已完成 85%</div>
             </div>
 
             <div class="grid">
@@ -190,10 +190,18 @@
                     </ul>
                 </div>
                 <div class="card">
+                    <h4>深入设计中</h4>
+                    <ul>
+                        <li><span class="tag tag-critical">最高</span> 自然语言对齐 (90%)</li>
+                        <li><span class="tag tag-critical">最高</span> 液体神经网络 (60%)</li>
+                        <li><span class="tag tag-confirmed">高</span> 知识图谱存储 (85%)</li>
+                    </ul>
+                </div>
+                <div class="card">
                     <h4>待深入设计</h4>
                     <ul>
-                        <li><span class="tag tag-critical">最高</span> 自然语言对齐</li>
-                        <li><span class="tag tag-critical">最高</span> 液体神经网络</li>
+                        <li><span class="tag tag-pending">高</span> 蛊虫属性系统</li>
+                        <li><span class="tag tag-pending">中</span> 技术栈选择</li>
                         <li><span class="tag tag-pending">高</span> 蛊虫属性定义</li>
                         <li><span class="tag tag-pending">高</span> 技术栈选择</li>
                         <li><span class="tag tag-pending">中</span> 文件结构设计</li>
@@ -506,49 +514,87 @@
                 <strong>核心原则：</strong>情绪不写死，通过与自己相关的事件动态调节权重
             </div>
 
-            <h3>8.2 情绪维度模型</h3>
+            <h3>8.2 二维情绪模型（改进后）</h3>
             <div class="diagram">
-          愉悦度 (Pleasure)
-               ▲
-               │
-    恐惧 ◄─────┼─────► 兴奋
-               │
-    悲伤 ◄─────┼─────► 愤怒
-               │
-               ▼
-           唤醒度 (Arousal)
+           效价维度 (Valence)
+                ▲
+                │    ┌─────────────────────────┐
+         消极   │    │  悲伤    │    愉悦   │   积极
+                │    │  愤怒    │    兴奋   │
+                │    └─────────────────────────┘
+                │              │
+                └──────────────┼──────────────►
+                               │
+           低唤醒 ─────────────┼───────────── 高唤醒
+                               │
+                           唤醒维度 (Arousal)
 
-   情绪不是离散状态，而是连续空间中的点
+   通过两个正交维度表达所有情绪状态
+   E(x,y) = f(valence, arousal)
    每个维度有权重，由事件动态调节</div>
 
-            <h3>8.3 事件类型与情绪影响</h3>
+            <h3>8.3 情感-理性双轨决策系统（创新改进）</h3>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────┐
+│           双轨决策系统                              │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│   输入事件 ──► 情感轨道 ──► 直觉决策               │
+│              (快速、感性)                           │
+│                    │                                │
+│                    ▼                                │
+│              权重调节 ──► 综合决策                 │
+│                    │                                │
+│                    ▼                                │
+│   输入事件 ──► 理性轨道 ──► 分析决策               │
+│              (慢速、理性)                           │
+│                                                     │
+│   动态权重：根据任务类型和环境状态自动调节          │
+│                                                     │
+└─────────────────────────────────────────────────────┘</div>
+
+            <h3>8.4 事件类型与情绪影响</h3>
             <table>
                 <tr>
                     <th>事件类别</th>
                     <th>示例</th>
-                    <th>可能情绪变化</th>
+                    <th>效价变化</th>
+                    <th>唤醒变化</th>
                 </tr>
                 <tr>
                     <td>收益类</td>
                     <td>获得金币、感谢</td>
-                    <td>愉悦↑、兴奋↑</td>
+                    <td>+0.3</td>
+                    <td>+0.2</td>
                 </tr>
                 <tr>
                     <td>损失类</td>
                     <td>失去金币、被欺骗</td>
-                    <td>愤怒↑、悲伤↑</td>
+                    <td>-0.3</td>
+                    <td>+0.3</td>
                 </tr>
                 <tr>
                     <td>社交类</td>
                     <td>被感谢、被忽略</td>
-                    <td>归属感↑/↓</td>
+                    <td>±0.1</td>
+                    <td>±0.1</td>
                 </tr>
                 <tr>
                     <td>成就类</td>
                     <td>完成任务、学习新知</td>
-                    <td>自信↑、满足↑</td>
+                    <td>+0.2</td>
+                    <td>+0.1</td>
                 </tr>
             </table>
+
+            <h3>8.5 情绪系统特点</h3>
+            <ul>
+                <li><strong>事件驱动</strong> - 情绪由事件触发，非预设</li>
+                <li><strong>二维简化</strong> - 从四维简化为二维，更优雅</li>
+                <li><strong>双轨决策</strong> - 情感与理性并行，动态权重</li>
+                <li><strong>时间衰减</strong> - 情绪会随时间淡化</li>
+                <li><strong>安全边界</strong> - 情绪影响有上下限，防止极端行为</li>
+            </ul>
         </section>
 
         <!-- 智能核心 -->
@@ -575,20 +621,179 @@
             <div class="diagram">
 docs/
 ├── index.html              # 主文档（项目概览）
-├── creature-design.html    # 蛊虫详细设计 ⭐ 重点
-│   ├── 液体神经网络设计
-│   ├── 自然语言对齐设计
-│   ├── 智能核心设计
-│   ├── 属性与能力
-│   └── 生命周期
-├── world-design.html       # 世界模型设计
-├── economy-design.html     # 经济系统设计
-└── communication-design.html # 通信系统设计</div>
+├── design/
+│   ├── lnn-design.html           # 液体神经网络深入设计 ✅
+│   ├── language-alignment-design.html # 自然语言对齐深入设计 ✅
+│   └── knowledge-graph-design.html # 知识图谱存储深入设计 ✅
+├── security/
+│   └── safety_proposals.md       # 安全提案
+├── creature-design.html    # 蛊虫详细设计（待创建）
+├── world-design.html       # 世界模型设计（待创建）
+├── economy-design.html     # 经济系统设计（待创建）
+└── communication-design.html # 通信系统设计（待创建）
+
+knowledge/                        # 知识图谱（实际存储）
+├── concepts/                    # 概念库
+│   ├── base/apple.html         # 示例：苹果概念 ✅
+│   └── domain/...              # 领域概念
+├── flows/                       # 流程图谱
+│   └── tasks/generate_html.html # 示例：生成HTML流程 ✅
+└── meta/
+    └── concept_index.html       # 概念索引 ✅</div>
+        </section>
+
+        <!-- 天才理事会改进建议 -->
+        <section class="section">
+            <h2>十一、天才理事会改进建议 🏛️</h2>
+
+            <h3>11.1 安全改进（螺丝咕姆）</h3>
+            <table>
+                <tr>
+                    <th>优先级</th>
+                    <th>安全机制</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td><span class="tag tag-critical">P1</span></td>
+                    <td>多层沙盒隔离体系</td>
+                    <td>物理/网络/进程/文件系统四层隔离</td>
+                </tr>
+                <tr>
+                    <td><span class="tag tag-critical">P1</span></td>
+                    <td>知识回流安全审计</td>
+                    <td>内容扫描+结构验证+多层审核+沙盒测试</td>
+                </tr>
+                <tr>
+                    <td><span class="tag tag-critical">P1</span></td>
+                    <td>插件系统安全调用</td>
+                    <td>API网关+权限控制+调用监控</td>
+                </tr>
+                <tr>
+                    <td><span class="tag tag-pending">P2</span></td>
+                    <td>经济系统防操纵</td>
+                    <td>异常检测+市场监控+交易审计</td>
+                </tr>
+                <tr>
+                    <td><span class="tag tag-pending">P2</span></td>
+                    <td>情绪系统安全边界</td>
+                    <td>影响评估+行为监控+干预机制</td>
+                </tr>
+                <tr>
+                    <td><span class="tag tag-pending">P3</span></td>
+                    <td>能力自生长安全控制</td>
+                    <td>能力边界定义+验证机制+影响评估</td>
+                </tr>
+            </table>
+
+            <h3>11.2 优雅化改进（拉蒂奥）</h3>
+            <table>
+                <tr>
+                    <th>简化项</th>
+                    <th>原设计</th>
+                    <th>简化后</th>
+                    <th>优雅度提升</th>
+                </tr>
+                <tr>
+                    <td>驱动模型</td>
+                    <td>三层驱动</td>
+                    <td>保持三层（安全可控）</td>
+                    <td>维持现状</td>
+                </tr>
+                <tr>
+                    <td>情绪系统</td>
+                    <td>四维情绪</td>
+                    <td>二维情绪（效价×唤醒）</td>
+                    <td>维度减半，更优雅</td>
+                </tr>
+                <tr>
+                    <td>知识闭环</td>
+                    <td>四阶段</td>
+                    <td>三阶段（输入→处理→输出）</td>
+                    <td>流程更紧凑</td>
+                </tr>
+                <tr>
+                    <td>经济系统</td>
+                    <td>复杂货币</td>
+                    <td>基础资源（能量/知识/信任）</td>
+                    <td>简化模型</td>
+                </tr>
+            </table>
+
+            <h3>11.3 创新突破（黑塔）</h3>
+            <table>
+                <tr>
+                    <th>改进建议</th>
+                    <th>评分</th>
+                    <th>预期突破</th>
+                </tr>
+                <tr>
+                    <td>神经网络拓扑自适应进化</td>
+                    <td>⭐ 9.5</td>
+                    <td>蛊虫自主调整网络结构，群体智能进化</td>
+                </tr>
+                <tr>
+                    <td>多维度知识融合与跨域迁移</td>
+                    <td>⭐ 9.2</td>
+                    <td>打破领域壁垒，实现通用AI</td>
+                </tr>
+                <tr>
+                    <td>情感-理性双轨决策系统</td>
+                    <td>⭐ 8.8</td>
+                    <td>接近人类的复杂决策能力</td>
+                </tr>
+            </table>
+
+            <h3>11.4 综合裁决矩阵</h3>
+            <table>
+                <tr>
+                    <th>模块</th>
+                    <th>螺丝咕姆</th>
+                    <th>拉蒂奥</th>
+                    <th>黑塔</th>
+                    <th>综合决定</th>
+                </tr>
+                <tr>
+                    <td>驱动模型</td>
+                    <td>保持三层（安全可控）</td>
+                    <td>简化为两层</td>
+                    <td>-</td>
+                    <td><strong>保持三层</strong></td>
+                </tr>
+                <tr>
+                    <td>情绪系统</td>
+                    <td>添加安全边界</td>
+                    <td>简化为二维</td>
+                    <td>双轨决策</td>
+                    <td><strong>二维+双轨决策</strong></td>
+                </tr>
+                <tr>
+                    <td>经济系统</td>
+                    <td>防操纵机制</td>
+                    <td>基础资源模型</td>
+                    <td>-</td>
+                    <td><strong>基础资源+防操纵</strong></td>
+                </tr>
+                <tr>
+                    <td>知识闭环</td>
+                    <td>安全审计</td>
+                    <td>三阶段简化</td>
+                    <td>跨域迁移</td>
+                    <td><strong>三阶段+安全审计</strong></td>
+                </tr>
+                <tr>
+                    <td>能力自生长</td>
+                    <td>安全边界</td>
+                    <td>-</td>
+                    <td>拓扑自适应</td>
+                    <td><strong>自适应+安全边界</strong></td>
+                </tr>
+            </table>
         </section>
 
         <footer>
-            <p>万物生成器 - 需求文档 v1.0</p>
-            <p>创建时间：2024-05-30 | 状态：设计中</p>
+            <p>万物生成器 - 需求文档 v1.1</p>
+            <p>创建时间：2024-05-30 | 更新时间：2024-05-30 | 状态：设计中</p>
+            <p>审查：天才理事会（黑塔/螺丝咕姆/拉蒂奥）</p>
         </footer>
     </div>
 </body>

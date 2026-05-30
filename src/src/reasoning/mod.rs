@@ -23,14 +23,26 @@ pub use crate::core::{LNN, LNNState, NeuronType, PlasticityRule};
 pub use crate::language::concept::{ConceptSpace, ConceptLevel};
 pub use crate::config::GlobalConfig;
 
-// 拉蒂奥优雅结构重导出
+// 拉蒂奥优雅结构模块
 pub mod core_elegant;
 pub mod chain;
 pub mod hierarchy;
 
 pub use core_elegant::{GuReasoningCore as ElegantReasoningCore, InferenceResult, InferenceType, ReasoningConfig};
 pub use chain::{ReasoningChain, ReasoningStep, ReasoningRule, ChainBuilder};
-pub use hierarchy::{KnowledgeHierarchy, KnowledgeNode, KnowledgeLevel, KnowledgeSource};
+pub use hierarchy::{KnowledgeHierarchy, KnowledgeNode, KnowledgeLevel as KLevel, KnowledgeSource};
+
+// 螺丝咕姆安全模块
+pub mod validation;
+pub mod drift;
+pub mod protocol;
+
+pub use validation::{InferenceValidator, ValidationResult, ValidationLevel};
+pub use drift::{VectorDriftDetector, DriftConfig, DriftResult};
+pub use protocol::{
+    CollaborationProtocol, CollaborationMessage, ConsensusRequest,
+    GuProfile, GuId, AnomalyRecord, AnomalyType,
+};
 
 /// 推理结果（兼容旧版）
 #[derive(Debug, Clone)]
@@ -63,6 +75,8 @@ pub struct GuReasoningCore {
     coins: f64,
     /// 推理历史
     reasoning_history: Vec<LegacyInferenceResult>,
+    /// 验证器
+    validator: InferenceValidator,
 }
 
 impl GuReasoningCore {
@@ -76,6 +90,7 @@ impl GuReasoningCore {
             config: GlobalConfig::new(),
             coins: 0.0,
             reasoning_history: Vec::new(),
+            validator: InferenceValidator::new(),
         }
     }
 
@@ -123,7 +138,7 @@ impl GuReasoningCore {
         }
     }
 
-    /// 执行推理
+    /// 执行推理（带验证）
     pub fn reason(
         &mut self,
         input_concepts: &[&str],
@@ -168,9 +183,24 @@ impl GuReasoningCore {
             InferenceType::Causal => self.causal_inference(input_concepts, &activated_concepts),
         };
 
+        // 四层验证
+        let validation_results = self.validator.validate(
+            &input_concepts.join(","),
+            &conclusion,
+            confidence,
+            &reasoning_path,
+        );
+
+        // 如果验证失败，降低置信度
+        let final_confidence = if self.validator.is_valid(&validation_results) {
+            confidence
+        } else {
+            confidence * 0.5
+        };
+
         let result = LegacyInferenceResult {
             conclusion,
-            confidence,
+            confidence: final_confidence,
             reasoning_path,
             activated_concepts,
         };
@@ -357,5 +387,14 @@ mod tests {
         let reward = core.learn_knowledge("test", "这是一段知识内容").unwrap();
         assert!(reward > 0.0);
         assert!(core.get_coins() > 0.0);
+    }
+
+    #[test]
+    fn test_validation() {
+        let core = GuReasoningCore::new();
+        let validator = InferenceValidator::new();
+
+        let results = validator.validate("input", "output", 0.9, &[]);
+        assert!(validator.is_valid(&results));
     }
 }

@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识图谱存储 - 深入设计文档</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0c0c1e 0%, #1a2a3e 50%, #0f3d4d 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 2px solid #1abc9c;
+            margin-bottom: 40px;
+        }
+        h1 {
+            font-size: 2.8em;
+            background: linear-gradient(90deg, #1abc9c, #3498db, #1abc9c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 1.1em;
+            color: #3498db;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(26, 188, 156, 0.3);
+        }
+        h2 {
+            color: #1abc9c;
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(26, 188, 156, 0.3);
+        }
+        h3 {
+            color: #3498db;
+            font-size: 1.3em;
+            margin: 20px 0 15px 0;
+        }
+        h4 {
+            color: #e74c3c;
+            font-size: 1.1em;
+            margin: 15px 0 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid rgba(26, 188, 156, 0.2);
+        }
+        th {
+            background: rgba(26, 188, 156, 0.15);
+            color: #1abc9c;
+        }
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .diagram {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre;
+            overflow-x: auto;
+            color: #3498db;
+            font-size: 0.85em;
+        }
+        .note {
+            background: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 2px;
+        }
+        .tag-core { background: #1abc9c; color: #0c0c1e; }
+        .tag-feature { background: #3498db; color: #0c0c1e; }
+        .tag-pending { background: #e74c3c; color: white; }
+        .highlight {
+            color: #1abc9c;
+            font-weight: bold;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(26, 188, 156, 0.2);
+        }
+        .card h4 {
+            margin-top: 0;
+            color: #1abc9c;
+        }
+        footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+            border-top: 2px solid #1abc9c;
+            color: #3498db;
+        }
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 24px;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #1abc9c, #3498db);
+            height: 100%;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0c0c1e;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        ul {
+            margin-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .code-block {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            border: 1px solid #2d3748;
+        }
+        .code-block .tag { background: #4a5568; }
+        .code-block .attr { color: #68d391; }
+        .code-block .value { color: #fbd38d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 知识图谱存储</h1>
+            <p class="subtitle">HTML微文件 | 概念网络 | 互相引用 | 流程图谱</p>
+        </header>
+
+        <!-- 文档信息 -->
+        <section class="section">
+            <h2>文档信息</h2>
+            <table>
+                <tr>
+                    <th>属性</th>
+                    <th>值</th>
+                </tr>
+                <tr>
+                    <td>文档类型</td>
+                    <td>深入设计文档</td>
+                </tr>
+                <tr>
+                    <td>优先级</td>
+                    <td><span class="tag tag-core">高</span></td>
+                </tr>
+                <tr>
+                    <td>设计状态</td>
+                    <td>深入设计中</td>
+                </tr>
+                <tr>
+                    <td>关联模块</td>
+                    <td>自然语言对齐、知识闭环、蛊虫实体</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 一、核心理念 -->
+        <section class="section">
+            <h2>一、核心理念</h2>
+
+            <h3>1.1 设计哲学</h3>
+            <div class="note">
+                <strong>核心思想：</strong>知识不是存在数据库里的一堆数据，而是无数概念簇通过互相引用形成的<b>活的网络</b>。每个概念都是一个微型HTML文件，既是存储单元，也是网络节点。
+            </div>
+
+            <h3>1.2 为什么用HTML微文件？</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>🔍 人类可读</h4>
+                    <p>HTML是纯文本，任何文本编辑器都能打开查看和编辑，方便调试和理解。</p>
+                </div>
+                <div class="card">
+                    <h4>🔗 天然链接</h4>
+                    <p>HTML的`<a>`标签天然支持超链接，概念之间可以互相引用形成网络。</p>
+                </div>
+                <div class="card">
+                    <h4>📱 轻量级</h4>
+                    <p>每个概念文件只有几KB，加载快速，存储高效。</p>
+                </div>
+                <div class="card">
+                    <h4>🌐 可移植</h4>
+                    <p>HTML是通用格式，不依赖特定软件，可以在任何系统上使用。</p>
+                </div>
+            </div>
+
+            <h3>1.3 知识图谱 vs 传统存储</h3>
+            <table>
+                <tr>
+                    <th>特性</th>
+                    <th>传统数据库</th>
+                    <th>HTML知识图谱</th>
+                </tr>
+                <tr>
+                    <td>存储形式</td>
+                    <td>表结构、行记录</td>
+                    <td>概念文件、引用网络</td>
+                </tr>
+                <tr>
+                    <td>关系表达</td>
+                    <td>外键、JOIN查询</td>
+                    <td>超链接、直接跳转</td>
+                </tr>
+                <tr>
+                    <td>可读性</td>
+                    <td>需要工具查看</td>
+                    <td>浏览器直接打开</td>
+                </tr>
+                <tr>
+                    <td>分布性</td>
+                    <td>集中式存储</td>
+                    <td>可分布式、可复制</td>
+                </tr>
+                <tr>
+                    <td>演化能力</td>
+                    <td>需要迁移脚本</td>
+                    <td>文件独立演化</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 二、存储结构 -->
+        <section class="section">
+            <h2>二、存储结构设计</h2>
+
+            <h3>2.1 目录结构</h3>
+            <div class="diagram">
+knowledge/
+├── concepts/                    # 概念库
+│   ├── core/                    # 核心概念（系统级）
+│   │   ├── time.html
+│   │   ├── space.html
+│   │   ├── cause.html
+│   │   └── truth.html
+│   ├── base/                    # 基础概念
+│   │   ├── fruit.html
+│   │   ├── company.html
+│   │   ├── programming.html
+│   │   └── task.html
+│   ├── domain/                  # 领域概念
+│   │   ├── html/
+│   │   │   ├── tag.html
+│   │   │   ├── attribute.html
+│   │   │   └── dom.html
+│   │   └── python/
+│   │       ├── function.html
+│   │       ├── class.html
+│   │       └── module.html
+│   └── temp/                    # 临时概念
+│       └── session_xxx/
+│           └── temp_concept.html
+│
+├── flows/                       # 流程图谱
+│   ├── reasoning/               # 推理流程
+│   │   ├── problem_solve.html
+│   │   └── decision_making.html
+│   ├── tasks/                   # 任务流程
+│   │   ├── generate_html.html
+│   │   └── write_code.html
+│   └── learning/                # 学习流程
+│       ├── read_document.html
+│       └── practice_skill.html
+│
+├── entities/                    # 实体知识
+│   ├── creatures/               # 蛊虫知识
+│   │   ├── creature_001.html
+│   │   └── creature_002.html
+│   └── world/                   # 世界知识
+│       ├── events.html
+│       └── market.html
+│
+└── meta/                        # 元数据
+    ├── concept_index.html       # 概念索引
+    ├── relation_types.html      # 关系类型定义
+    └── version_history.html     # 版本历史</div>
+
+            <h3>2.2 概念文件大小限制</h3>
+            <table>
+                <tr>
+                    <th>类型</th>
+                    <th>建议大小</th>
+                    <th>最大大小</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>原子概念</td>
+                    <td>1-2 KB</td>
+                    <td>5 KB</td>
+                    <td>单一概念，最小粒度</td>
+                </tr>
+                <tr>
+                    <td>复合概念</td>
+                    <td>3-5 KB</td>
+                    <td>10 KB</td>
+                    <td>包含子概念引用</td>
+                </tr>
+                <tr>
+                    <td>流程图谱</td>
+                    <td>5-10 KB</td>
+                    <td>20 KB</td>
+                    <td>步骤和决策点</td>
+                </tr>
+                <tr>
+                    <td>实体知识</td>
+                    <td>2-5 KB</td>
+                    <td>15 KB</td>
+                    <td>蛊虫/世界状态</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 三、概念文件格式 -->
+        <section class="section">
+            <h2>三、概念文件格式</h2>
+
+            <h3>3.1 基础结构</h3>
+            <div class="code-block">
+&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN" data-type="concept"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;!-- 概念元数据 --&gt;
+    &lt;meta name="concept-id" content="concept_fruit_apple"&gt;
+    &lt;meta name="concept-type" content="base"&gt;
+    &lt;meta name="concept-level" content="1"&gt;
+    &lt;meta name="created-by" content="creature_001"&gt;
+    &lt;meta name="created-at" content="2024-05-30T10:00:00Z"&gt;
+    &lt;meta name="updated-at" content="2024-05-30T15:30:00Z"&gt;
+    &lt;meta name="consensus-status" content="approved"&gt;
+    &lt;meta name="consensus-rate" content="0.95"&gt;
+    &lt;title&gt;苹果(水果) - 概念&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;article class="concept"&gt;
+        &lt;!-- 概念标识 --&gt;
+        &lt;header class="concept-header"&gt;
+            &lt;h1&gt;苹果(水果)&lt;/h1&gt;
+            &lt;div class="concept-meta"&gt;
+                &lt;span class="concept-id"&gt;concept_fruit_apple&lt;/span&gt;
+                &lt;span class="concept-type"&gt;base&lt;/span&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+
+        &lt;!-- 概念定义 --&gt;
+        &lt;section class="definition"&gt;
+            &lt;h2&gt;定义&lt;/h2&gt;
+            &lt;p&gt;苹果是一种常见的&lt;a href="../fruit.html"&gt;水果&lt;/a&gt;，
+            通常为圆形，颜色有红、绿、黄等，口感清脆或绵软。&lt;/p&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 概念属性 --&gt;
+        &lt;section class="attributes"&gt;
+            &lt;h2&gt;属性&lt;/h2&gt;
+            &lt;dl&gt;
+                &lt;dt&gt;颜色&lt;/dt&gt;
+                &lt;dd&gt;&lt;a href="../../domain/color/red.html"&gt;红色&lt;/a&gt;、
+                    &lt;a href="../../domain/color/green.html"&gt;绿色&lt;/a&gt;、
+                    &lt;a href="../../domain/color/yellow.html"&gt;黄色&lt;/a&gt;&lt;/dd&gt;
+                &lt;dt&gt;口感&lt;/dt&gt;
+                &lt;dd&gt;清脆、绵软&lt;/dd&gt;
+                &lt;dt&gt;营养价值&lt;/dt&gt;
+                &lt;dd&gt;富含维生素、膳食纤维&lt;/dd&gt;
+            &lt;/dl&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 相关概念 --&gt;
+        &lt;section class="relations"&gt;
+            &lt;h2&gt;关系&lt;/h2&gt;
+            &lt;ul class="relation-list"&gt;
+                &lt;li&gt;&lt;a href="../fruit.html" rel="is-a"&gt;是一种水果&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="../food.html" rel="is-a"&gt;是一种食物&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="../../domain/company/apple_inc.html" rel="different"&gt;
+                    区别于苹果公司&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 使用示例 --&gt;
+        &lt;section class="examples"&gt;
+            &lt;h2&gt;示例&lt;/h2&gt;
+            &lt;ul&gt;
+                &lt;li&gt;"我在吃一个红苹果"&lt;/li&gt;
+                &lt;li&gt;"苹果富含维生素"&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 概念向量（机器可读） --&gt;
+        &lt;section class="embedding" hidden&gt;
+            &lt;!-- 高维向量，供LNN使用 --&gt;
+            &lt;data name="vector" value="[0.23,-0.45,0.67,...]"&gt;&lt;/data&gt;
+            &lt;data name="vector-dim" value="256"&gt;&lt;/data&gt;
+        &lt;/section&gt;
+    &lt;/article&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+
+            <h3>3.2 关系类型</h3>
+            <table>
+                <tr>
+                    <th>关系类型</th>
+                    <th>rel属性值</th>
+                    <th>说明</th>
+                    <th>示例</th>
+                </tr>
+                <tr>
+                    <td>继承关系</td>
+                    <td>is-a</td>
+                    <td>A是B的一种</td>
+                    <td>苹果 is-a 水果</td>
+                </tr>
+                <tr>
+                    <td>包含关系</td>
+                    <td>has-part</td>
+                    <td>A包含B</td>
+                    <td>苹果 has-part 果核</td>
+                </tr>
+                <tr>
+                    <td>属性关系</td>
+                    <td>has-property</td>
+                    <td>A具有属性B</td>
+                    <td>苹果 has-property 红色</td>
+                </tr>
+                <tr>
+                    <td>因果关系</td>
+                    <td>causes</td>
+                    <td>A导致B</td>
+                    <td>下雨 causes 地面湿</td>
+                </tr>
+                <tr>
+                    <td>相关关系</td>
+                    <td>related-to</td>
+                    <td>A与B相关</td>
+                    <td>苹果 related-to 果汁</td>
+                </tr>
+                <tr>
+                    <td>对比关系</td>
+                    <td>different</td>
+                    <td>A与B不同</td>
+                    <td>苹果(水果) different 苹果(公司)</td>
+                </tr>
+                <tr>
+                    <td>前置关系</td>
+                    <td>requires</td>
+                    <td>A需要B</td>
+                    <td>写代码 requires 编程知识</td>
+                </tr>
+                <tr>
+                    <td>顺序关系</td>
+                    <td>precedes</td>
+                    <td>A在B之前</td>
+                    <td>设计 precedes 编码</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 四、流程图谱 -->
+        <section class="section">
+            <h2>四、流程图谱设计</h2>
+
+            <h3>4.1 流程文件结构</h3>
+            <div class="code-block">
+&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN" data-type="flow"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="flow-id" content="flow_generate_html"&gt;
+    &lt;meta name="flow-type" content="task"&gt;
+    &lt;meta name="complexity" content="medium"&gt;
+    &lt;title&gt;生成HTML - 流程图谱&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;article class="flow"&gt;
+        &lt;header&gt;
+            &lt;h1&gt;生成HTML页面&lt;/h1&gt;
+            &lt;p class="description"&gt;根据需求生成结构良好的HTML页面&lt;/p&gt;
+        &lt;/header&gt;
+
+        &lt;!-- 流程步骤 --&gt;
+        &lt;section class="steps"&gt;
+            &lt;h2&gt;步骤&lt;/h2&gt;
+            &lt;ol class="step-list"&gt;
+                &lt;li class="step" data-step="1"&gt;
+                    &lt;h3&gt;理解需求&lt;/h3&gt;
+                    &lt;p&gt;分析用户需要什么类型的HTML页面&lt;/p&gt;
+                    &lt;a href="../../concepts/domain/html/structure.html"&gt;
+                        需要知识: HTML结构&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class="step" data-step="2"&gt;
+                    &lt;h3&gt;设计结构&lt;/h3&gt;
+                    &lt;p&gt;规划页面的DOM结构和语义标签&lt;/p&gt;
+                    &lt;a href="../../concepts/domain/html/dom.html"&gt;
+                        需要知识: DOM模型&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class="step" data-step="3"&gt;
+                    &lt;h3&gt;编写代码&lt;/h3&gt;
+                    &lt;p&gt;根据结构设计生成HTML代码&lt;/p&gt;
+                    &lt;a href="../../concepts/domain/html/syntax.html"&gt;
+                        需要知识: HTML语法&lt;/a&gt;
+                &lt;/li&gt;
+                &lt;li class="step" data-step="4"&gt;
+                    &lt;h3&gt;验证输出&lt;/h3&gt;
+                    &lt;p&gt;检查HTML是否符合规范&lt;/p&gt;
+                &lt;/li&gt;
+            &lt;/ol&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 决策点 --&gt;
+        &lt;section class="decisions"&gt;
+            &lt;h2&gt;决策点&lt;/h2&gt;
+            &lt;ul class="decision-list"&gt;
+                &lt;li class="decision" data-decision="d1"&gt;
+                    &lt;h3&gt;是否需要样式？&lt;/h3&gt;
+                    &lt;ul class="branches"&gt;
+                        &lt;li&gt;&lt;a href="./add_css.html"&gt;是 → 添加CSS&lt;/a&gt;&lt;/li&gt;
+                        &lt;li&gt;否 → 继续下一步&lt;/li&gt;
+                    &lt;/ul&gt;
+                &lt;/li&gt;
+                &lt;li class="decision" data-decision="d2"&gt;
+                    &lt;h3&gt;是否需要交互？&lt;/h3&gt;
+                    &lt;ul class="branches"&gt;
+                        &lt;li&gt;&lt;a href="./add_js.html"&gt;是 → 添加JavaScript&lt;/a&gt;&lt;/li&gt;
+                        &lt;li&gt;否 → 输出纯HTML&lt;/li&gt;
+                    &lt;/ul&gt;
+                &lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 相关流程 --&gt;
+        &lt;section class="related-flows"&gt;
+            &lt;h2&gt;相关流程&lt;/h2&gt;
+            &lt;ul&gt;
+                &lt;li&gt;&lt;a href="./generate_css.html" rel="related"&gt;生成CSS&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="./generate_js.html" rel="related"&gt;生成JavaScript&lt;/a&gt;&lt;/li&gt;
+                &lt;li&gt;&lt;a href="./validate_html.html" rel="related"&gt;验证HTML&lt;/a&gt;&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/section&gt;
+    &lt;/article&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+
+            <h3>4.2 流程可视化</h3>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                    流程图谱可视化示例                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   [开始]                                                     │
+│      │                                                       │
+│      ▼                                                       │
+│   ┌──────────────────┐                                      │
+│   │ Step 1: 理解需求 │                                      │
+│   │ 需要: HTML结构   │ ──► knowledge/.../structure.html     │
+│   └────────┬─────────┘                                      │
+│            │                                                 │
+│            ▼                                                 │
+│   ┌──────────────────┐                                      │
+│   │ Step 2: 设计结构 │                                      │
+│   │ 需要: DOM模型    │ ──► knowledge/.../dom.html           │
+│   └────────┬─────────┘                                      │
+│            │                                                 │
+│            ▼                                                 │
+│   ┌──────────────────┐                                      │
+│   │ 决策: 需要样式?  │                                      │
+│   └────────┬─────────┘                                      │
+│            │                                                 │
+│      ┌─────┴─────┐                                          │
+│      │           │                                          │
+│     是          否                                          │
+│      │           │                                          │
+│      ▼           │                                          │
+│   [添加CSS]      │                                          │
+│      │           │                                          │
+│      └─────┬─────┘                                          │
+│            │                                                 │
+│            ▼                                                 │
+│   ┌──────────────────┐                                      │
+│   │ Step 3: 编写代码 │                                      │
+│   └────────┬─────────┘                                      │
+│            │                                                 │
+│            ▼                                                 │
+│   [结束]                                                     │
+│                                                             │
+│   每个节点都是一个HTML文件，通过链接形成流程图              │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <!-- 五、知识引用网络 -->
+        <section class="section">
+            <h2>五、知识引用网络</h2>
+
+            <h3>5.1 引用机制</h3>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                    知识引用网络                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   concept_fruit.html                                        │
+│        │                                                     │
+│        ├──► concept_fruit_apple.html (is-a)                │
+│        │         │                                          │
+│        │         ├──► concept_color_red.html (has-property)│
+│        │         │                                          │
+│        │         └──► concept_company_apple.html (different)│
+│        │                                                    │
+│        ├──► concept_fruit_banana.html (is-a)               │
+│        │                                                    │
+│        └──► concept_fruit_orange.html (is-a)               │
+│                                                             │
+│   ─────────────────────────────────────────────────────    │
+│                                                             │
+│   flow_generate_html.html                                   │
+│        │                                                     │
+│        ├──► concept_html_structure.html (requires)         │
+│        │         │                                          │
+│        │         └──► concept_html_tag.html (has-part)     │
+│        │                                                    │
+│        ├──► flow_add_css.html (branches-to)                │
+│        │                                                    │
+│        └──► flow_validate_html.html (related)              │
+│                                                             │
+│   引用形成网络，知识可以互相跳转和追溯                      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</div>
+
+            <h3>5.2 引用计数与重要性</h3>
+            <table>
+                <tr>
+                    <th>被引用次数</th>
+                    <th>重要性级别</th>
+                    <th>处理方式</th>
+                </tr>
+                <tr>
+                    <td>> 100</td>
+                    <td>核心概念</td>
+                    <td>缓存、优先加载、不易修改</td>
+                </tr>
+                <tr>
+                    <td>10-100</td>
+                    <td>重要概念</td>
+                    <td>常规缓存、需共识修改</td>
+                </tr>
+                <tr>
+                    <td>1-10</td>
+                    <td>普通概念</td>
+                    <td>按需加载、正常修改流程</td>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>孤立概念</td>
+                    <td>标记为待清理、可能删除</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 六、蛊虫知识管理 -->
+        <section class="section">
+            <h2>六、蛊虫知识管理</h2>
+
+            <h3>6.1 蛊虫知识库</h3>
+            <div class="diagram">
+creature_001/
+├── knowledge/                    # 蛊虫个人知识库
+│   ├── owned/                    # 自有概念（可修改）
+│   │   ├── concepts/
+│   │   │   └── my_understanding_of_html.html
+│   │   └── flows/
+│   │       └── my_html_workflow.html
+│   │
+│   ├── shared/                   # 共享概念（引用全局库）
+│   │   ├── concepts/             # 符号链接或引用
+│   │   │   ├── fruit.html → ../../../global/concepts/base/fruit.html
+│   │   │   └── html.html → ../../../global/concepts/domain/html/html.html
+│   │   └── flows/
+│   │       └── generate_html.html → ../../../global/flows/tasks/generate_html.html
+│   │
+│   └── cache/                    # 临时缓存
+│       └── session_xxx/
+│           └── temp_context.html
+│
+├── state/                       # 当前状态
+│   ├── current_task.html        # 当前任务
+│   ├── mood.html                # 情绪状态
+│   └── relations.html           # 关系状态
+│
+└── memory/                      # 记忆存储
+    ├── short_term/              # 短期记忆
+    │   └── recent_interactions.html
+    └── long_term/               # 长期记忆
+        └── important_events.html</div>
+
+            <h3>6.2 知识共享机制</h3>
+            <div class="note">
+                <strong>共享流程：</strong>
+                <ol>
+                    <li>蛊虫A创建新概念或修改现有概念</li>
+                    <li>提交到共享区，发起共识流程</li>
+                    <li>其他蛊虫通过通信频道讨论</li>
+                    <li>投票表决，达到阈值后合并到全局库</li>
+                    <li>感谢机制：知识贡献者获得金币奖励</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- 七、知识操作接口 -->
+        <section class="section">
+            <h2>七、知识操作接口</h2>
+
+            <h3>7.1 核心接口</h3>
+            <div class="code-block">
+// 知识图谱操作接口
+interface KnowledgeGraph {
+    // 概念操作
+    getConcept(id: string): Promise&lt;ConceptFile&gt;;
+    createConcept(data: ConceptData): Promise&lt;ConceptFile&gt;;
+    updateConcept(id: string, data: Partial&lt;ConceptData&gt;): Promise&lt;ConceptFile&gt;;
+    deleteConcept(id: string): Promise&lt;boolean&gt;;
+
+    // 关系操作
+    addRelation(from: string, to: string, type: RelationType): Promise&lt;void&gt;;
+    removeRelation(from: string, to: string): Promise&lt;void&gt;;
+    getRelated(id: string, type?: RelationType): Promise&lt;ConceptFile[]&gt;;
+
+    // 查询操作
+    search(query: string): Promise&lt;ConceptFile[]&gt;;
+    findByPath(path: string): Promise&lt;ConceptFile[]&gt;;
+
+    // 流程操作
+    getFlow(id: string): Promise&lt;FlowFile&gt;;
+    executeFlow(id: string, context: Context): Promise&lt;FlowResult&gt;;
+}
+
+// 概念文件解析
+interface ConceptParser {
+    parse(html: string): ConceptData;
+    serialize(data: ConceptData): string;
+    extractLinks(html: string): Link[];
+    extractVector(html: string): Tensor;
+}
+
+// 知识引用
+interface KnowledgeRef {
+    type: 'concept' | 'flow' | 'entity';
+    id: string;
+    path: string;
+    version?: string;
+}</div>
+
+            <h3>7.2 文件读写示例</h3>
+            <div class="code-block">
+// 读取概念
+async function loadConcept(id: string): Promise&lt;Concept&gt; {
+    const path = `knowledge/concepts/${id}.html`;
+    const html = await fs.readFile(path, 'utf-8');
+
+    const parser = new ConceptParser();
+    const data = parser.parse(html);
+
+    return {
+        id: data.id,
+        name: data.name,
+        definition: data.definition,
+        relations: parser.extractLinks(html),
+        vector: parser.extractVector(html)
+    };
+}
+
+// 创建概念
+async function createConcept(data: ConceptData): Promise&lt;ConceptFile&gt; {
+    const parser = new ConceptParser();
+    const html = parser.serialize(data);
+
+    const path = `knowledge/concepts/${data.type}/${data.id}.html`;
+    await fs.writeFile(path, html, 'utf-8');
+
+    // 更新索引
+    await updateIndex(data.id, path);
+
+    return { path, data };
+}
+
+// 添加关系
+async function addRelation(
+    from: string,
+    to: string,
+    type: RelationType
+): Promise&lt;void&gt; {
+    const fromConcept = await loadConcept(from);
+    const toPath = resolveConceptPath(to);
+
+    // 在from文件中添加链接
+    const relationSection = fromConcept.html.querySelector('.relations');
+    const link = createRelationLink(toPath, type);
+    relationSection.appendChild(link);
+
+    await saveConcept(from, fromConcept.html);
+}</div>
+        </section>
+
+        <!-- 八、版本与演化 -->
+        <section class="section">
+            <h2>八、版本与演化</h2>
+
+            <h3>8.1 版本控制</h3>
+            <div class="code-block">
+&lt;!-- 在概念文件中记录版本历史 --&gt;
+&lt;section class="history" hidden&gt;
+    &lt;h2&gt;版本历史&lt;/h2&gt;
+    &lt;ul class="version-list"&gt;
+        &lt;li class="version" data-version="1.0"&gt;
+            &lt;time datetime="2024-05-29T10:00:00Z"&gt;2024-05-29&lt;/time&gt;
+            &lt;span class="author"&gt;creature_001&lt;/span&gt;
+            &lt;span class="change"&gt;初始创建&lt;/span&gt;
+        &lt;/li&gt;
+        &lt;li class="version" data-version="1.1"&gt;
+            &lt;time datetime="2024-05-30T15:00:00Z"&gt;2024-05-30&lt;/time&gt;
+            &lt;span class="author"&gt;creature_003&lt;/span&gt;
+            &lt;span class="change"&gt;添加颜色属性&lt;/span&gt;
+            &lt;a href="./apple_v1.0.html"&gt;查看旧版&lt;/a&gt;
+        &lt;/li&gt;
+    &lt;/ul&gt;
+&lt;/section&gt;</div>
+
+            <h3>8.2 演化策略</h3>
+            <table>
+                <tr>
+                    <th>变化类型</th>
+                    <th>处理方式</th>
+                    <th>通知范围</th>
+                </tr>
+                <tr>
+                    <td>新增概念</td>
+                    <td>创建新文件</td>
+                    <td>相关蛊虫</td>
+                </tr>
+                <tr>
+                    <td>修改定义</td>
+                    <td>需要共识，记录版本</td>
+                    <td>所有引用者</td>
+                </tr>
+                <tr>
+                    <td>删除概念</td>
+                    <td>标记废弃，保留历史</td>
+                    <td>全局通知</td>
+                </tr>
+                <tr>
+                    <td>合并概念</td>
+                    <td>创建新概念，重定向旧链接</td>
+                    <td>全局通知</td>
+                </tr>
+                <tr>
+                    <td>拆分概念</td>
+                    <td>创建子概念，更新引用</td>
+                    <td>相关蛊虫</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 九、性能优化 -->
+        <section class="section">
+            <h2>九、性能优化</h2>
+
+            <h3>9.1 缓存策略</h3>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                    多级缓存架构                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   L1: 内存缓存 (热点概念)                                   │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  被引用次数 > 100 的核心概念                         │  │
+│   │  常驻内存，快速访问                                  │  │
+│   │  容量: ~100 个概念                                   │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                          │                                  │
+│                          ▼                                  │
+│   L2: 索引缓存 (常用概念)                                   │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  被引用次数 10-100 的重要概念                        │  │
+│   │  解析后的对象缓存                                    │  │
+│   │  容量: ~1000 个概念                                  │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                          │                                  │
+│                          ▼                                  │
+│   L3: 文件系统 (全部概念)                                   │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  所有概念以HTML文件存储                              │  │
+│   │  按需加载                                            │  │
+│   │  容量: 无限制                                        │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</div>
+
+            <h3>9.2 懒加载</h3>
+            <div class="code-block">
+// 懒加载概念
+class LazyConceptLoader {
+    private cache: Map&lt;string, Promise&lt;Concept&gt;&gt; = new Map();
+
+    async load(id: string): Promise&lt;Concept&gt; {
+        // 检查缓存
+        if (this.cache.has(id)) {
+            return this.cache.get(id)!;
+        }
+
+        // 检查是否在加载中
+        const loading = this.cache.get(id);
+        if (loading) {
+            return loading;
+        }
+
+        // 开始加载
+        const promise = this.doLoad(id);
+        this.cache.set(id, promise);
+        return promise;
+    }
+
+    private async doLoad(id: string): Promise&lt;Concept&gt; {
+        const concept = await loadConcept(id);
+
+        // 预加载直接相关概念（一层）
+        for (const ref of concept.relations.slice(0, 5)) {
+            this.load(ref.targetId); // 不等待，后台加载
+        }
+
+        return concept;
+    }
+}</div>
+        </section>
+
+        <!-- 十、渐进式填充机制 -->
+        <section class="section">
+            <h2>十、渐进式填充机制</h2>
+
+            <h3>10.1 核心问题</h3>
+            <div class="warning">
+                <strong>⚠️ 现实场景：</strong>
+                <p>知识不是一次性完整的，而是一点一点补全的：</p>
+                <ul>
+                    <li>蛊虫第一次听说"量子计算"时，可能只知道名字</li>
+                    <li>学习后，补充了基本原理</li>
+                    <li>再学习，补充了应用场景</li>
+                    <li>不断交互，知识逐渐丰富</li>
+                </ul>
+            </div>
+
+            <h3>10.2 知识完整性级别</h3>
+            <table>
+                <tr>
+                    <th>级别</th>
+                    <th>名称</th>
+                    <th>包含内容</th>
+                    <th>触发条件</th>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>空壳概念</td>
+                    <td>仅ID和名称</td>
+                    <td>首次遇到新概念</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>初步概念</td>
+                    <td>名称 + 简短定义 + 父概念</td>
+                    <td>第一次学习</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>基本概念</td>
+                    <td>+ 属性 + 示例 + 相关概念</td>
+                    <td>多次交互学习</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>完整概念</td>
+                    <td>+ 向量 + 消歧义 + 详细说明</td>
+                    <td>深入学习</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>专家概念</td>
+                    <td>+ 流程关联 + 领域知识 + 边界情况</td>
+                    <td>专业领域精通</td>
+                </tr>
+            </table>
+
+            <h3>10.3 空壳概念示例</h3>
+            <div class="diagram">
+&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN" data-type="concept" data-level="0"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;!-- 概念元数据 --&gt;
+    &lt;meta name="concept-id" content="concept_tech_quantum_computing"&gt;
+    &lt;meta name="concept-type" content="domain"&gt;
+    &lt;meta name="concept-level" content="0"&gt;
+    &lt;meta name="created-by" content="creature_005"&gt;
+    &lt;meta name="created-at" content="2024-05-30T10:00:00Z"&gt;
+    &lt;meta name="status" content="skeleton"&gt;
+    &lt;!-- 缺失知识标记 --&gt;
+    &lt;meta name="missing" content="definition,properties,examples,relations"&gt;
+    &lt;title&gt;量子计算 - 概念（待补充）&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;article class="concept skeleton"&gt;
+        &lt;header class="concept-header"&gt;
+            &lt;h1&gt;量子计算&lt;/h1&gt;
+            &lt;div class="concept-meta"&gt;
+                &lt;span class="concept-id"&gt;concept_tech_quantum_computing&lt;/span&gt;
+                &lt;span class="status-badge"&gt;⚠️ 知识不完整&lt;/span&gt;
+            &lt;/div&gt;
+        &lt;/header&gt;
+
+        &lt;!-- 定义：待补充 --&gt;
+        &lt;section class="definition" data-status="missing"&gt;
+            &lt;h2&gt;定义&lt;/h2&gt;
+            &lt;p class="placeholder"&gt;
+                📝 此概念定义待补充
+                &lt;br&gt;&lt;small&gt;创建原因：在阅读量子计算相关文章时遇到&lt;/small&gt;
+            &lt;/p&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 属性：待补充 --&gt;
+        &lt;section class="attributes" data-status="missing"&gt;
+            &lt;h2&gt;属性&lt;/h2&gt;
+            &lt;p class="placeholder"&gt;属性信息待学习补充&lt;/p&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 关系：仅知道是科技领域 --&gt;
+        &lt;section class="relations" data-status="partial"&gt;
+            &lt;h2&gt;关系&lt;/h2&gt;
+            &lt;ul class="relation-list"&gt;
+                &lt;li&gt;▸ &lt;a href="../domain/technology.html" rel="is-a"&gt;属于科技领域&lt;/a&gt;&lt;/li&gt;
+                &lt;li class="missing-relation"&gt;
+                    📝 相关概念待补充（如：量子比特、量子门等）
+                &lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 示例：待补充 --&gt;
+        &lt;section class="examples" data-status="missing"&gt;
+            &lt;h2&gt;示例&lt;/h2&gt;
+            &lt;p class="placeholder"&gt;示例待收集&lt;/p&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 学习建议 --&gt;
+        &lt;section class="learning-suggestions"&gt;
+            &lt;h2&gt;📚 学习建议&lt;/h2&gt;
+            &lt;ul&gt;
+                &lt;li&gt;阅读量子计算基础教程&lt;/li&gt;
+                &lt;li&gt;了解量子比特概念&lt;/li&gt;
+                &lt;li&gt;学习量子门操作原理&lt;/li&gt;
+            &lt;/ul&gt;
+        &lt;/section&gt;
+
+        &lt;!-- 向量：暂用默认值 --&gt;
+        &lt;section class="embedding" hidden&gt;
+            &lt;data name="vector" value="[0,0,0,...]"&gt;&lt;/data&gt;
+            &lt;data name="vector-status" value="uninitialized"&gt;&lt;/data&gt;
+        &lt;/section&gt;
+    &lt;/article&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+
+            <h3>10.4 模板 vs 动态生成</h3>
+            <div class="note">
+                <strong>混合策略：模板骨架 + 动态内容</strong>
+            </div>
+
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                   概念文件生成策略                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  固定模板部分（骨架）                                │  │
+│   │  - HTML基本结构                                      │  │
+│   │  - 元数据header模板                                  │  │
+│   │  - 标准section容器                                   │  │
+│   │  - CSS样式引用                                       │  │
+│   │  - 版本历史结构                                      │  │
+│   │                                                     │  │
+│   │  作用：保证文件格式一致性，便于解析和渲染            │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                          │                                  │
+│                          ▼                                  │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  动态生成部分（内容）                                │  │
+│   │  - 概念名称和ID                                      │  │
+│   │  - 定义文本                                          │  │
+│   │  - 属性列表                                          │  │
+│   │  - 关系链接                                          │  │
+│   │  - 示例内容                                          │  │
+│   │  - 向量数据                                          │  │
+│   │                                                     │  │
+│   │  来源：蛊虫学习、交互、共识                          │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                          │                                  │
+│                          ▼                                  │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  智能占位符（待填充）                                │  │
+│   │  - 缺失标记 data-status="missing"                    │  │
+│   │  - 学习建议                                          │  │
+│   │  - 期望来源提示                                      │  │
+│   │                                                     │  │
+│   │  作用：引导后续学习方向                              │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</div>
+
+            <h3>10.5 知识补全流程</h3>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                   知识补全流程                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   触发: 蛊虫遇到知识缺口                                   │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  Step 1: 检测缺失                                   │  │
+│   │                                                     │  │
+│   │  if (concept.level < 2) {                          │  │
+│   │      // 标记为需要学习                             │  │
+│   │      addLearningTask(concept);                      │  │
+│   │  }                                                  │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                          │                                  │
+│                          ▼                                  │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  Step 2: 学习获取                                   │  │
+│   │                                                     │  │
+│   │  - 阅读相关文档                                     │  │
+│   │  - 询问其他蛊虫                                     │  │
+│   │  - 请求用户指导                                     │  │
+│   │  - 推理推断                                         │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                          │                                  │
+│                          ▼                                  │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  Step 3: 内容更新                                   │  │
+│   │                                                     │  │
+│   │  // 读取现有文件                                    │  │
+│   │  const html = readConceptFile(id);                  │  │
+│   │  // 解析并更新                                      │  │
+│   │  const updated = mergeKnowledge(html, newInfo);      │  │
+│   │  // 写回文件                                        │  │
+│   │  writeConceptFile(id, updated);                      │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                          │                                  │
+│                          ▼                                  │
+│   ┌─────────────────────────────────────────────────────┐  │
+│   │  Step 4: 版本记录                                   │  │
+│   │                                                     │  │
+│   │  &lt;li class="version" data-version="1.1"&gt;            │  │
+│   │    补充定义：量子计算是...                          │  │
+│   │    来源：阅读量子计算入门                           │  │
+│   │  &lt;/li&gt;                                             │  │
+│   └─────────────────────────────────────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘</div>
+
+            <h3>10.6 智能合并算法</h3>
+            <div class="code-block">
+// 知识合并器
+class KnowledgeMerger {
+    merge(existing: ConceptHTML, newInfo: KnowledgeUpdate): ConceptHTML {
+        const result = existing.clone();
+
+        // 1. 只更新缺失或更详细的内容
+        for (const section of ['definition', 'attributes', 'examples']) {
+            if (newInfo[section] &&
+                (result.isMissing(section) ||
+                 newInfo.isMoreDetailed(section))) {
+                result.updateSection(section, newInfo[section]);
+            }
+        }
+
+        // 2. 关系列表：合并而非替换
+        if (newInfo.relations) {
+            for (const rel of newInfo.relations) {
+                if (!result.hasRelation(rel)) {
+                    result.addRelation(rel);
+                }
+            }
+        }
+
+        // 3. 向量：有新数据时更新
+        if (newInfo.vector && result.vectorStatus === 'uninitialized') {
+            result.setVector(newInfo.vector);
+        }
+
+        // 4. 更新完整性级别
+        result.updateLevel(this.calculateLevel(result));
+
+        // 5. 记录变更历史
+        result.addVersionHistory({
+            change: newInfo.changeDescription,
+            source: newInfo.source,
+            timestamp: Date.now()
+        });
+
+        return result;
+    }
+
+    calculateLevel(concept: ConceptHTML): number {
+        let level = 0;
+        if (concept.hasDefinition()) level++;
+        if (concept.hasAttributes()) level++;
+        if (concept.hasExamples()) level++;
+        if (concept.hasVector()) level++;
+        if (concept.hasDomainKnowledge()) level++;
+        return Math.min(level, 4);
+    }
+}</div>
+
+            <h3>10.7 缺失知识查找</h3>
+            <div class="code-block">
+// 查找缺失知识
+class KnowledgeGapFinder {
+    // 查找所有不完整的概念
+    async findIncomplete(): Promise&lt;ConceptRef[]&gt; {
+        const concepts = await this.scanAllConcepts();
+        return concepts.filter(c => c.level &lt; 3);
+    }
+
+    // 查找特定概念的缺失部分
+    getGaps(conceptId: string): KnowledgeGap[] {
+        const concept = this.load(conceptId);
+        const gaps: KnowledgeGap[] = [];
+
+        if (concept.isMissing('definition')) {
+            gaps.push({
+                field: 'definition',
+                priority: 'high',
+                suggestion: '需要基本定义'
+            });
+        }
+
+        if (concept.isMissing('examples')) {
+            gaps.push({
+                field: 'examples',
+                priority: 'medium',
+                suggestion: '收集使用示例'
+            });
+        }
+
+        if (concept.vectorStatus === 'uninitialized') {
+            gaps.push({
+                field: 'vector',
+                priority: 'high',
+                suggestion: '需要训练概念向量'
+            });
+        }
+
+        return gaps;
+    }
+
+    // 生成学习计划
+    generateLearningPlan(creature: Creature): LearningTask[] {
+        const incomplete = this.findIncomplete();
+        const gaps = incomplete.flatMap(c => this.getGaps(c.id));
+
+        // 按优先级和与蛊虫的相关性排序
+        return gaps
+            .sort((a, b) => this.priorityScore(b) - this.priorityScore(a))
+            .slice(0, 10); // 每次最多10个学习任务
+    }
+}</div>
+        </section>
+
+        <!-- 十一、设计进度 -->
+        <section class="section">
+            <h2>十一、设计进度</h2>
+
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 85%;">知识图谱存储设计 85%</div>
+            </div>
+
+            <table>
+                <tr>
+                    <th>模块</th>
+                    <th>状态</th>
+                    <th>备注</th>
+                </tr>
+                <tr>
+                    <td>目录结构</td>
+                    <td><span class="tag tag-core">已设计</span></td>
+                    <td>概念库、流程库、实体库</td>
+                </tr>
+                <tr>
+                    <td>概念文件格式</td>
+                    <td><span class="tag tag-core">已设计</span></td>
+                    <td>HTML微文件格式</td>
+                </tr>
+                <tr>
+                    <td>关系类型</td>
+                    <td><span class="tag tag-core">已设计</span></td>
+                    <td>8种关系类型定义</td>
+                </tr>
+                <tr>
+                    <td>流程图谱</td>
+                    <td><span class="tag tag-feature">已设计</span></td>
+                    <td>步骤和决策点结构</td>
+                </tr>
+                <tr>
+                    <td>蛊虫知识管理</td>
+                    <td><span class="tag tag-feature">已设计</span></td>
+                    <td>个人知识库结构</td>
+                </tr>
+                <tr>
+                    <td>操作接口</td>
+                    <td><span class="tag tag-feature">已设计</span></td>
+                    <td>CRUD和查询接口</td>
+                </tr>
+                <tr>
+                    <td>缓存优化</td>
+                    <td><span class="tag tag-feature">已设计</span></td>
+                    <td>三级缓存架构</td>
+                </tr>
+                <tr>
+                    <td>渐进式填充</td>
+                    <td><span class="tag tag-core">已设计</span></td>
+                    <td>空壳概念、知识补全、合并算法</td>
+                </tr>
+                <tr>
+                    <td>缺失检测</td>
+                    <td><span class="tag tag-core">已设计</span></td>
+                    <td>知识缺口查找、学习计划生成</td>
+                </tr>
+                <tr>
+                    <td>具体实现</td>
+                    <td><span class="tag tag-pending">待实现</span></td>
+                    <td>需要技术栈确定</td>
+                </tr>
+            </table>
+        </section>
+
+        <footer>
+            <p>知识图谱存储 - 深入设计文档 v1.1</p>
+            <p>创建时间：2024-05-30 | 更新时间：2024-05-30 | 状态：深入设计中</p>
+            <p>审查：天才理事会（黑塔/螺丝咕姆/拉蒂奥）</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-type="concept">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 概念元数据 -->
+    <meta name="concept-id" content="concept_fruit_apple">
+    <meta name="concept-type" content="base">
+    <meta name="concept-level" content="1">
+    <meta name="created-by" content="system">
+    <meta name="created-at" content="2024-05-30T10:00:00Z">
+    <meta name="updated-at" content="2024-05-30T10:00:00Z">
+    <meta name="consensus-status" content="approved">
+    <meta name="consensus-rate" content="0.98">
+    <meta name="ref-count" content="156">
+    <title>苹果(水果) - 概念</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
+        .concept { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .concept-header { border-bottom: 2px solid #e74c3c; padding-bottom: 15px; margin-bottom: 20px; }
+        .concept-meta { font-size: 0.85em; color: #666; }
+        .concept-id { background: #e74c3c; color: white; padding: 2px 8px; border-radius: 4px; }
+        section { margin: 20px 0; }
+        h2 { color: #e74c3c; font-size: 1.2em; border-left: 4px solid #e74c3c; padding-left: 10px; }
+        dl { margin: 10px 0; }
+        dt { font-weight: bold; color: #333; }
+        dd { margin: 5px 0 15px 20px; color: #666; }
+        a { color: #3498db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        a[rel="is-a"] { color: #27ae60; }
+        a[rel="different"] { color: #e67e22; }
+        .relation-list { list-style: none; padding: 0; }
+        .relation-list li { margin: 8px 0; }
+        .embedding { display: none; }
+    </style>
+</head>
+<body>
+    <article class="concept">
+        <!-- 概念标识 -->
+        <header class="concept-header">
+            <h1>🍎 苹果(水果)</h1>
+            <div class="concept-meta">
+                <span class="concept-id">concept_fruit_apple</span>
+                <span class="concept-type">基础概念</span>
+                <span class="ref-count">被引用: 156次</span>
+            </div>
+        </header>
+
+        <!-- 概念定义 -->
+        <section class="definition">
+            <h2>定义</h2>
+            <p>苹果是一种常见的<a href="./fruit.html">水果</a>，蔷薇科苹果属植物的果实。
+            通常为圆形，颜色有红、绿、黄等，口感清脆或绵软，味甜或酸甜。</p>
+        </section>
+
+        <!-- 概念属性 -->
+        <section class="attributes">
+            <h2>属性</h2>
+            <dl>
+                <dt>颜色</dt>
+                <dd><a href="../domain/color/red.html">红色</a>、
+                    <a href="../domain/color/green.html">绿色</a>、
+                    <a href="../domain/color/yellow.html">黄色</a></dd>
+                <dt>口感</dt>
+                <dd>清脆、绵软</dd>
+                <dt>味道</dt>
+                <dd>甜、酸甜</dd>
+                <dt>营养价值</dt>
+                <dd>富含维生素C、膳食纤维、果胶</dd>
+                <dt>产地</dt>
+                <dd>温带地区广泛种植</dd>
+            </dl>
+        </section>
+
+        <!-- 相关概念 -->
+        <section class="relations">
+            <h2>关系</h2>
+            <ul class="relation-list">
+                <li>▸ <a href="./fruit.html" rel="is-a">是一种水果</a></li>
+                <li>▸ <a href="./food.html" rel="is-a">是一种食物</a></li>
+                <li>▸ <a href="./tree.html" rel="related-to">生长在苹果树上</a></li>
+                <li>▸ <a href="../domain/company/apple_inc.html" rel="different">区别于苹果公司(Apple Inc.)</a></li>
+            </ul>
+        </section>
+
+        <!-- 使用示例 -->
+        <section class="examples">
+            <h2>示例</h2>
+            <ul>
+                <li>"我在吃一个红苹果" - 此处指水果</li>
+                <li>"苹果富含维生素" - 此处指水果的营养价值</li>
+                <li>"一天一个苹果，医生远离我" - 谚语，强调健康价值</li>
+            </ul>
+        </section>
+
+        <!-- 消歧义 -->
+        <section class="disambiguation">
+            <h2>消歧义</h2>
+            <p>当上下文中出现"苹果"时，需要根据上下文判断含义：</p>
+            <ul>
+                <li>"吃苹果" → <strong>苹果(水果)</strong> ← 当前概念</li>
+                <li>"用苹果手机" → <a href="../domain/company/apple_inc.html">苹果(公司)</a></li>
+            </ul>
+        </section>
+
+        <!-- 概念向量（机器可读） -->
+        <section class="embedding" hidden>
+            <data name="vector" value="[0.23,-0.45,0.67,0.12,-0.89,0.34,0.78,-0.23,0.56,-0.12]"></data>
+            <data name="vector-dim" value="256"></data>
+            <data name="vector-model" value="concept-embed-v1"></data>
+        </section>
+
+        <!-- 版本历史 -->
+        <section class="history" hidden>
+            <h2>版本历史</h2>
+            <ul class="version-list">
+                <li class="version" data-version="1.0">
+                    <time datetime="2024-05-30T10:00:00Z">2024-05-30</time>
+                    <span class="author">system</span>
+                    <span class="change">初始创建</span>
+                </li>
+            </ul>
+        </section>
+    </article>
+</body>
+</html>

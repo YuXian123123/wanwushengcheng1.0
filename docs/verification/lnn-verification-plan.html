@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LNN验证方案 - 螺丝咕姆</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #9b59b6;
+            margin-bottom: 30px;
+        }
+        h1 { color: #9b59b6; font-size: 2em; }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #9b59b6;
+        }
+        h2 { color: #e74c3c; font-size: 1.3em; margin-bottom: 15px; }
+        h3 { color: #f39c12; font-size: 1.1em; margin: 15px 0 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px; text-align: left; border: 1px solid rgba(155,89,182,0.3); }
+        th { background: rgba(155,89,182,0.2); color: #9b59b6; }
+        tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+        .test-case {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid rgba(231,76,60,0.3);
+        }
+        .test-case h4 { color: #e74c3c; margin-bottom: 8px; }
+        .pass { color: #27ae60; }
+        .fail { color: #e74c3c; }
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .critical { background: rgba(231,76,60,0.1); border-left: 3px solid #e74c3c; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 LNN验证方案</h1>
+            <p style="color: #a4a4a4;">螺丝咕姆 (Screwllum) - 安全天才</p>
+        </header>
+
+        <section class="section">
+            <h2>一、安全边界测试</h2>
+
+            <div class="test-case">
+                <h4>TEST-S1: 神经元数量下限</h4>
+                <p><strong>测试方法:</strong> 创建 MIN_NEURONS - 1 个神经元</p>
+                <p><strong>预期结果:</strong> <span class="fail">拒绝创建</span>，抛出错误 "Neuron count below minimum"</p>
+                <p><strong>验证代码:</strong> <code>expect(() => lnn.removeNeuron()).toThrow()</code></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-S2: 神经元数量上限</h4>
+                <p><strong>测试方法:</strong> 尝试创建 MAX_NEURONS + 1 个神经元</p>
+                <p><strong>预期结果:</strong> <span class="fail">拒绝创建</span>，抛出错误 "Neuron count exceeds maximum"</p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-S3: 权重边界溢出</h4>
+                <p><strong>测试方法:</strong> 设置权重为 W_MAX + 5.0</p>
+                <p><strong>预期结果:</strong> <span class="pass">自动截断到 W_MAX</span></p>
+                <p><strong>验证代码:</strong> <code>expect(synapse.weight).toBeLessThanOrEqual(W_MAX)</code></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-S4: 状态值归一化</h4>
+                <p><strong>测试方法:</strong> 输入极大值（如 1e10）触发状态更新</p>
+                <p><strong>预期结果:</strong> <span class="pass">状态值保持在 [-1, 1] 范围内</span></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-S5: 熔断触发</h4>
+                <p><strong>测试方法:</strong> 使 40% 的神经元状态异常（|state| > 0.95 持续）</p>
+                <p><strong>预期结果:</strong> <span class="fail">触发熔断</span>，冻结网络，记录日志</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>二、功能正确性测试</h2>
+
+            <div class="test-case">
+                <h4>TEST-F1: 状态方程求解</h4>
+                <p><strong>测试方法:</strong> 单神经元，恒定输入 I=1.0，运行100个时间步</p>
+                <p><strong>预期结果:</strong> <span class="pass">状态收敛到稳态值 ≈ 1.0（考虑偏置和时间常数）</span></p>
+                <p><strong>数学验证:</strong> 稳态时 dx/dt = 0，x = I + bias</p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F2: 赫布学习</h4>
+                <p><strong>测试方法:</strong> 两个神经元同时激活（state=1.0），更新权重</p>
+                <p><strong>预期结果:</strong> <span class="pass">权重增加: Δw = η × 1.0 × 1.0 = η</span></p>
+                <p><strong>验证代码:</strong> <code>expect(synapse.weight).toBe(initialWeight + learningRate)</code></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F3: Oja规则防爆炸</h4>
+                <p><strong>测试方法:</strong> 持续学习1000次，观察权重变化</p>
+                <p><strong>预期结果:</strong> <span class="pass">权重不会无限增长，收敛到稳定值</span></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F4: 动态拓扑 - 神经元增删</h4>
+                <p><strong>测试方法:</strong> 添加新神经元后删除不活跃神经元</p>
+                <p><strong>预期结果:</strong> <span class="pass">正确添加，不活跃神经元被标记删除</span></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F5: 信号传递</h4>
+                <p><strong>测试方法:</strong> 三个神经元链式连接 A→B→C，输入A，观察C</p>
+                <p><strong>预期结果:</strong> <span class="pass">信号正确传递，C状态变化</span></p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>三、验收标准</h2>
+            <table>
+                <tr>
+                    <th>标准</th>
+                    <th>要求</th>
+                    <th>验证方法</th>
+                </tr>
+                <tr>
+                    <td>1. 所有边界测试通过</td>
+                    <td>5/5 PASS</td>
+                    <td>单元测试报告</td>
+                </tr>
+                <tr>
+                    <td>2. 所有功能测试通过</td>
+                    <td>5/5 PASS</td>
+                    <td>单元测试报告</td>
+                </tr>
+                <tr>
+                    <td>3. 无内存泄漏</td>
+                    <td>运行1小时内存稳定</td>
+                    <td>压力测试</td>
+                </tr>
+                <tr>
+                    <td>4. 熔断机制有效</td>
+                    <td>异常情况100%触发</td>
+                    <td>注入测试</td>
+                </tr>
+                <tr>
+                    <td>5. 审计日志完整</td>
+                    <td>所有拓扑变更有记录</td>
+                    <td>日志检查</td>
+                </tr>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>四、安全风险点</h2>
+            <div class="critical">
+                <strong>⚠️ 风险1: 权重爆炸</strong>
+                <p>如果Oja规则实现有误，可能导致权重无限增长。</p>
+                <p><strong>缓解措施:</strong> 强制权重上限检查，每次更新后验证。</p>
+            </div>
+            <div class="critical">
+                <strong>⚠️ 风险2: 资源耗尽</strong>
+                <p>动态拓扑如果没有正确约束，可能创建过多神经元。</p>
+                <p><strong>缓解措施:</strong> 硬编码 MAX_NEURONS 上限，不可配置超过10000。</p>
+            </div>
+            <div class="critical">
+                <strong>⚠️ 风险3: 状态异常传播</strong>
+                <p>NaN或Inf可能通过突触传播到整个网络。</p>
+                <p><strong>缓解措施:</strong> 每次状态更新后检查 isFinite()。</p>
+            </div>
+        </section>
+
+        <footer style="text-align: center; padding: 20px; margin-top: 30px; color: #a4a4a4;">
+            <p>LNN验证方案 v1.0 | 螺丝咕姆签名</p>
+            <p>创建时间: 2024-05-30</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-type="flow">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 流程元数据 -->
+    <meta name="flow-id" content="flow_generate_html">
+    <meta name="flow-type" content="task">
+    <meta name="complexity" content="medium">
+    <meta name="created-by" content="system">
+    <meta name="created-at" content="2024-05-30T10:00:00Z">
+    <meta name="avg-duration" content="30s">
+    <meta name="success-rate" content="0.95">
+    <title>生成HTML页面 - 流程图谱</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; max-width: 900px; margin: 20px auto; padding: 20px; background: #f0f4f8; }
+        .flow { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .flow-header { border-bottom: 2px solid #3498db; padding-bottom: 15px; margin-bottom: 20px; }
+        .flow-meta { font-size: 0.85em; color: #666; }
+        .flow-id { background: #3498db; color: white; padding: 2px 8px; border-radius: 4px; }
+        section { margin: 25px 0; }
+        h2 { color: #3498db; font-size: 1.2em; border-left: 4px solid #3498db; padding-left: 10px; }
+        h3 { color: #2c3e50; font-size: 1.1em; margin: 10px 0; }
+        .step-list { list-style: none; padding: 0; counter-reset: step; }
+        .step { counter-increment: step; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; margin: 10px 0; position: relative; }
+        .step::before { content: counter(step); position: absolute; left: -15px; top: 15px; background: #3498db; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .step h3 { margin-left: 25px; }
+        .step p { margin-left: 25px; color: #666; }
+        .step a { margin-left: 25px; font-size: 0.9em; }
+        .decision { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin: 15px 0; }
+        .decision h3 { color: #856404; }
+        .branches { list-style: none; padding: 0; }
+        .branches li { margin: 8px 0; padding: 8px 15px; background: white; border-radius: 4px; }
+        .branches a { color: #3498db; }
+        a { color: #3498db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .knowledge-link { display: inline-block; background: #e8f4f8; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <article class="flow">
+        <!-- 流程标识 -->
+        <header class="flow-header">
+            <h1>📄 生成HTML页面</h1>
+            <p class="description">根据需求生成结构良好、语义正确的HTML页面</p>
+            <div class="flow-meta">
+                <span class="flow-id">flow_generate_html</span>
+                <span class="flow-type">任务流程</span>
+                <span class="complexity">中等复杂度</span>
+                <span class="success-rate">成功率: 95%</span>
+            </div>
+        </header>
+
+        <!-- 前置条件 -->
+        <section class="prerequisites">
+            <h2>前置条件</h2>
+            <ul>
+                <li>理解用户需求的能力</li>
+                <li>HTML基础知识: <a href="../concepts/domain/html/structure.html" class="knowledge-link">HTML结构</a></li>
+                <li>语义化标签知识: <a href="../concepts/domain/html/semantic.html" class="knowledge-link">语义化</a></li>
+            </ul>
+        </section>
+
+        <!-- 流程步骤 -->
+        <section class="steps">
+            <h2>执行步骤</h2>
+            <ol class="step-list">
+                <li class="step" data-step="1">
+                    <h3>理解需求</h3>
+                    <p>分析用户描述，确定需要生成的HTML页面类型和结构</p>
+                    <a href="../concepts/domain/html/structure.html" class="knowledge-link">需要知识: HTML结构</a>
+                </li>
+                <li class="step" data-step="2">
+                    <h3>规划结构</h3>
+                    <p>设计页面的DOM结构，选择合适的语义化标签</p>
+                    <a href="../concepts/domain/html/semantic.html" class="knowledge-link">需要知识: 语义化标签</a>
+                    <a href="../concepts/domain/html/dom.html" class="knowledge-link">需要知识: DOM模型</a>
+                </li>
+                <li class="step" data-step="3">
+                    <h3>编写HTML</h3>
+                    <p>根据结构设计，编写符合规范的HTML代码</p>
+                    <a href="../concepts/domain/html/syntax.html" class="knowledge-link">需要知识: HTML语法</a>
+                </li>
+                <li class="step" data-step="4">
+                    <h3>验证输出</h3>
+                    <p>检查HTML是否符合规范，确保标签正确闭合、属性有效</p>
+                </li>
+            </ol>
+        </section>
+
+        <!-- 决策点 -->
+        <section class="decisions">
+            <h2>决策点</h2>
+            <div class="decision" data-decision="d1">
+                <h3>❓ 是否需要内联样式？</h3>
+                <ul class="branches">
+                    <li>✅ 是 → <a href="./add_inline_style.html">添加内联样式流程</a></li>
+                    <li>❌ 否 → 继续下一步</li>
+                </ul>
+            </div>
+            <div class="decision" data-decision="d2">
+                <h3>❓ 是否需要JavaScript交互？</h3>
+                <ul class="branches">
+                    <li>✅ 是 → <a href="./add_javascript.html">添加JavaScript流程</a></li>
+                    <li>❌ 否 → 输出纯HTML</li>
+                </ul>
+            </div>
+            <div class="decision" data-decision="d3">
+                <h3>❓ 是否需要外部CSS文件？</h3>
+                <ul class="branches">
+                    <li>✅ 是 → <a href="./generate_css.html">生成CSS文件流程</a></li>
+                    <li>❌ 否 → 保持内联或无样式</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 输出结果 -->
+        <section class="output">
+            <h2>输出结果</h2>
+            <dl>
+                <dt>主要输出</dt>
+                <dd>HTML文件或代码片段</dd>
+                <dt>可选输出</dt>
+                <dd>CSS文件、JavaScript文件</dd>
+            </dl>
+        </section>
+
+        <!-- 相关流程 -->
+        <section class="related-flows">
+            <h2>相关流程</h2>
+            <ul>
+                <li>▸ <a href="./generate_css.html" rel="related">生成CSS样式</a></li>
+                <li>▸ <a href="./generate_js.html" rel="related">生成JavaScript</a></li>
+                <li>▸ <a href="./validate_html.html" rel="related">验证HTML规范</a></li>
+                <li>▸ <a href="./optimize_html.html" rel="related">优化HTML结构</a></li>
+            </ul>
+        </section>
+
+        <!-- 执行统计 -->
+        <section class="statistics" hidden>
+            <data name="exec-count" value="1523"></data>
+            <data name="success-count" value="1447"></data>
+            <data name="avg-duration-ms" value="28500"></data>
+        </section>
+    </article>
+</body>
+</html>

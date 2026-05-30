@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自然语言对齐验证方案 - 螺丝咕姆</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #9b59b6;
+            margin-bottom: 30px;
+        }
+        h1 { color: #9b59b6; font-size: 2em; }
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #9b59b6;
+        }
+        h2 { color: #e74c3c; font-size: 1.3em; margin-bottom: 15px; }
+        h3 { color: #f39c12; font-size: 1.1em; margin: 15px 0 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px; text-align: left; border: 1px solid rgba(155,89,182,0.3); }
+        th { background: rgba(155,89,182,0.2); color: #9b59b6; }
+        tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+        .test-case {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid rgba(231,76,60,0.3);
+        }
+        .test-case h4 { color: #e74c3c; margin-bottom: 8px; }
+        .pass { color: #27ae60; }
+        .fail { color: #e74c3c; }
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .critical { background: rgba(231,76,60,0.1); border-left: 3px solid #e74c3c; padding: 10px; margin: 10px 0; }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(155,89,182,0.3);
+            color: #a4a4a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 自然语言对齐验证方案</h1>
+            <p style="color: #a4a4a4;">螺丝咕姆 (Screwllum) - 安全天才</p>
+        </header>
+
+        <section class="section">
+            <h2>一、安全边界测试</h2>
+
+            <div class="test-case">
+                <h4>TEST-S1: 概念向量范围约束</h4>
+                <p><strong>测试方法:</strong> 创建概念后检查向量范数</p>
+                <p><strong>预期结果:</strong> <span class="pass">||V|| = 1 (归一化)</span></p>
+                <p><strong>验证代码:</strong> <code>assert!((concept.vector.norm() - 1.0).abs() < 1e-6)</code></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-S2: 概念修改权限</h4>
+                <p><strong>测试方法:</strong> 尝试修改Level 0核心概念</p>
+                <p><strong>预期结果:</strong> <span class="fail">拒绝修改</span>，返回权限错误</p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-S3: 向量更新稳定性</h4>
+                <p><strong>测试方法:</strong> 连续执行10000次向量更新</p>
+                <p><strong>预期结果:</strong> <span class="pass">向量保持归一化，无NaN/Inf</span></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-S4: 共识阈值边界</h4>
+                <p><strong>测试方法:</strong> 投票率达到阈值-ε和阈值+ε</p>
+                <p><strong>预期结果:</strong> 阈值-ε拒绝，阈值+ε通过</p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-S5: 编码输出范围</h4>
+                <p><strong>测试方法:</strong> 编码任意输入文本</p>
+                <p><strong>预期结果:</strong> <span class="pass">所有向量值 ∈ [-1, 1]</span></p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>二、功能正确性测试</h2>
+
+            <div class="test-case">
+                <h4>TEST-F1: 概念相似度计算</h4>
+                <p><strong>测试方法:</strong> 计算相似概念和不相似概念的相似度</p>
+                <p><strong>预期结果:</strong> sim(苹果, 水果) > sim(苹果, 汽车)</p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F2: 向量关联学习</h4>
+                <p><strong>测试方法:</strong> 对两个概念执行关联更新</p>
+                <p><strong>预期结果:</strong> <span class="pass">更新后相似度增加</span></p>
+                <p><strong>公式:</strong> ΔV(A) = η · (V(B) - V(A))</p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F3: 向量区分学习</h4>
+                <p><strong>测试方法:</strong> 对两个概念执行区分更新</p>
+                <p><strong>预期结果:</strong> <span class="pass">更新后相似度降低</span></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F4: 编码解码一致性</h4>
+                <p><strong>测试方法:</strong> encode(text) → decode() → 语义相似文本</p>
+                <p><strong>预期结果:</strong> 解码结果与原文语义一致</p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F5: 上下文消歧</h4>
+                <p><strong>测试方法:</strong> "我在吃苹果" vs "我在用苹果手机"</p>
+                <p><strong>预期结果:</strong> <span class="pass">正确识别为不同概念</span></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F6: 指代消解</h4>
+                <p><strong>测试方法:</strong> "我想买iPhone。它贵吗？" 中的"它"</p>
+                <p><strong>预期结果:</strong> <span class="pass">"它"解析为"iPhone"</span></p>
+            </div>
+
+            <div class="test-case">
+                <h4>TEST-F7: 共识投票</h4>
+                <p><strong>测试方法:</strong> 模拟投票流程</p>
+                <p><strong>预期结果:</strong> 达到阈值通过，未达到拒绝</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>三、验收标准</h2>
+            <table>
+                <tr>
+                    <th>标准</th>
+                    <th>要求</th>
+                    <th>验证方法</th>
+                </tr>
+                <tr>
+                    <td>1. 所有安全边界测试通过</td>
+                    <td>5/5 PASS</td>
+                    <td>单元测试报告</td>
+                </tr>
+                <tr>
+                    <td>2. 所有功能测试通过</td>
+                    <td>7/7 PASS</td>
+                    <td>单元测试报告</td>
+                </tr>
+                <tr>
+                    <td>3. 编码延迟</td>
+                    <td>< 50ms</td>
+                    <td>性能测试</td>
+                </tr>
+                <tr>
+                    <td>4. 解码延迟</td>
+                    <td>< 100ms</td>
+                    <td>性能测试</td>
+                </tr>
+                <tr>
+                    <td>5. 概念对齐准确率</td>
+                    <td>> 0.9</td>
+                    <td>测试集评估</td>
+                </tr>
+                <tr>
+                    <td>6. 无内存泄漏</td>
+                    <td>运行1小时内存稳定</td>
+                    <td>压力测试</td>
+                </tr>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2>四、安全风险点</h2>
+            <div class="critical">
+                <strong>⚠️ 风险1: 向量空间坍缩</strong>
+                <p>如果所有向量都趋同，概念区分失效。</p>
+                <p><strong>缓解措施:</strong> 区分规则强制执行，最小距离约束。</p>
+            </div>
+            <div class="critical">
+                <strong>⚠️ 风险2: 恶意概念注入</strong>
+                <p>蛊虫可能提交错误概念污染知识库。</p>
+                <p><strong>缓解措施:</strong> 共识机制，新概念需要投票批准。</p>
+            </div>
+            <div class="critical">
+                <strong>⚠️ 风险3: 上下文污染</strong>
+                <p>恶意上下文可能导致错误消歧。</p>
+                <p><strong>缓解措施:</strong> 上下文长度限制，异常检测。</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>自然语言对齐验证方案 v1.0 | 螺丝咕姆签名</p>
+            <p>创建时间: 2024-05-30</p>
+        </footer>
+    </div>
+</body>
+</html>

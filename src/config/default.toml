@@ -1,0 +1,111 @@
+# 万物生成器默认配置
+#
+# 所有系统参数都在此文件中定义
+# 修改此文件可以调整系统行为
+
+[concept]
+# 概念向量维度
+# - 128: 快速但精度较低
+# - 256: 平衡性能和精度（推荐）
+# - 512: 高精度但计算量大
+vector_dim = 256
+
+# 向量归一化阈值
+normalization_threshold = 1e-10
+
+# 继承扰动范围 [min, max]
+inheritance_perturbation_min = -0.05
+inheritance_perturbation_max = 0.05
+
+# 随机初始化范围 [min, max]
+random_init_range_min = -0.1
+random_init_range_max = 0.1
+
+# 相似度计算阈值
+similarity_threshold = 1e-10
+
+[learning]
+# 基础学习率
+# - 0.001: 非常保守
+# - 0.01: 标准学习率（推荐）
+# - 0.1: 激进，可能不稳定
+base_learning_rate = 0.01
+
+# 关联学习强度
+association_strength = 1.0
+
+# 区分学习强度
+differentiation_strength = 1.0
+
+# STDP时间窗口（毫秒）
+stdp_time_window_ms = 20.0
+
+# STDP长时程增强系数
+stdp_a_plus = 0.1
+
+# STDP长时程抑制系数
+stdp_a_minus = 0.12
+
+# STDP时间常数
+stdp_tau = 20.0
+
+# 学习率范围
+min_learning_rate = 0.0001
+max_learning_rate = 0.5
+
+[consensus]
+# 最小投票数
+min_votes = 3
+
+# 批准阈值
+approval_threshold = 0.6
+
+# 投票超时（秒）
+vote_timeout_secs = 3600
+
+# 各级别阈值
+system_core_threshold = 1.0
+basic_threshold = 0.9
+common_threshold = 0.7
+domain_threshold = 0.6
+temporary_threshold = 0.5
+
+[context]
+# 最大历史记录数
+max_history = 100
+
+# 会话超时（秒）
+session_timeout_secs = 1800
+
+# 任务优先级衰减率
+task_priority_decay = 0.1
+
+# 关系强度更新率
+relationship_update_rate = 0.05
+
+# 关系强度范围
+min_relationship_strength = 0.0
+max_relationship_strength = 1.0
+
+# 上下文向量维度
+context_vector_dim = 64
+
+[tokenizer]
+# 是否过滤空白符
+filter_whitespace = false
+
+# 是否过滤标点符号
+filter_punctuation = false
+
+# 是否识别数字
+recognize_numbers = true
+
+# 是否识别小数
+recognize_decimals = true
+
+# 中文字符Unicode范围
+chinese_char_start = 19968  # 0x4E00
+chinese_char_end = 40959    # 0x9FFF
+
+# 最大token长度
+max_token_length = 100
