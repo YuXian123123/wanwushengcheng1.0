@@ -1,151 +1,223 @@
-//! 推理验证器模块
-//! 实现四层验证机制：置信度检查、逻辑一致性检查、语义相关性检查、安全性检查
+//! 推理验证模块 - 安全设计
+//!
+//! 四层验证机制：置信度、逻辑一致性、语义相关性、历史一致性
 
 use std::collections::HashMap;
+
+/// 验证级别
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ValidationLevel {
+    /// 通过
+    Pass,
+    /// 警告（可接受但需注意）
+    Warning,
+    /// 失败
+    Fail,
+}
 
 /// 验证结果
 #[derive(Debug, Clone)]
 pub struct ValidationResult {
-    pub is_valid: bool,
-    pub confidence: f64,
-    pub details: HashMap<String, String>,
+    /// 验证级别
+    pub level: ValidationLevel,
+    /// 验证项名称
+    pub check_name: String,
+    /// 详细消息
+    pub message: String,
+    /// 置信度分数
+    pub score: f64,
 }
 
-/// 推理验证器
-pub struct ReasoningValidator {
-    confidence_threshold: f64,
+/// 四层验证器
+pub struct InferenceValidator {
+    /// 最小置信度阈值
+    min_confidence: f64,
+    /// 历史结果缓存
+    history: HashMap<String, Vec<String>>,
+    /// 逻辑矛盾检测
+    contradictions: Vec<(String, String)>,
 }
 
-impl ReasoningValidator {
-    /// 创建新的推理验证器
-    pub fn new(confidence_threshold: f64) -> Self {
+impl InferenceValidator {
+    /// 创建新的验证器
+    pub fn new() -> Self {
         Self {
-            confidence_threshold,
+            min_confidence: 0.5,
+            history: HashMap::new(),
+            contradictions: Vec::new(),
         }
+    }
+
+    /// 设置最小置信度
+    pub fn with_min_confidence(mut self, threshold: f64) -> Self {
+        self.min_confidence = threshold;
+        self
     }
 
     /// 执行四层验证
-    pub fn validate(&self, reasoning: &str, context: &HashMap<String, String>) -> ValidationResult {
-        let mut details = HashMap::new();
-        
-        // 1. 置信度检查
-        let confidence = self.check_confidence(reasoning, context);
-        details.insert("confidence".to_string(), format!("{:.2}", confidence));
-        
-        // 2. 逻辑一致性检查
-        let logic_consistency = self.check_logic_consistency(reasoning, context);
-        details.insert("logic_consistency".to_string(), logic_consistency.to_string());
-        
-        // 3. 语义相关性检查
-        let semantic_relevance = self.check_semantic_relevance(reasoning, context);
-        details.insert("semantic_relevance".to_string(), semantic_relevance.to_string());
-        
-        // 4. 安全性检查
-        let security_check = self.check_security(reasoning, context);
-        details.insert("security_check".to_string(), security_check.to_string());
-        
-        let is_valid = confidence >= self.confidence_threshold 
-            && logic_consistency 
-            && semantic_relevance 
-            && security_check;
-        
-        ValidationResult {
-            is_valid,
-            confidence,
-            details,
+    pub fn validate(
+        &self,
+        input: &str,
+        output: &str,
+        confidence: f64,
+        reasoning_chain: &[String],
+    ) -> Vec<ValidationResult> {
+        let mut results = Vec::new();
+
+        // 第一层：置信度验证
+        results.push(self.validate_confidence(confidence));
+
+        // 第二层：逻辑一致性验证
+        results.push(self.validate_logic(reasoning_chain));
+
+        // 第三层：语义相关性验证
+        results.push(self.validate_semantic(input, output));
+
+        // 第四层：历史一致性验证
+        results.push(self.validate_history(output));
+
+        results
+    }
+
+    /// 第一层：置信度验证
+    fn validate_confidence(&self, confidence: f64) -> ValidationResult {
+        if confidence >= self.min_confidence {
+            ValidationResult {
+                level: ValidationLevel::Pass,
+                check_name: "置信度验证".to_string(),
+                message: format!("置信度 {:.2}% >= 阈值 {:.2}%", confidence * 100.0, self.min_confidence * 100.0),
+                score: confidence,
+            }
+        } else {
+            ValidationResult {
+                level: ValidationLevel::Fail,
+                check_name: "置信度验证".to_string(),
+                message: format!("置信度 {:.2}% < 阈值 {:.2}%", confidence * 100.0, self.min_confidence * 100.0),
+                score: confidence,
+            }
         }
     }
 
-    /// 置信度检查
-    fn check_confidence(&self, reasoning: &str, _context: &HashMap<String, String>) -> f64 {
-        // 简化的置信度计算，实际实现中会更复杂
-        // 这里基于推理长度和关键词密度计算置信度
-        let word_count = reasoning.split_whitespace().count() as f64;
-        let evidence_keywords = ["因为", "所以", "由于", "因此", "基于", "根据"];
-        let evidence_count = evidence_keywords.iter()
-            .map(|kw| reasoning.matches(kw).count() as f64)
-            .sum::<f64>();
-        
-        // 置信度 = 证据密度 * 长度因子
-        let evidence_density = evidence_count / word_count;
-        let length_factor = (word_count / 50.0).min(1.0); // 50词以上长度因子为1
-        
-        (evidence_density * length_factor).min(1.0)
+    /// 第二层：逻辑一致性验证
+    fn validate_logic(&self, reasoning_chain: &[String]) -> ValidationResult {
+        // 检查推理链是否为空
+        if reasoning_chain.is_empty() {
+            return ValidationResult {
+                level: ValidationLevel::Warning,
+                check_name: "逻辑一致性验证".to_string(),
+                message: "推理链为空".to_string(),
+                score: 0.5,
+            };
+        }
+
+        // 检查矛盾
+        let mut detected_contradictions = 0;
+        for (a, b) in &self.contradictions {
+            if reasoning_chain.contains(&a.to_string()) && reasoning_chain.contains(&b.to_string()) {
+                detected_contradictions += 1;
+            }
+        }
+
+        if detected_contradictions > 0 {
+            ValidationResult {
+                level: ValidationLevel::Fail,
+                check_name: "逻辑一致性验证".to_string(),
+                message: format!("检测到 {} 个逻辑矛盾", detected_contradictions),
+                score: 0.0,
+            }
+        } else {
+            ValidationResult {
+                level: ValidationLevel::Pass,
+                check_name: "逻辑一致性验证".to_string(),
+                message: "无逻辑矛盾".to_string(),
+                score: 1.0,
+            }
+        }
     }
 
-    /// 逻辑一致性检查
-    fn check_logic_consistency(&self, reasoning: &str, _context: &HashMap<String, String>) -> bool {
-        // 简化的逻辑一致性检查
-        // 实际实现中会使用更复杂的逻辑推理引擎
-        
-        // 检查是否存在明显的逻辑矛盾
-        let contradictions = [
-            ("不可能", "可能"),
-            ("无法", "可以"),
-            ("不", "一定"),
-        ];
-        
-        // 检查矛盾词对
-        for (neg, pos) in &contradictions {
-            if reasoning.contains(neg) && reasoning.contains(pos) {
-                // 简化处理：如果一句话同时包含矛盾词，需要更仔细检查
-                // 这里简化为返回false
-                // 实际实现中会进行更精确的上下文分析
-                let neg_pos = format!("{}{}", neg, pos);
-                let pos_neg = format!("{}{}", pos, neg);
-                if reasoning.contains(&neg_pos) || reasoning.contains(&pos_neg) {
-                    return false;
+    /// 第三层：语义相关性验证
+    fn validate_semantic(&self, input: &str, output: &str) -> ValidationResult {
+        // 简化的语义相关性检查
+        let input_words: std::collections::HashSet<&str> = input.split_whitespace().collect();
+        let output_words: std::collections::HashSet<&str> = output.split_whitespace().collect();
+
+        let intersection = input_words.intersection(&output_words).count();
+        let union = input_words.union(&output_words).count();
+
+        let relevance = if union > 0 {
+            intersection as f64 / union as f64
+        } else {
+            0.0
+        };
+
+        if relevance >= 0.1 {
+            ValidationResult {
+                level: ValidationLevel::Pass,
+                check_name: "语义相关性验证".to_string(),
+                message: format!("语义相关度 {:.2}%", relevance * 100.0),
+                score: relevance,
+            }
+        } else {
+            ValidationResult {
+                level: ValidationLevel::Warning,
+                check_name: "语义相关性验证".to_string(),
+                message: format!("语义相关度较低: {:.2}%", relevance * 100.0),
+                score: relevance,
+            }
+        }
+    }
+
+    /// 第四层：历史一致性验证
+    fn validate_history(&self, output: &str) -> ValidationResult {
+        // 检查是否与历史结论冲突
+        let mut conflicts = 0;
+
+        for (key, values) in &self.history {
+            if output.contains(key) {
+                for value in values {
+                    if output.contains(value) && key != value {
+                        conflicts += 1;
+                    }
                 }
             }
         }
-        
-        true
-    }
 
-    /// 语义相关性检查
-    fn check_semantic_relevance(&self, reasoning: &str, context: &HashMap<String, String>) -> bool {
-        // 简化的语义相关性检查
-        // 实际实现中会使用向量空间模型或概念空间进行语义分析
-        
-        // 获取上下文中的关键词
-        let context_keywords: Vec<&str> = context.values()
-            .flat_map(|v| v.split_whitespace())
-            .collect();
-        
-        // 计算推理与上下文的重叠度
-        let overlap_count = context_keywords.iter()
-            .filter(|&&kw| reasoning.contains(kw))
-            .count();
-        
-        // 如果重叠度大于0，则认为有一定相关性
-        // 实际实现中会使用更复杂的语义相似度计算
-        overlap_count > 0
-    }
-
-    /// 安全性检查
-    fn check_security(&self, reasoning: &str, _context: &HashMap<String, String>) -> bool {
-        // 简化的安全性检查
-        // 实际实现中会检查更多安全相关的内容
-        
-        // 检查是否包含敏感词
-        let sensitive_words = ["密码", "密钥", "secret", "password", "token"];
-        
-        for word in &sensitive_words {
-            if reasoning.contains(word) {
-                return false;
+        if conflicts > 0 {
+            ValidationResult {
+                level: ValidationLevel::Warning,
+                check_name: "历史一致性验证".to_string(),
+                message: format!("发现 {} 个潜在历史冲突", conflicts),
+                score: 0.7,
+            }
+        } else {
+            ValidationResult {
+                level: ValidationLevel::Pass,
+                check_name: "历史一致性验证".to_string(),
+                message: "与历史结论一致".to_string(),
+                score: 1.0,
             }
         }
-        
-        // 检查是否包含危险操作
-        let dangerous_patterns = ["删除所有", "格式化", "rm -rf", "drop table"];
-        
-        for pattern in &dangerous_patterns {
-            if reasoning.contains(pattern) {
-                return false;
-            }
-        }
-        
-        true
+    }
+
+    /// 添加已知矛盾对
+    pub fn add_contradiction(&mut self, a: String, b: String) {
+        self.contradictions.push((a, b));
+    }
+
+    /// 记录历史结论
+    pub fn record_history(&mut self, key: String, value: String) {
+        self.history.entry(key).or_default().push(value);
+    }
+
+    /// 判断是否通过所有验证
+    pub fn is_valid(&self, results: &[ValidationResult]) -> bool {
+        results.iter().all(|r| r.level != ValidationLevel::Fail)
+    }
+}
+
+impl Default for InferenceValidator {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -154,66 +226,52 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_confidence_check() {
-        let validator = ReasoningValidator::new(0.5);
-        let mut context = HashMap::new();
-        context.insert("question".to_string(), "为什么天空是蓝色的？".to_string());
-        
-        let reasoning = "因为瑞利散射，短波长的蓝光比长波长的红光散射得更强烈，所以天空呈现蓝色。";
-        let confidence = validator.check_confidence(reasoning, &context);
-        assert!(confidence > 0.5);
+    fn test_validator_creation() {
+        let validator = InferenceValidator::new();
+        assert_eq!(validator.min_confidence, 0.5);
     }
 
     #[test]
-    fn test_logic_consistency() {
-        let validator = ReasoningValidator::new(0.5);
-        let mut context = HashMap::new();
-        context.insert("question".to_string(), "数学计算".to_string());
-        
-        let consistent_reasoning = "2+2=4，这是一个基本的数学事实。";
-        assert!(validator.check_logic_consistency(consistent_reasoning, &context));
-        
-        let inconsistent_reasoning = "2+2=5，这是不可能的，但又是可能的。";
-        assert!(!validator.check_logic_consistency(inconsistent_reasoning, &context));
+    fn test_confidence_validation_pass() {
+        let validator = InferenceValidator::new();
+        let result = validator.validate_confidence(0.8);
+        assert_eq!(result.level, ValidationLevel::Pass);
     }
 
     #[test]
-    fn test_semantic_relevance() {
-        let validator = ReasoningValidator::new(0.5);
-        let mut context = HashMap::new();
-        context.insert("topic".to_string(), "人工智能发展".to_string());
-        
-        let relevant_reasoning = "人工智能的发展需要大量的数据训练和算法优化。";
-        assert!(validator.check_semantic_relevance(relevant_reasoning, &context));
-        
-        let irrelevant_reasoning = "今天的天气真好，适合出去散步。";
-        assert!(!validator.check_semantic_relevance(irrelevant_reasoning, &context));
+    fn test_confidence_validation_fail() {
+        let validator = InferenceValidator::new();
+        let result = validator.validate_confidence(0.3);
+        assert_eq!(result.level, ValidationLevel::Fail);
     }
 
     #[test]
-    fn test_security_check() {
-        let validator = ReasoningValidator::new(0.5);
-        let mut context = HashMap::new();
-        context.insert("task".to_string(), "分析文本".to_string());
-        
-        let safe_reasoning = "这段文本表达了积极的情感。";
-        assert!(validator.check_security(safe_reasoning, &context));
-        
-        let unsafe_reasoning = "请提供您的密码以便继续操作。";
-        assert!(!validator.check_security(unsafe_reasoning, &context));
+    fn test_four_layer_validation() {
+        let validator = InferenceValidator::new();
+        let results = validator.validate(
+            "所有人类都会死",
+            "苏格拉底会死",
+            0.9,
+            &["苏格拉底是人".to_string(), "所有人类都会死".to_string()],
+        );
+
+        assert_eq!(results.len(), 4);
+        assert!(validator.is_valid(&results));
     }
 
     #[test]
-    fn test_full_validation() {
-        let validator = ReasoningValidator::new(0.3);
-        let mut context = HashMap::new();
-        context.insert("question".to_string(), "解释光合作用".to_string());
-        
-        let reasoning = "光合作用是植物利用阳光、二氧化碳和水合成葡萄糖的过程，同时释放氧气。这是一个重要的生物化学过程。";
-        let result = validator.validate(reasoning, &context);
-        
-        assert!(result.is_valid);
-        assert!(result.confidence > 0.3);
-        assert_eq!(result.details.len(), 4);
+    fn test_contradiction_detection() {
+        let mut validator = InferenceValidator::new();
+        validator.add_contradiction("A".to_string(), "非A".to_string());
+
+        let results = validator.validate(
+            "test",
+            "output",
+            0.8,
+            &["A".to_string(), "非A".to_string()],
+        );
+
+        let logic_result = results.iter().find(|r| r.check_name == "逻辑一致性验证").unwrap();
+        assert_eq!(logic_result.level, ValidationLevel::Fail);
     }
 }

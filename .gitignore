@@ -33,3 +33,16 @@ coverage/
 
 # Claude Code 工作目录
 .claude/
+
+# Large files
+chrome/
+data/embeddings/
+*.bin
+*.dll
+*.exe
+
+# Node.js
+node_modules/
+web/.vite/
+web/dist/
+
