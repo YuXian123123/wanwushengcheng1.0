@@ -7,6 +7,7 @@ mod types;
 mod space;
 mod learning;
 
-pub use types::{Concept, ConceptId, ConceptVector, ConceptLevel, ConceptRelation, ConsensusStatus, VECTOR_DIM};
+pub use types::{Concept, ConceptId, ConceptVector, ConceptLevel, ConceptRelation, ConsensusStatus};
+// VECTOR_DIM 已废弃，请使用 ConceptConfig::vector_dim()
 pub use space::ConceptSpace;
 pub use learning::VectorLearningRules;

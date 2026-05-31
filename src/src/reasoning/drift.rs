@@ -67,7 +67,7 @@ impl VectorDriftDetector {
     /// 注册锚点向量
     pub fn register_anchor(&mut self, concept_id: String, vector: Vec<f64>) {
         self.anchors.insert(concept_id.clone(), vector.clone());
-        self.current.insert(concept_id, vector);
+        self.current.insert(concept_id.clone(), vector);
         self.elastic_coefficients.insert(concept_id, 1.0);
     }
 

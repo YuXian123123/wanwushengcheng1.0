@@ -113,15 +113,22 @@ impl SimilarityDetector {
 
     /// 计算内容哈希（简化版本）
     fn hash_content(&self, content: &str) -> String {
-        // 简化的内容哈希：使用字符频率分布
+        // 使用所有字节的频率分布生成哈希
         let mut freq = vec![0u32; 256];
         for b in content.bytes() {
             freq[b as usize] += 1;
         }
-        // 取前32个字节的频率作为哈希
-        freq[..32].iter()
-            .map(|&f| format!("{:02x}", f % 256))
-            .collect()
+
+        // 使用更多字节位置来生成哈希（取均匀分布的位置）
+        let mut hash_parts = Vec::new();
+        for i in 0..32 {
+            // 从不同位置采样，覆盖整个字节范围
+            let idx1 = (i * 8) % 256;
+            let idx2 = (i * 8 + 128) % 256;  // 从后半部分也采样
+            let combined = (freq[idx1] + freq[idx2]) % 256;
+            hash_parts.push(format!("{:02x}", combined));
+        }
+        hash_parts.join("")
     }
 
     /// 计算最大相似度: Sim = cosine_similarity(content, history)
@@ -204,7 +211,8 @@ mod tests {
         let history = vec![detector.hash_content(content)];
 
         let result = detector.detect(content, &history, &sender_history);
-        assert!(result.score > 0.9);
+        // 相同内容的哈希相同，余弦相似度应该接近 1.0
+        assert!(result.score > 0.9, "Similarity score {} should be > 0.9", result.score);
         assert!(result.is_violation);
     }
 

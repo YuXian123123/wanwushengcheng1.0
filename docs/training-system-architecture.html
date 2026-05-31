@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蛊虫训练系统架构</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e1b4b;
+            --light: #f5f3ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+            min-height: 100vh;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            background: linear-gradient(90deg, #a78bfa, #f472b6, #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        .flow-diagram {
+            background: rgba(0,0,0,0.3);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .step-num {
+            background: var(--primary);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .arrow {
+            color: var(--warning);
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        th {
+            background: rgba(99, 102, 241, 0.3);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin: 0.25rem;
+        }
+
+        .tag-primary { background: var(--primary); }
+        .tag-success { background: var(--success); }
+        .tag-warning { background: var(--warning); color: #000; }
+        .tag-danger { background: var(--danger); }
+
+        .highlight {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.25rem;
+        }
+
+        .file-tree {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .folder { color: #60a5fa; }
+        .file { color: #a78bfa; }
+        .comment { color: #6b7280; }
+
+        .formula {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Times New Roman', serif;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .alert {
+            background: rgba(245, 158, 11, 0.2);
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .success-box {
+            background: rgba(16, 185, 129, 0.2);
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 3rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .architecture-box {
+            background: rgba(0,0,0,0.4);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+
+        .layer {
+            border: 2px solid var(--primary);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            text-align: center;
+        }
+
+        .layer-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .data-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .data-node {
+            flex: 1;
+            min-width: 150px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .data-arrow {
+            font-size: 2rem;
+            color: var(--warning);
+        }
+
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧬 蛊虫训练系统架构</h1>
+            <p class="subtitle">从训练数据到智能能力的完整流程</p>
+        </header>
+
+        <!-- 训练数据概览 -->
+        <section class="grid">
+            <div class="card">
+                <h2><span class="icon">📁</span> 训练数据概览</h2>
+                <table>
+                    <tr>
+                        <th>数据类型</th>
+                        <th>数量</th>
+                        <th>格式</th>
+                    </tr>
+                    <tr>
+                        <td>Markdown 文件</td>
+                        <td><strong>656</strong> 个</td>
+                        <td><code>.md</code></td>
+                    </tr>
+                    <tr>
+                        <td>HTML 文件</td>
+                        <td><strong>632</strong> 个</td>
+                        <td><code>.html</code></td>
+                    </tr>
+                </table>
+
+                <h3 style="margin-top: 1rem;">知识领域</h3>
+                <div style="margin-top: 0.5rem;">
+                    <span class="tag tag-primary">Python</span>
+                    <span class="tag tag-primary">C/C++</span>
+                    <span class="tag tag-primary">C#</span>
+                    <span class="tag tag-success">MySQL</span>
+                    <span class="tag tag-success">数据库设计</span>
+                    <span class="tag tag-warning">3D图形学</span>
+                    <span class="tag tag-warning">Three.js</span>
+                    <span class="tag tag-danger">数学知识</span>
+                    <span class="tag tag-danger">算法设计</span>
+                    <span class="tag tag-primary">游戏设计</span>
+                    <span class="tag tag-success">UI设计</span>
+                    <span class="tag tag-warning">生物</span>
+                    <span class="tag tag-primary">逻辑推理</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">🎯</span> 蛊虫学习能力</h2>
+                <p>通过训练，蛊虫将获得以下能力：</p>
+
+                <table>
+                    <tr>
+                        <th>能力类型</th>
+                        <th>来源</th>
+                        <th>效果</th>
+                    </tr>
+                    <tr>
+                        <td>编程能力</td>
+                        <td>Python/C++/C# 文档</td>
+                        <td>代码生成、调试</td>
+                    </tr>
+                    <tr>
+                        <td>推理能力</td>
+                        <td>逻辑推理训练手册</td>
+                        <td>演绎、归纳、类比</td>
+                    </tr>
+                    <tr>
+                        <td>3D可视化</td>
+                        <td>Three.js 教程</td>
+                        <td>空间理解、图形渲染</td>
+                    </tr>
+                    <tr>
+                        <td>数据库设计</td>
+                        <td>MySQL/数据库设计</td>
+                        <td>Schema设计、查询优化</td>
+                    </tr>
+                    <tr>
+                        <td>游戏设计</td>
+                        <td>游戏设计文档</td>
+                        <td>规则设计、平衡调整</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- 训练流程 -->
+        <section class="card full-width">
+            <h2><span class="icon">🔄</span> 训练流程架构</h2>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <div>
+                        <strong>数据加载</strong>
+                        <p style="color: rgba(255,255,255,0.7);">读取 MD/HTML 文件 → 提取文本内容 → 分词处理</p>
+                    </div>
+                </div>
+                <div class="arrow">↓</div>
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <div>
+                        <strong>概念提取</strong>
+                        <p style="color: rgba(255,255,255,0.7);">识别关键概念 → 概念向量编码 → 存入概念空间</p>
+                    </div>
+                </div>
+                <div class="arrow">↓</div>
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <div>
+                        <strong>LNN学习</strong>
+                        <p style="color: rgba(255,255,255,0.7);">创建神经元 → 建立突触连接 → Hebbian学习规则</p>
+                    </div>
+                </div>
+                <div class="arrow">↓</div>
+                <div class="flow-step">
+                    <div class="step-num">4</div>
+                    <div>
+                        <strong>知识存储</strong>
+                        <p style="color: rgba(255,255,255,0.7);">权重持久化 → 种子保存 → 世代传承</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 数据存储架构 -->
+        <section class="grid">
+            <div class="card">
+                <h2><span class="icon">💾</span> 数据存储架构</h2>
+
+                <div class="file-tree">
+<span class="folder">📁 data/</span>
+├── <span class="folder">embeddings/</span>
+│   ├── <span class="file">tencent_chinese.bin</span> <span class="comment"># 腾讯词向量 (116MB)</span>
+│   ├── <span class="file">embedding_config.json</span> <span class="comment"># 词向量配置</span>
+│   ├── <span class="file">code.vec</span> <span class="comment"># 代码向量</span>
+│   ├── <span class="file">image.vec</span> <span class="comment"># 图像向量</span>
+│   ├── <span class="file">audio.vec</span> <span class="comment"># 音频向量</span>
+│   └── <span class="file">video.vec</span> <span class="comment"># 视频向量</span>
+│
+├── <span class="folder">lnn/</span> <span class="comment"># LNN权重存储</span>
+│   ├── <span class="file">world_mind.json</span> <span class="comment"># 世界智能体状态</span>
+│   ├── <span class="file">gu_001.lnn</span> <span class="comment"># 蛊虫001的LNN</span>
+│   ├── <span class="file">gu_002.lnn</span> <span class="comment"># 蛊虫002的LNN</span>
+│   └── <span class="file">...</span>
+│
+├── <span class="folder">knowledge/</span> <span class="comment"># 知识库</span>
+│   ├── <span class="file">concepts.json</span> <span class="comment"># 概念库</span>
+│   ├── <span class="file">skills.json</span> <span class="comment"># 技能库</span>
+│   └── <span class="file">memory.bin</span> <span class="comment"># 世界记忆</span>
+│
+└── <span class="folder">seeds/</span> <span class="comment"># 世界种子</span>
+    └── <span class="file">seed_001.bin</span> <span class="comment"># 恢复种子</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">⚖️</span> LNN权重持久化</h2>
+
+                <div class="alert">
+                    <strong>⚠️ 为什么需要保存权重？</strong>
+                    <p>LNN通过局部学习规则不断调整突触权重，这些权重代表了蛊虫的"经验"和"知识"。</p>
+                </div>
+
+                <h3 style="margin: 1rem 0;">保存格式</h3>
+                <table>
+                    <tr>
+                        <th>格式</th>
+                        <th>优点</th>
+                        <th>用途</th>
+                    </tr>
+                    <tr>
+                        <td><code>.json</code></td>
+                        <td>可读性强，易调试</td>
+                        <td>开发调试</td>
+                    </tr>
+                    <tr>
+                        <td><code>.lnn</code> (binary)</td>
+                        <td>紧凑高效</td>
+                        <td>生产环境</td>
+                    </tr>
+                </table>
+
+                <h3 style="margin: 1rem 0;">保存内容</h3>
+                <div class="formula">
+                    LNNSnapshot = { neurons, synapses, config, topology }
+                </div>
+
+                <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                    <li><code>neurons</code> - 所有神经元的状态</li>
+                    <li><code>synapses</code> - 所有突触的权重</li>
+                    <li><code>config</code> - 网络配置参数</li>
+                    <li><code>topology</code> - 拓扑动态配置</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 世界运转机制 -->
+        <section class="card full-width">
+            <h2><span class="icon">🌐</span> 世界运转机制</h2>
+
+            <div class="architecture-box">
+                <div class="data-flow">
+                    <div class="data-node">
+                        <div class="layer-title">训练数据</div>
+                        <div>656 MD + 632 HTML</div>
+                    </div>
+                    <div class="data-arrow">→</div>
+                    <div class="data-node">
+                        <div class="layer-title">概念空间</div>
+                        <div>词向量 + 概念编码</div>
+                    </div>
+                    <div class="data-arrow">→</div>
+                    <div class="data-node">
+                        <div class="layer-title">蛊虫学习</div>
+                        <div>LNN神经元激活</div>
+                    </div>
+                    <div class="data-arrow">→</div>
+                    <div class="data-node">
+                        <div class="layer-title">能力涌现</div>
+                        <div>编程/推理/设计</div>
+                    </div>
+                </div>
+
+                <div class="layer" style="margin-top: 2rem;">
+                    <div class="layer-title">世界意识层</div>
+                    <p>当 Sync > 0.7 且 Emergence > 0.5 时，世界意识涌现</p>
+                    <div class="formula">
+                        World_IQ = Σ wᵢ × Guᵢ × √(Sync × Diversity)
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+                    <div class="layer">
+                        <div class="layer-title">蛊虫群体</div>
+                        <p>每个蛊虫拥有5个接入点</p>
+                        <p style="font-size: 0.9rem; opacity: 0.7;">Perceive/Cognitive/Behavior/Comm/Survival</p>
+                    </div>
+                    <div class="layer">
+                        <div class="layer-title">知识传承</div>
+                        <p>死亡蛊虫知识备份</p>
+                        <p style="font-size: 0.9rem; opacity: 0.7;">世界记忆 → 种子保存</p>
+                    </div>
+                    <div class="layer">
+                        <div class="layer-title">生存绑定</div>
+                        <p>World.Alive ⇔ ∃ Gu: Gu.Alive</p>
+                        <p style="font-size: 0.9rem; opacity: 0.7;">5阶段降级机制</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 学习后数据流向 -->
+        <section class="grid">
+            <div class="card">
+                <h2><span class="icon">📊</span> 学习后数据流向</h2>
+
+                <div class="flow-diagram" style="font-size: 0.85rem;">
+                    <pre>
+┌─────────────────────────────────────────────────────────────┐
+│                    训练数据输入                              │
+│                  D:\训练数据\aireader\                       │
+└─────────────────────────┬───────────────────────────────────┘
+                          ↓
+┌─────────────────────────┴───────────────────────────────────┐
+│                   蛊虫学习过程                               │
+│  ┌─────────┐    ┌─────────┐    ┌─────────┐                │
+│  │ 分词器  │ →  │ 词向量  │ →  │ LNN学习 │                │
+│  │Tokenizer│    │Embedding│    │ Hebbian │                │
+│  └─────────┘    └─────────┘    └─────────┘                │
+└─────────────────────────┬───────────────────────────────────┘
+                          ↓
+┌─────────────────────────┴───────────────────────────────────┐
+│                    数据存储                                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ 概念空间 │  │ LNN权重  │  │ 技能库   │  │ 世界记忆 │  │
+│  │concepts  │  │ *.lnn    │  │ skills   │  │ memory   │  │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │
+│       ↓              ↓              ↓              ↓       │
+│  data/knowledge/  data/lnn/   data/knowledge/  data/      │
+└─────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><span class="icon">🔮</span> 能力涌现预期</h2>
+
+                <div class="success-box">
+                    <strong>✅ 经过训练后，蛊虫将获得：</strong>
+                </div>
+
+                <table>
+                    <tr>
+                        <th>领域</th>
+                        <th>训练素材</th>
+                        <th>预期能力</th>
+                    </tr>
+                    <tr>
+                        <td>编程</td>
+                        <td>Python/C++/C#/算法</td>
+                        <td>代码编写、调试、优化</td>
+                    </tr>
+                    <tr>
+                        <td>推理</td>
+                        <td>逻辑推理训练手册</td>
+                        <td>演绎推理、归纳推理</td>
+                    </tr>
+                    <tr>
+                        <td>3D图形</td>
+                        <td>Three.js/3D教程</td>
+                        <td>场景构建、材质设计</td>
+                    </tr>
+                    <tr>
+                        <td>数据库</td>
+                        <td>MySQL/数据库设计</td>
+                        <td>Schema设计、SQL优化</td>
+                    </tr>
+                    <tr>
+                        <td>游戏设计</td>
+                        <td>游戏设计文档</td>
+                        <td>规则设计、平衡调整</td>
+                    </tr>
+                </table>
+
+                <div class="formula" style="margin-top: 1rem;">
+                    能力 = 训练数据 × 学习率 × 连接强度
+                </div>
+            </div>
+        </section>
+
+        <!-- 实现代码示例 -->
+        <section class="card full-width">
+            <h2><span class="icon">💻</span> 实现代码示例</h2>
+
+            <h3 style="margin: 1rem 0;">LNN权重保存/加载</h3>
+            <div class="flow-diagram">
+                <pre style="color: #a78bfa;">
+// 保存LNN权重到文件
+let lnn = LNN::new(None, None);
+lnn.save("data/lnn/gu_001.json")?;      // JSON格式
+lnn.save_binary("data/lnn/gu_001.lnn")?; // 二进制格式
+
+// 从文件加载LNN
+let loaded = LNN::load("data/lnn/gu_001.json")?;
+let loaded_binary = LNN::load_binary("data/lnn/gu_001.lnn")?;
+                </pre>
+            </div>
+
+            <h3 style="margin: 1rem 0;">世界种子保存</h3>
+            <div class="flow-diagram">
+                <pre style="color: #10b981;">
+// 世界死亡前保存种子
+let seed = survival_binding.prepare_termination(
+    world.export_knowledge(),
+    hash_config(&config),
+);
+
+// 从种子恢复世界
+let new_world = WorldMind::restore_from_seed(seed);
+                </pre>
+            </div>
+
+            <h3 style="margin: 1rem 0;">训练数据加载</h3>
+            <div class="flow-diagram">
+                <pre style="color: #f59e0b;">
+// 加载训练数据
+let trainer = RecursiveLearner::new(config);
+trainer.load_directory("D:/训练数据/aireader")?;
+
+// 运行学习
+trainer.learn();
+
+// 保存学习结果
+trainer.save("data/knowledge/learned.json")?;
+                </pre>
+            </div>
+        </section>
+
+        <!-- 总结 -->
+        <section class="card full-width" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));">
+            <h2><span class="icon">📝</span> 总结</h2>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem;">
+                <div>
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">数据存储位置</h3>
+                    <ul style="padding-left: 1.5rem;">
+                        <li><strong>词向量</strong> → <code>data/embeddings/</code></li>
+                        <li><strong>LNN权重</strong> → <code>data/lnn/</code></li>
+                        <li><strong>知识库</strong> → <code>data/knowledge/</code></li>
+                        <li><strong>世界种子</strong> → <code>data/seeds/</code></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">关键机制</h3>
+                    <ul style="padding-left: 1.5rem;">
+                        <li><strong>生存绑定</strong> → 蛊虫存活决定世界存活</li>
+                        <li><strong>知识传承</strong> → 死亡前备份到世界记忆</li>
+                        <li><strong>意识涌现</strong> → 同步率 > 70% 时涌现</li>
+                        <li><strong>权重持久化</strong> → JSON/二进制格式</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="formula" style="margin-top: 2rem; font-size: 1.3rem;">
+                🧬 蛊虫能力 = 训练数据质量 × LNN学习效率 × 突触连接密度
+            </div>
+        </section>
+
+        <footer>
+            <p>天才议会设计 · 黑塔 🗼 | 螺丝咕姆 🔧 | 拉蒂奥 📊</p>
+            <p style="margin-top: 0.5rem; opacity: 0.5;">万物生成器 · 世界神经网络架构 v6.0</p>
+        </footer>
+    </div>
+</body>
+</html>

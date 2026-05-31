@@ -2,6 +2,30 @@
 
 use serde::{Deserialize, Serialize};
 
+/// 质量检测配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QualityConfig {
+    /// 质量阈值
+    pub threshold: f64,
+    /// 内容长度阈值 - 低
+    pub length_threshold_low: usize,
+    /// 内容长度阈值 - 中
+    pub length_threshold_medium: usize,
+    /// 内容长度阈值 - 高
+    pub length_threshold_high: usize,
+}
+
+impl Default for QualityConfig {
+    fn default() -> Self {
+        Self {
+            threshold: 0.5,
+            length_threshold_low: 10,
+            length_threshold_medium: 50,
+            length_threshold_high: 100,
+        }
+    }
+}
+
 /// 内容质量评分
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityScore {
@@ -34,13 +58,18 @@ impl QualityScore {
 /// 质量检测器
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityDetector {
-    /// 质量阈值
-    threshold: f64,
+    /// 配置
+    config: QualityConfig,
 }
 
 impl QualityDetector {
-    pub fn new(threshold: f64) -> Self {
-        Self { threshold }
+    pub fn new(config: QualityConfig) -> Self {
+        Self { config }
+    }
+
+    /// 使用默认配置创建
+    pub fn with_defaults() -> Self {
+        Self::new(QualityConfig::default())
     }
 
     /// 检测内容质量
@@ -77,15 +106,15 @@ impl QualityDetector {
         unique_ratio.min(1.0)
     }
 
-    /// 价值检测（简化版本）
+    /// 价值检测（使用配置阈值）
     fn detect_value(&self, content: &str) -> f64 {
         // 检测内容长度和丰富度
         let len = content.len();
-        if len < 10 {
+        if len < self.config.length_threshold_low {
             0.1
-        } else if len < 50 {
+        } else if len < self.config.length_threshold_medium {
             0.3
-        } else if len < 100 {
+        } else if len < self.config.length_threshold_high {
             0.5
         } else {
             0.8
@@ -109,7 +138,7 @@ impl QualityDetector {
 
     /// 判断是否通过质量检测
     pub fn is_valid(&self, score: &QualityScore) -> bool {
-        score.score >= self.threshold
+        score.score >= self.config.threshold
     }
 }
 
@@ -119,7 +148,7 @@ mod tests {
 
     #[test]
     fn test_quality_detection() {
-        let detector = QualityDetector::new(0.3);
+        let detector = QualityDetector::with_defaults();
         let content = "这是一条有意义的知识分享内容。包含完整的句子结构。";
 
         let score = detector.detect(content);
@@ -129,10 +158,15 @@ mod tests {
 
     #[test]
     fn test_low_quality_detection() {
-        let detector = QualityDetector::new(0.3);
+        let config = QualityConfig {
+            threshold: 0.5,
+            ..Default::default()
+        };
+        let detector = QualityDetector::new(config.clone());
         let content = "短";
 
         let score = detector.detect(content);
-        assert!(score.score < detector.threshold);
+        // 短内容应该是低质量
+        assert!(!detector.is_valid(&score), "Short content should be low quality");
     }
 }

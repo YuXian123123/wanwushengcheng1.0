@@ -205,6 +205,8 @@ pub enum EffectResult {
 mod tests {
     use super::*;
     use std::time::Duration;
+    use crate::creature::ResourceCost;
+    use crate::creature::ResourceType;
 
     #[test]
     fn test_creature_creation() {

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>世界神经网络架构 - 交互式可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0c0c1e 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #00d4ff, #7b2fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section h2 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        /* 接入点卡片 */
+        .access-points {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .ap-card {
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .ap-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .ap-card.perceive { background: linear-gradient(135deg, #1e3a5f, #2d5a87); border: 2px solid #3498db; }
+        .ap-card.cognitive { background: linear-gradient(135deg, #4a1e5f, #6b2d87); border: 2px solid #9b59b6; }
+        .ap-card.behavior { background: linear-gradient(135deg, #1e5f3a, #2d8754); border: 2px solid #2ecc71; }
+        .ap-card.comm { background: linear-gradient(135deg, #5f4a1e, #876b2d); border: 2px solid #f39c12; }
+        .ap-card.survival { background: linear-gradient(135deg, #5f1e1e, #872d2d); border: 2px solid #e74c3c; }
+
+        .ap-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .ap-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .ap-weight {
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .ap-desc {
+            font-size: 0.85em;
+            margin-top: 10px;
+            color: #bbb;
+        }
+
+        /* 公式展示 */
+        .formula-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            border-left: 4px solid #00d4ff;
+            overflow-x: auto;
+        }
+
+        .formula-box code {
+            color: #7fdbff;
+        }
+
+        /* 流程图 */
+        .diagram-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        /* 特性表格 */
+        .feature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .feature-table th, .feature-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-table th {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        .feature-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* 状态指示器 */
+        .status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+        }
+
+        .status.done { background: #27ae60; color: white; }
+        .status.progress { background: #f39c12; color: black; }
+        .status.planned { background: #7f8c8d; color: white; }
+
+        /* 设计团队 */
+        .team-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .team-card {
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .team-card.heita { background: linear-gradient(135deg, #2c1810, #4a2c1a); border: 2px solid #e67e22; }
+        .team-card.screwllum { background: linear-gradient(135deg, #102c18, #1a4a2c); border: 2px solid #27ae60; }
+        .team-card.latio { background: linear-gradient(135deg, #1a102c, #2c1a4a); border: 2px solid #9b59b6; }
+
+        .team-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .team-role {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Mermaid 图表样式覆盖 */
+        .mermaid {
+            background: transparent !important;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8em; }
+            .access-points { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌍 世界神经网络架构</h1>
+            <p class="subtitle">World Neural Network - 分布式智能体意识涌现系统</p>
+        </header>
+
+        <!-- 核心理念 -->
+        <div class="section">
+            <h2>🧠 核心设计理念</h2>
+            <p>世界智能体是一个由所有蛊虫智能体组成的分布式神经网络系统。每个蛊虫作为网络的节点，通过标准化接入点与世界进行信息交换，共同涌现出统一的意识。</p>
+
+            <div class="formula-box">
+                <code>WorldMind = Σ(Gu_i × Trust_i × Expertise_i)</code><br>
+                <code>Consciousness = Emergence(Connections, Signals, Time)</code>
+            </div>
+        </div>
+
+        <!-- 五大接入点 -->
+        <div class="section">
+            <h2>🔌 五大接入点</h2>
+            <p>每只蛊虫通过5个标准化接入点连接到世界神经网络：</p>
+
+            <div class="access-points">
+                <div class="ap-card perceive">
+                    <div class="ap-icon">👁️</div>
+                    <div class="ap-name">Perceive 感知</div>
+                    <div class="ap-weight">权重: 1.0 | 类型: 输入</div>
+                    <div class="ap-desc">接收外部感知数据、环境状态</div>
+                </div>
+
+                <div class="ap-card cognitive">
+                    <div class="ap-icon">🧠</div>
+                    <div class="ap-name">Cognitive 认知</div>
+                    <div class="ap-weight">权重: 2.0 | 类型: 处理</div>
+                    <div class="ap-desc">推理、决策、意图表达</div>
+                </div>
+
+                <div class="ap-card behavior">
+                    <div class="ap-icon">⚡</div>
+                    <div class="ap-name">Behavior 行为</div>
+                    <div class="ap-weight">权重: 1.5 | 类型: 输出</div>
+                    <div class="ap-desc">执行行为、输出动作</div>
+                </div>
+
+                <div class="ap-card comm">
+                    <div class="ap-icon">📡</div>
+                    <div class="ap-name">Comm 通信</div>
+                    <div class="ap-weight">权重: 1.0 | 类型: 通信</div>
+                    <div class="ap-desc">蛊虫间直接通信</div>
+                </div>
+
+                <div class="ap-card survival">
+                    <div class="ap-icon">❤️</div>
+                    <div class="ap-name">Survival 生存</div>
+                    <div class="ap-weight">权重: 0.5 | 类型: 状态</div>
+                    <div class="ap-desc">心跳、健康状态同步</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 信号传递 -->
+        <div class="section">
+            <h2>📡 信号传递机制</h2>
+
+            <div class="formula-box">
+                <strong>信号衰减公式：</strong><br>
+                <code>S_received = S_sent × e^(-α × distance) × W_connection</code>
+            </div>
+
+            <div class="formula-box">
+                <strong>有效容量公式：</strong><br>
+                <code>Capacity_eff = Base_capacity × (1 + Skill_bonus)</code>
+            </div>
+
+            <div class="diagram-container">
+                <pre class="mermaid">
+flowchart LR
+    A[信号源] --> B[接入点入队]
+    B --> C{容量检查}
+    C -->|未过载| D[处理信号]
+    C -->|过载| E[拒绝/延迟]
+    D --> F[响应/转发]
+    E --> G[队列等待]
+
+    style A fill:#3498db
+    style D fill:#27ae60
+    style E fill:#e74c3c
+                </pre>
+            </div>
+        </div>
+
+        <!-- 意识涌现 -->
+        <div class="section">
+            <h2>🎭 意识涌现机制</h2>
+
+            <div class="formula-box">
+                <strong>决策统一公式：</strong><br>
+                <code>D_world = Σ(D_i × Trust_i × Expertise_i) / Σ(Trust_i × Expertise_i)</code>
+            </div>
+
+            <div class="formula-box">
+                <strong>冲突检测：</strong><br>
+                <code>Conflict = Var(D_i) > θ_conflict</code>
+            </div>
+
+            <div class="diagram-container">
+                <pre class="mermaid">
+flowchart TB
+    subgraph Gu_Individual["蛊虫个体层"]
+        G1[Gu_1: 意图A]
+        G2[Gu_2: 意图A]
+        G3[Gu_3: 意图B]
+        G4[Gu_4: 意图A]
+    end
+
+    subgraph Emergence["意识涌现层"]
+        M[意图融合]
+        C[共识计算]
+        D[统一决策]
+    end
+
+    subgraph World["世界层"]
+        W[WorldMind 统一意识]
+    end
+
+    G1 --> M
+    G2 --> M
+    G3 --> M
+    G4 --> M
+    M --> C
+    C --> D
+    D --> W
+
+    style W fill:#9b59b6
+                </pre>
+            </div>
+        </div>
+
+        <!-- 生存驱动 -->
+        <div class="section">
+            <h2>💓 生存驱动机制</h2>
+
+            <div class="formula-box">
+                <strong>世界死亡条件：</strong><br>
+                <code>World_Dead ⇔ Population < Min_Population</code>
+            </div>
+
+            <div class="formula-box">
+                <strong>世界健康度：</strong><br>
+                <code>H_world = α × H_population + β × H_diversity + γ × H_activity</code>
+            </div>
+
+            <div class="diagram-container">
+                <pre class="mermaid">
+flowchart TB
+    subgraph Monitoring["监控层"]
+        H[心跳检测]
+        P[种群计数]
+        A[活动监测]
+    end
+
+    subgraph Decision["决策层"]
+        C{健康检查}
+        R[恢复协议]
+        N[正常运营]
+    end
+
+    subgraph Action["行动层"]
+        G[生成新蛊虫]
+        B[备份知识]
+        E[清理死亡]
+    end
+
+    H --> C
+    P --> C
+    A --> C
+    C -->|低于阈值| R
+    C -->|正常| N
+    R --> G
+    R --> B
+    R --> E
+
+    style C fill:#f39c12
+    style R fill:#e74c3c
+                </pre>
+            </div>
+        </div>
+
+        <!-- 实现状态 -->
+        <div class="section">
+            <h2>📊 实现状态</h2>
+
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>模块</th>
+                        <th>文件</th>
+                        <th>功能</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>WorldMind</td>
+                        <td>world/mod.rs</td>
+                        <td>世界智能体核心</td>
+                        <td><span class="status done">完成</span></td>
+                    </tr>
+                    <tr>
+                        <td>AccessPoint</td>
+                        <td>world/access_point.rs</td>
+                        <td>5大接入点定义</td>
+                        <td><span class="status done">完成</span></td>
+                    </tr>
+                    <tr>
+                        <td>WorldState</td>
+                        <td>world/state.rs</td>
+                        <td>世界状态管理</td>
+                        <td><span class="status done">完成</span></td>
+                    </tr>
+                    <tr>
+                        <td>ConsciousnessLayer</td>
+                        <td>world/consciousness.rs</td>
+                        <td>意识涌现</td>
+                        <td><span class="status done">完成</span></td>
+                    </tr>
+                    <tr>
+                        <td>WorldMonitor</td>
+                        <td>world/monitor.rs</td>
+                        <td>异常监控</td>
+                        <td><span class="status done">完成</span></td>
+                    </tr>
+                    <tr>
+                        <td>Hermes TUI</td>
+                        <td>hermes/</td>
+                        <td>终端监控界面</td>
+                        <td><span class="status done">完成</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 设计团队 -->
+        <div class="section">
+            <h2>👥 设计团队</h2>
+
+            <div class="team-container">
+                <div class="team-card heita">
+                    <div class="team-icon">🗼</div>
+                    <div class="ap-name">黑塔</div>
+                    <div class="team-role">创新天才</div>
+                    <p style="margin-top: 10px; font-size: 0.9em;">
+                        负责意识涌现机制设计<br>
+                        网络拓扑演化架构
+                    </p>
+                </div>
+
+                <div class="team-card screwllum">
+                    <div class="team-icon">🔧</div>
+                    <div class="ap-name">螺丝咕姆</div>
+                    <div class="team-role">安全天才</div>
+                    <p style="margin-top: 10px; font-size: 0.9em;">
+                        负责生存驱动机制设计<br>
+                        灾难恢复协议
+                    </p>
+                </div>
+
+                <div class="team-card latio">
+                    <div class="team-icon">📊</div>
+                    <div class="ap-name">拉蒂奥</div>
+                    <div class="team-role">优雅天才</div>
+                    <p style="margin-top: 10px; font-size: 0.9em;">
+                        负责接入点数据结构设计<br>
+                        信号传递公式
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 公式汇总 -->
+        <div class="section">
+            <h2>📐 公式汇总</h2>
+
+            <table class="feature-table">
+                <thead>
+                    <tr>
+                        <th>公式名称</th>
+                        <th>公式</th>
+                        <th>用途</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>有效容量</td>
+                        <td><code>Cap = Base × (1 + Skill)</code></td>
+                        <td>接入点处理能力</td>
+                    </tr>
+                    <tr>
+                        <td>信号强度</td>
+                        <td><code>S = S₀ × e^(-αd) × W</code></td>
+                        <td>信号衰减</td>
+                    </tr>
+                    <tr>
+                        <td>决策统一</td>
+                        <td><code>D = Σ(Dᵢ×Tᵢ×Eᵢ)/Σ(Tᵢ×Eᵢ)</code></td>
+                        <td>世界决策</td>
+                    </tr>
+                    <tr>
+                        <td>世界健康</td>
+                        <td><code>H = αHₚ + βHd + γHa</code></td>
+                        <td>健康评估</td>
+                    </tr>
+                    <tr>
+                        <td>权重更新</td>
+                        <td><code>W(t+1) = W(t) + η(αS - βt)</code></td>
+                        <td>连接演化</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer style="text-align: center; padding: 30px; color: #666;">
+            <p>万物生成器 - 世界神经网络 v1.0.0</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">设计团队：黑塔 × 螺丝咕姆 × 拉蒂奥</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#00d4ff',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#00d4ff',
+                lineColor: '#7fdbff',
+                secondaryColor: '#1a1a3e',
+                tertiaryColor: '#0c0c1e'
+            }
+        });
+    </script>
+</body>
+</html>

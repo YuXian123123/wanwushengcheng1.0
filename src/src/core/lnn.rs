@@ -4,15 +4,38 @@
 
 use crate::core::{Neuron, NeuronType, Synapse, PlasticityRule, LNNConfig, TopologyDynamics};
 use crate::safety::{SafetyMonitor, FuseState};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
+use std::path::Path;
 use std::time::Instant;
 
 /// 审计日志条目
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditEntry {
     pub timestamp: u64,
     pub event: String,
     pub data: HashMap<String, String>,
+}
+
+/// LNN 持久化状态（可序列化）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LNNSnapshot {
+    /// 版本号
+    pub version: u32,
+    /// 创建时间戳
+    pub created_at: u64,
+    /// 神经元状态
+    pub neurons: Vec<crate::core::neuron::NeuronState>,
+    /// 突触状态
+    pub synapses: Vec<crate::core::synapse::SynapseState>,
+    /// 当前时间
+    pub current_time: f64,
+    /// 配置
+    pub config: LNNConfig,
+    /// 拓扑动态配置
+    pub topology_dynamics: TopologyDynamics,
 }
 
 /// LNN网络
@@ -345,6 +368,167 @@ impl LNN {
     pub fn get_audit_log(&self) -> &[AuditEntry] {
         &self.audit_log
     }
+
+    // ========================================================================
+    // 持久化功能
+    // ========================================================================
+
+    /// 创建网络快照（用于保存）
+    pub fn create_snapshot(&self) -> LNNSnapshot {
+        LNNSnapshot {
+            version: 1,
+            created_at: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis() as u64)
+                .unwrap_or(0),
+            neurons: self.neurons.values().map(|n| n.to_state()).collect(),
+            synapses: self.synapses.values().map(|s| s.to_state()).collect(),
+            current_time: self.current_time,
+            config: self.config.clone(),
+            topology_dynamics: self.topology_dynamics.clone(),
+        }
+    }
+
+    /// 从快照恢复网络
+    pub fn from_snapshot(snapshot: LNNSnapshot) -> Self {
+        let mut neurons = HashMap::new();
+        for state in snapshot.neurons {
+            let id = state.id.clone();
+            neurons.insert(id, Neuron::from_state(state));
+        }
+
+        let mut synapses = HashMap::new();
+        for state in snapshot.synapses {
+            let id = state.id.clone();
+            synapses.insert(id, Synapse::from_state(state));
+        }
+
+        Self {
+            neurons,
+            synapses,
+            config: snapshot.config,
+            topology_dynamics: snapshot.topology_dynamics,
+            current_time: snapshot.current_time,
+            safety_monitor: SafetyMonitor::new(),
+            audit_log: Vec::new(),
+            last_growth_time: None,
+            last_prune_time: None,
+            task_complexity: 0.0,
+        }
+    }
+
+    /// 保存网络到文件
+    ///
+    /// # 格式
+    /// JSON 格式，可读性强，便于调试
+    ///
+    /// # Errors
+    /// 文件写入失败时返回错误
+    pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<(), LNNError> {
+        let file = File::create(path)?;
+        let writer = BufWriter::new(file);
+        let snapshot = self.create_snapshot();
+        serde_json::to_writer_pretty(writer, &snapshot)?;
+        Ok(())
+    }
+
+    /// 从文件加载网络
+    ///
+    /// # Errors
+    /// 文件读取或解析失败时返回错误
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self, LNNError> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        let snapshot: LNNSnapshot = serde_json::from_reader(reader)?;
+        Ok(Self::from_snapshot(snapshot))
+    }
+
+    /// 保存为二进制格式（更紧凑）
+    pub fn save_binary<P: AsRef<Path>>(&self, path: P) -> Result<(), LNNError> {
+        let file = File::create(path)?;
+        let writer = BufWriter::new(file);
+        let snapshot = self.create_snapshot();
+        bincode::serialize_into(writer, &snapshot)?;
+        Ok(())
+    }
+
+    /// 从二进制格式加载
+    pub fn load_binary<P: AsRef<Path>>(path: P) -> Result<Self, LNNError> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        let snapshot: LNNSnapshot = bincode::deserialize_from(reader)?;
+        Ok(Self::from_snapshot(snapshot))
+    }
+
+    /// 获取网络统计信息
+    pub fn statistics(&self) -> NetworkStatistics {
+        let neuron_count = self.neurons.len();
+        let synapse_count = self.synapses.len();
+
+        let avg_activity = if neuron_count > 0 {
+            self.neurons.values().map(|n| n.activity()).sum::<f64>() / neuron_count as f64
+        } else {
+            0.0
+        };
+
+        let avg_weight = if synapse_count > 0 {
+            self.synapses.values().map(|s| s.weight()).sum::<f64>() / synapse_count as f64
+        } else {
+            0.0
+        };
+
+        let type_distribution = self.neurons.values()
+            .fold(HashMap::new(), |mut acc, n| {
+                *acc.entry(n.neuron_type()).or_insert(0) += 1;
+                acc
+            });
+
+        NetworkStatistics {
+            neuron_count,
+            synapse_count,
+            avg_activity,
+            avg_weight,
+            current_time: self.current_time,
+            type_distribution,
+        }
+    }
+}
+
+/// 网络统计信息
+#[derive(Debug, Clone)]
+pub struct NetworkStatistics {
+    pub neuron_count: usize,
+    pub synapse_count: usize,
+    pub avg_activity: f64,
+    pub avg_weight: f64,
+    pub current_time: f64,
+    pub type_distribution: HashMap<NeuronType, usize>,
+}
+
+/// LNN 错误类型
+#[derive(Debug)]
+pub enum LNNError {
+    IoError(std::io::Error),
+    SerializeError(serde_json::Error),
+    BincodeError(bincode::Error),
+}
+
+impl From<std::io::Error> for LNNError {
+    fn from(e: std::io::Error) -> Self {
+        LNNError::IoError(e)
+    }
+}
+
+impl From<serde_json::Error> for LNNError {
+    fn from(e: serde_json::Error) -> Self {
+        LNNError::SerializeError(e)
+    }
+}
+
+impl From<bincode::Error> for LNNError {
+    fn from(e: bincode::Error) -> Self {
+        LNNError::BincodeError(e)
+    }
 }
 
 /// LNN状态
@@ -427,5 +611,104 @@ mod tests {
         // C的状态应该有变化
         let state_c = lnn.neurons.get(&c).unwrap().state();
         assert!(state_c.abs() > 0.0);
+    }
+
+    #[test]
+    fn test_save_load_json() {
+        let mut lnn = LNN::new(None, None);
+
+        // 创建网络结构
+        let n1 = lnn.add_neuron(NeuronType::Perception).unwrap();
+        let n2 = lnn.add_neuron(NeuronType::Cognitive).unwrap();
+        let n3 = lnn.add_neuron(NeuronType::Behavior).unwrap();
+        lnn.add_synapse(&n1, &n2, 0.5, PlasticityRule::Hebbian).unwrap();
+        lnn.add_synapse(&n2, &n3, 0.3, PlasticityRule::Oja).unwrap();
+
+        // 运行一些更新
+        for _ in 0..10 {
+            lnn.update(0.01).unwrap();
+        }
+
+        // 保存
+        let temp_path = std::env::temp_dir().join("test_lnn_save.json");
+        lnn.save(&temp_path).unwrap();
+
+        // 加载
+        let loaded = LNN::load(&temp_path).unwrap();
+
+        // 验证
+        assert_eq!(loaded.neurons.len(), 3);
+        assert_eq!(loaded.synapses.len(), 2);
+        assert!((loaded.current_time - lnn.current_time).abs() < 1e-10);
+
+        // 清理
+        std::fs::remove_file(temp_path).ok();
+    }
+
+    #[test]
+    fn test_save_load_binary() {
+        let mut lnn = LNN::new(None, None);
+
+        let n1 = lnn.add_neuron(NeuronType::Perception).unwrap();
+        let n2 = lnn.add_neuron(NeuronType::Cognitive).unwrap();
+        lnn.add_synapse(&n1, &n2, 0.7, PlasticityRule::Stdp).unwrap();
+
+        for _ in 0..10 {
+            lnn.update(0.01).unwrap();
+        }
+
+        // 保存二进制
+        let temp_path = std::env::temp_dir().join("test_lnn_save.bin");
+        lnn.save_binary(&temp_path).unwrap();
+
+        // 加载
+        let loaded = LNN::load_binary(&temp_path).unwrap();
+
+        assert_eq!(loaded.neurons.len(), 2);
+        assert_eq!(loaded.synapses.len(), 1);
+
+        // 清理
+        std::fs::remove_file(temp_path).ok();
+    }
+
+    #[test]
+    fn test_snapshot_restore() {
+        let mut lnn = LNN::new(None, None);
+
+        let n1 = lnn.add_neuron(NeuronType::Cognitive).unwrap();
+        let n2 = lnn.add_neuron(NeuronType::Cognitive).unwrap();
+        lnn.add_synapse(&n1, &n2, 0.5, PlasticityRule::Hebbian).unwrap();
+
+        // 运行更新
+        for _ in 0..50 {
+            lnn.update(0.01).unwrap();
+        }
+
+        // 创建快照
+        let snapshot = lnn.create_snapshot();
+
+        // 从快照恢复
+        let restored = LNN::from_snapshot(snapshot);
+
+        // 验证状态一致
+        assert_eq!(restored.neurons.len(), lnn.neurons.len());
+        assert_eq!(restored.synapses.len(), lnn.synapses.len());
+    }
+
+    #[test]
+    fn test_statistics() {
+        let mut lnn = LNN::new(None, None);
+
+        lnn.add_neuron(NeuronType::Perception).unwrap();
+        lnn.add_neuron(NeuronType::Cognitive).unwrap();
+        lnn.add_neuron(NeuronType::Cognitive).unwrap();
+        lnn.add_neuron(NeuronType::Behavior).unwrap();
+
+        let stats = lnn.statistics();
+        assert_eq!(stats.neuron_count, 4);
+        assert_eq!(stats.synapse_count, 0);
+        assert_eq!(*stats.type_distribution.get(&NeuronType::Perception).unwrap_or(&0), 1);
+        assert_eq!(*stats.type_distribution.get(&NeuronType::Cognitive).unwrap_or(&0), 2);
+        assert_eq!(*stats.type_distribution.get(&NeuronType::Behavior).unwrap_or(&0), 1);
     }
 }

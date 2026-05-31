@@ -15,7 +15,11 @@
       "Bash(git commit -m 'feat: 创建系统架构设计文档目录 *)",
       "Bash(git commit -m 'feat: 创建蛊虫详细设计文档目录 *)",
       "Bash(git commit -m 'feat: 创建世界模型设计文档目录 *)",
-      "Bash(git commit -m 'feat: 创建经济系统设计文档目录 *)"
+      "Bash(git commit -m 'feat: 创建经济系统设计文档目录 *)",
+      "Bash(cargo build *)",
+      "Bash(cargo run *)",
+      "Bash(dir *)",
+      "Bash(echo *)"
     ]
   }
 }

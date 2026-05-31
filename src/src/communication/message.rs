@@ -160,9 +160,9 @@ impl Message {
         
         Self {
             id: MessageId::new(),
-            sender,
-            channel,
-            message_type,
+            sender: sender.clone(),
+            channel: channel.clone(),
+            message_type: message_type.clone(),
             timestamp: now,
             signature: signer.sign(&sender, &channel, &message_type),
         }

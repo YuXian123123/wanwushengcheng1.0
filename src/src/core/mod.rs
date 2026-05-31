@@ -8,7 +8,12 @@ mod lnn;
 mod types;
 
 pub use neuron::Neuron;
+pub use neuron::NeuronState;
 pub use synapse::Synapse;
+pub use synapse::SynapseState;
 pub use lnn::LNN;
 pub use lnn::LNNState;
+pub use lnn::LNNSnapshot;
+pub use lnn::NetworkStatistics;
+pub use lnn::AuditEntry;
 pub use types::{NeuronType, PlasticityRule, LNNConfig, TopologyDynamics};

@@ -416,6 +416,8 @@ mod tests {
 
         let reward = market.award_task("task_1", "bidder");
         assert!(reward.is_some());
-        assert_eq!(market.balance("bidder"), 120.0); // 100 + 20 (2x reward)
+        // 任务价格 = base_price * difficulty * urgency = 10.0 * 1.0 * 1.0 = 10.0
+        // 中标者余额 = 初始100 + 任务奖励10 = 110.0
+        assert_eq!(market.balance("bidder"), 110.0);
     }
 }

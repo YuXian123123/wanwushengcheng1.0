@@ -4,6 +4,27 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 
+/// 行为分析配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BehaviorConfig {
+    /// 最大历史记录数
+    pub max_history_size: usize,
+    /// 高频阈值（每分钟）
+    pub high_frequency_threshold: f64,
+    /// 重复阈值
+    pub repetition_threshold: f64,
+}
+
+impl Default for BehaviorConfig {
+    fn default() -> Self {
+        Self {
+            max_history_size: 100,
+            high_frequency_threshold: 10.0,
+            repetition_threshold: 0.5,
+        }
+    }
+}
+
 /// 行为模式
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BehaviorPattern {
@@ -33,7 +54,7 @@ pub enum AnomalyType {
 }
 
 /// 用户行为记录
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserBehavior {
     /// 发送次数
     pub send_count: u64,
@@ -43,15 +64,18 @@ pub struct UserBehavior {
     pub intervals: Vec<u64>,
     /// 内容哈希集合
     pub content_hashes: Vec<String>,
+    /// 最大历史记录数
+    max_history_size: usize,
 }
 
 impl UserBehavior {
-    pub fn new() -> Self {
+    pub fn new(max_history_size: usize) -> Self {
         Self {
             send_count: 0,
             last_send_time: 0,
             intervals: Vec::new(),
             content_hashes: Vec::new(),
+            max_history_size,
         }
     }
 
@@ -63,8 +87,8 @@ impl UserBehavior {
         // 计算间隔
         if self.last_send_time > 0 {
             new_behavior.intervals.push(timestamp - self.last_send_time);
-            // 保留最近100个间隔
-            if new_behavior.intervals.len() > 100 {
+            // 保留最近的间隔（使用配置）
+            while new_behavior.intervals.len() > new_behavior.max_history_size {
                 new_behavior.intervals.remove(0);
             }
         }
@@ -72,12 +96,18 @@ impl UserBehavior {
         new_behavior.last_send_time = timestamp;
         new_behavior.content_hashes.push(content_hash);
 
-        // 保留最近100个内容哈希
-        if new_behavior.content_hashes.len() > 100 {
+        // 保留最近的内容哈希（使用配置）
+        while new_behavior.content_hashes.len() > new_behavior.max_history_size {
             new_behavior.content_hashes.remove(0);
         }
 
         new_behavior
+    }
+}
+
+impl Default for UserBehavior {
+    fn default() -> Self {
+        Self::new(100)
     }
 }
 
@@ -86,24 +116,28 @@ impl UserBehavior {
 pub struct BehaviorAnalyzer {
     /// 用户行为记录
     user_behaviors: HashMap<Uuid, UserBehavior>,
-    /// 高频阈值（每分钟）
-    high_frequency_threshold: f64,
-    /// 重复阈值
-    repetition_threshold: f64,
+    /// 配置
+    config: BehaviorConfig,
 }
 
 impl BehaviorAnalyzer {
-    pub fn new() -> Self {
+    pub fn new(config: BehaviorConfig) -> Self {
         Self {
             user_behaviors: HashMap::new(),
-            high_frequency_threshold: 10.0,
-            repetition_threshold: 0.5,
+            config,
         }
+    }
+
+    /// 使用默认配置创建
+    pub fn with_defaults() -> Self {
+        Self::new(BehaviorConfig::default())
     }
 
     /// 分析行为模式
     pub fn analyze(&self, user: &Uuid, content: &str) -> BehaviorPattern {
-        let behavior = self.user_behaviors.get(user).cloned().unwrap_or_default();
+        let behavior = self.user_behaviors.get(user).cloned().unwrap_or_else(|| {
+            UserBehavior::new(self.config.max_history_size)
+        });
 
         // 计算频率因子
         let frequency_factor = self.calculate_frequency_factor(&behavior);
@@ -179,13 +213,13 @@ impl BehaviorAnalyzer {
         timing: f64,
         diversity: f64,
     ) -> (bool, Option<AnomalyType>) {
-        // 高频异常
-        if frequency > 0.8 {
+        // 高频异常（使用配置阈值）
+        if frequency > self.config.high_frequency_threshold / 10.0 {
             return (true, Some(AnomalyType::HighFrequency));
         }
 
-        // 内容重复异常
-        if diversity < 0.3 {
+        // 内容重复异常（使用配置阈值）
+        if diversity < self.config.repetition_threshold {
             return (true, Some(AnomalyType::ContentRepetition));
         }
 
@@ -206,7 +240,9 @@ impl BehaviorAnalyzer {
     pub fn record(&self, user: Uuid, timestamp: u64, content: &str) -> Self {
         let mut new_analyzer = self.clone();
         let content_hash = self.simple_hash(content);
-        let behavior = self.user_behaviors.get(&user).cloned().unwrap_or_default();
+        let behavior = self.user_behaviors.get(&user).cloned().unwrap_or_else(|| {
+            UserBehavior::new(self.config.max_history_size)
+        });
         let new_behavior = behavior.record(timestamp, content_hash);
         new_analyzer.user_behaviors.insert(user, new_behavior);
         new_analyzer
@@ -215,7 +251,7 @@ impl BehaviorAnalyzer {
 
 impl Default for BehaviorAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self::with_defaults()
     }
 }
 
@@ -225,7 +261,7 @@ mod tests {
 
     #[test]
     fn test_behavior_analyzer_creation() {
-        let analyzer = BehaviorAnalyzer::new();
+        let analyzer = BehaviorAnalyzer::with_defaults();
         let user = Uuid::new_v4();
 
         let pattern = analyzer.analyze(&user, "test content");
@@ -234,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_frequency_factor() {
-        let mut analyzer = BehaviorAnalyzer::new();
+        let mut analyzer = BehaviorAnalyzer::with_defaults();
         let user = Uuid::new_v4();
 
         // 模拟高频发送

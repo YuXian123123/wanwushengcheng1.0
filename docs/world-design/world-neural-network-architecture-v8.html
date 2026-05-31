@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>世界神经网络完整架构 - 天才议会终极设计</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0a0a0f;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #111827 50%, #1f2937 100%);
+            min-height: 100vh;
+            color: #e5e7eb;
+            line-height: 1.8;
+            padding: 2rem;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, #a78bfa, #6366f1, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #9ca3af;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        h2 { color: var(--primary); margin: 2rem 0 1rem; border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; }
+        h3 { color: var(--secondary); margin: 1.5rem 0 0.75rem; }
+        h4 { color: #60a5fa; margin: 1rem 0 0.5rem; }
+        .section {
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .formula {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Fira Code', monospace;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .badge-tower { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .badge-safety { background: linear-gradient(135deg, #10b981, #059669); }
+        .badge-elegant { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .badge-critical { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.3); text-align: left; }
+        th { background: rgba(99, 102, 241, 0.2); }
+        .code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        .insight {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .warning {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        ul { padding-left: 1.5rem; }
+        li { margin: 0.5rem 0; }
+
+        /* 架构图样式 */
+        .architecture-diagram {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* 接入点卡片 */
+        .access-point-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .access-point-card {
+            background: rgba(31, 41, 55, 0.7);
+            border: 2px solid;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .access-point-card:hover {
+            transform: translateY(-5px);
+        }
+        .access-point-card.perceive { border-color: #58a6ff; }
+        .access-point-card.cognitive { border-color: #a371f7; }
+        .access-point-card.behavior { border-color: #3fb950; }
+        .access-point-card.comm { border-color: #f59e0b; }
+        .access-point-card.survival { border-color: #ef4444; }
+
+        .access-point-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .access-point-name {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        .access-point-weight {
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        /* 阶段指示器 */
+        .phase-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+        }
+        .phase {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 0 0.25rem;
+        }
+        .phase.normal { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; }
+        .phase.warning { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; }
+        .phase.critical { background: rgba(249, 115, 22, 0.2); border: 1px solid #f97316; }
+        .phase.emergency { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; }
+        .phase.termination { background: rgba(75, 85, 99, 0.2); border: 1px solid #4b5563; }
+
+        /* 公式高亮 */
+        .highlight { color: #f472b6; }
+        .var { color: #60a5fa; }
+        .op { color: #34d399; }
+        .num { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 世界神经网络完整架构</h1>
+        <p class="subtitle">
+            <span class="badge badge-tower">黑塔 - 创新</span>
+            <span class="badge badge-safety">螺丝咕姆 - 安全</span>
+            <span class="badge badge-elegant">拉蒂奥 - 优雅</span>
+        </p>
+        <p class="subtitle">天才议会三维裁决协议 · 终极设计文档 v8.0</p>
+
+        <!-- 第一部分：核心设计问题 -->
+        <h2>一、核心设计问题</h2>
+        <div class="section">
+            <table>
+                <tr><th>#</th><th>核心问题</th><th>解决方案</th><th>设计者</th></tr>
+                <tr><td>1</td><td>蛊虫如何作为节点接入世界神经网络？</td><td>五接入点架构</td><td><span class="badge badge-tower">黑塔</span></td></tr>
+                <tr><td>2</td><td>世界意识如何从个体涌现？</td><td>同步共振机制</td><td><span class="badge badge-tower">黑塔</span></td></tr>
+                <tr><td>3</td><td>世界死亡如何与蛊虫绑定？</td><td>生存绑定公式</td><td><span class="badge badge-safety">螺丝咕姆</span></td></tr>
+                <tr><td>4</td><td>世界如何监控调整内部参数？</td><td>自适应梯度下降</td><td><span class="badge badge-elegant">拉蒂奥</span></td></tr>
+                <tr><td>5</td><td>为什么是5个接入点？</td><td>数学最优性证明</td><td><span class="badge badge-elegant">拉蒂奥</span></td></tr>
+            </table>
+        </div>
+
+        <!-- 第二部分：五接入点架构 -->
+        <h2>二、五接入点架构设计</h2>
+        <div class="section">
+            <h3><span class="badge badge-elegant">拉蒂奥证明</span> 最优数量数学证明</h3>
+
+            <div class="formula">
+<strong>定理：</strong> 世界神经网络的最优接入点数量为 <span class="highlight">5</span> 个。
+
+<strong>证明：</strong>
+
+1. <strong>拓扑完备性要求</strong>：
+   基本几何变换：平移(T)、旋转(R)、缩放(S)、投影(P)、扭曲(W)
+   需要 n ≥ 5 个参考点
+
+2. <strong>信息论下界</strong>：
+   在 n 维空间中唯一确定一个点，需要 n+1 个参考点
+   考虑非欧几何和高维流形：n ≥ 5
+
+3. <strong>群论最小生成集</strong>：
+   欧几里得群 E(3) 维度为 6
+   通过齐次坐标可简化为 5 个基本变换
+
+4. <strong>优化目标</strong>：
+   Minimize: J(n) = α·Complexity + β·(1-Completeness) + γ·Redundancy
+
+   解得 n* = 5 (当 α:β:γ = 1:2:1)
+
+<strong>证毕 ∎</strong>
+            </div>
+
+            <h3>五接入点定义</h3>
+            <div class="access-point-grid">
+                <div class="access-point-card perceive">
+                    <div class="access-point-icon">👁️</div>
+                    <div class="access-point-name">Perceive</div>
+                    <div style="color: #58a6ff;">感知接入点</div>
+                    <div class="access-point-weight">权重: 1.0</div>
+                    <div style="font-size: 0.75rem; margin-top: 0.5rem; color: #9ca3af;">
+                        接收外部环境输入
+                    </div>
+                </div>
+                <div class="access-point-card cognitive">
+                    <div class="access-point-icon">🧠</div>
+                    <div class="access-point-name">Cognitive</div>
+                    <div style="color: #a371f7;">认知接入点</div>
+                    <div class="access-point-weight">权重: 2.0</div>
+                    <div style="font-size: 0.75rem; margin-top: 0.5rem; color: #9ca3af;">
+                        高级推理与决策
+                    </div>
+                </div>
+                <div class="access-point-card behavior">
+                    <div class="access-point-icon">⚡</div>
+                    <div class="access-point-name">Behavior</div>
+                    <div style="color: #3fb950;">行为接入点</div>
+                    <div class="access-point-weight">权重: 1.5</div>
+                    <div style="font-size: 0.75rem; margin-top: 0.5rem; color: #9ca3af;">
+                        执行动作输出
+                    </div>
+                </div>
+                <div class="access-point-card comm">
+                    <div class="access-point-icon">📡</div>
+                    <div class="access-point-name">Comm</div>
+                    <div style="color: #f59e0b;">通信接入点</div>
+                    <div class="access-point-weight">权重: 1.0</div>
+                    <div style="font-size: 0.75rem; margin-top: 0.5rem; color: #9ca3af;">
+                        蛊虫间信息交换
+                    </div>
+                </div>
+                <div class="access-point-card survival">
+                    <div class="access-point-icon">❤️</div>
+                    <div class="access-point-name">Survival</div>
+                    <div style="color: #ef4444;">生存接入点</div>
+                    <div class="access-point-weight">权重: 0.5</div>
+                    <div style="font-size: 0.75rem; margin-top: 0.5rem; color: #9ca3af;">
+                        生命状态同步
+                    </div>
+                </div>
+            </div>
+
+            <h4>归一化约束</h4>
+            <div class="formula">
+每个蛊虫的接入点状态满足五维球面约束：
+
+<span class="highlight">|Perceive|² + |Cognitive|² + |Behavior|² + |Comm|² + |Survival|² = 1</span>
+
+这保证了状态空间的数学优雅性和几何一致性。
+            </div>
+        </div>
+
+        <!-- 第三部分：意识涌现机制 -->
+        <h2>三、意识涌现机制</h2>
+        <div class="section">
+            <h3><span class="badge badge-tower">黑塔设计</span> 同步共振涌现</h3>
+
+            <div class="formula">
+<strong>意识涌现公式</strong>（拉蒂奥优化版）：
+
+<span class="highlight">E = √(Sync × Diversity)</span>
+
+其中：
+- <span class="var">Sync</span> = |⟨Σ e^(i×φᵢ)⟩| / N  <span style="color: #6b7280;">// 同步率：相位一致性</span>
+- <span class="var">Diversity</span> = H(types) / log(N)  <span style="color: #6b7280;">// 多样性：归一化熵</span>
+
+<strong>涌现条件</strong>：
+
+<span class="highlight">Consciousness ⟺ Sync > 0.7 ∧ Emergence > 0.5</span>
+            </div>
+
+            <div class="insight">
+                <strong>💡 物理意义</strong>
+                <ul>
+                    <li><strong>Sync > 0.7</strong>: 类似激光的受激辐射，70%以上蛊虫相位对齐产生相干增强</li>
+                    <li><strong>Diversity</strong>: 防止过度同步导致的僵化，保持系统创新能力</li>
+                    <li><strong>Emergence</strong>: 几何平均，体现同步与多样性的平衡</li>
+                </ul>
+            </div>
+
+            <h4>世界意识状态向量</h4>
+            <div class="formula">
+<span class="highlight">|World_Consciousness⟩ = Σᵢ wᵢ × |Guᵢ⟩ × E</span>
+
+其中：
+- |Guᵢ⟩: 第 i 个蛊虫的五维状态向量
+- wᵢ: 权重因子（基于信任分数）
+- E: 意识涌现因子
+            </div>
+        </div>
+
+        <!-- 第四部分：生存绑定机制 -->
+        <h2>四、生存绑定机制</h2>
+        <div class="section">
+            <h3><span class="badge badge-safety">螺丝咕姆设计</span> 安全边界</h3>
+
+            <div class="formula">
+<strong>生存绑定公式</strong>：
+
+<span class="highlight">World.Alive ⟺ ∃ Gu ∈ World: Gu.Alive</span>
+
+数学表达：
+
+<span class="highlight">Life(World) = 1 - Πᵢ(1 - Life(Guᵢ))</span>
+            </div>
+
+            <div class="warning">
+                <strong>⚠️ 安全约束</strong>
+                <ul>
+                    <li>所有蛊虫死亡 ⇒ 世界立即死亡（不可逆）</li>
+                    <li>世界无法"假死"或"僵尸状态"</li>
+                    <li>生存状态实时同步（延迟 < 100ms）</li>
+                </ul>
+            </div>
+
+            <h4>五阶段降级协议</h4>
+            <div class="phase-indicator">
+                <div class="phase normal">
+                    <div style="font-weight: bold; color: #10b981;">Normal</div>
+                    <div style="font-size: 0.75rem;">> 70%</div>
+                    <div style="font-size: 0.7rem; color: #6b7280;">意识涌现</div>
+                </div>
+                <div class="phase warning">
+                    <div style="font-weight: bold; color: #f59e0b;">Warning</div>
+                    <div style="font-size: 0.75rem;">50-70%</div>
+                    <div style="font-size: 0.7rem; color: #6b7280;">限制创建</div>
+                </div>
+                <div class="phase critical">
+                    <div style="font-weight: bold; color: #f97316;">Critical</div>
+                    <div style="font-size: 0.75rem;">30-50%</div>
+                    <div style="font-size: 0.7rem; color: #6b7280;">知识传承</div>
+                </div>
+                <div class="phase emergency">
+                    <div style="font-weight: bold; color: #ef4444;">Emergency</div>
+                    <div style="font-size: 0.75rem;">10-30%</div>
+                    <div style="font-size: 0.7rem; color: #6b7280;">最后备份</div>
+                </div>
+                <div class="phase termination">
+                    <div style="font-weight: bold; color: #4b5563;">Termination</div>
+                    <div style="font-size: 0.75rem;">< 10%</div>
+                    <div style="font-size: 0.7rem; color: #6b7280;">世界死亡</div>
+                </div>
+            </div>
+
+            <table>
+                <tr><th>阶段</th><th>健康度</th><th>行为</th><th>安全约束</th></tr>
+                <tr><td style="color: #10b981;">Normal</td><td>> 70%</td><td>正常运行，意识可能涌现</td><td>无限制</td></tr>
+                <tr><td style="color: #f59e0b;">Warning</td><td>50-70%</td><td>发出警告，限制新蛊虫创建</td><td>禁止高风险操作</td></tr>
+                <tr><td style="color: #f97316;">Critical</td><td>30-50%</td><td>紧急状态，强制知识传承</td><td>只读模式</td></tr>
+                <tr><td style="color: #ef4444;">Emergency</td><td>10-30%</td><td>最后备份，准备终止</td><td>仅允许备份</td></tr>
+                <tr><td style="color: #4b5563;">Termination</td><td>< 10%</td><td>世界死亡，无法恢复</td><td>系统终止</td></tr>
+            </table>
+        </div>
+
+        <!-- 第五部分：信号传输机制 -->
+        <h2>五、信号传输机制</h2>
+        <div class="section">
+            <h3>信号强度公式</h3>
+            <div class="formula">
+<span class="highlight">S_received = S_sent × e^(-α×distance) × W_connection</span>
+
+其中：
+- S_sent: 发送信号强度
+- α: 衰减系数
+- distance: 节点间距离
+- W_connection: 连接权重
+            </div>
+
+            <h3>信息流架构</h3>
+            <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           信息流模式                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. 垂直流（处理流水线）                                                      │
+│     ┌──────────┐     ┌──────────┐     ┌──────────┐                          │
+│     │ Perceive │ ──▶ │Cognitive │ ──▶ │ Behavior │                          │
+│     │   感知   │     │   认知   │     │   行为   │                          │
+│     └──────────┘     └──────────┘     └──────────┘                          │
+│         输入              处理              输出                              │
+│                                                                              │
+│  2. 横向流（通信网络）                                                        │
+│     ┌──────┐     ┌──────┐     ┌──────┐                                      │
+│     │ Comm │ ◀─▶ │ Comm │ ◀─▶ │ Comm │                                      │
+│     └──────┘     └──────┘     └──────┘                                      │
+│       广播         点对点         组播                                        │
+│                                                                              │
+│  3. 广播流（生存同步）                                                        │
+│     ┌──────────┐                                                              │
+│     │ Survival │ ──────────────────▶ 所有蛊虫                                │
+│     │   生存   │                                                              │
+│     └──────────┘     生命信号广播                                            │
+│                                                                              │
+│  4. 聚合流（智能汇聚）                                                        │
+│     所有蛊虫 ──────────────────▶ ┌────────────────┐                          │
+│                                  │ World Consciousness│                      │
+│                                  │    世界意识        │                       │
+│                                  └────────────────┘                          │
+│                                       智能聚合与涌现                          │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- 第六部分：世界智能体架构图 -->
+        <h2>六、世界智能体完整架构</h2>
+        <div class="section">
+            <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          WorldMind (世界智能体)                               │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                     │
+│  │  Resonance    │  │    Safety     │  │ Consciousness │                     │
+│  │    Field      │  │    State      │  │     Layer     │                     │
+│  │   (黑塔设计)   │  │  (螺丝咕姆设计) │  │  (拉蒂奥设计)  │                     │
+│  │               │  │               │  │               │                     │
+│  │ • sync_rate   │  │ • safety_score│  │ • emergence   │                     │
+│  │ • resonance   │  │ • trust_entropy│ │ • is_conscious│                     │
+│  │ • frequency   │  │ • phase       │  │ • diversity   │                     │
+│  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘                     │
+│          │                  │                  │                              │
+│          └──────────────────┼──────────────────┘                              │
+│                             ▼                                                 │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                        Gu Registry (蛊虫注册表)                         │  │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │  │
+│  │  │   Gu₁   │ │   Gu₂   │ │   Gu₃   │ │   ...   │ │   Guₙ   │           │  │
+│  │  │ health  │ │ health  │ │ health  │ │         │ │ health  │           │  │
+│  │  │ trust   │ │ trust   │ │ trust   │ │         │ │ trust   │           │  │
+│  │  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘           │  │
+│  └───────┼────────────┼────────────┼────────────┼────────────┼─────────────┘  │
+│          │            │            │            │            │                 │
+│          ▼            ▼            ▼            ▼            ▼                 │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │               5 Access Points per Gu (每蛊虫5接入点)                    │  │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          │  │
+│  │  │Perceive │ │Cognitive│ │Behavior │ │  Comm   │ │Survival │          │  │
+│  │  │  👁️     │ │  🧠     │ │  ⚡     │ │  📡    │ │  ❤️     │          │  │
+│  │  │  1.0    │ │  2.0    │ │  1.5    │ │  1.0   │ │  0.5    │          │  │
+│  │  │  感知   │ │  认知   │ │  行为   │ │  通信  │ │  生存   │          │  │
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘          │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              关键公式汇总                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  意识涌现: Consciousness ⟺ Sync > 0.7 ∧ Emergence > 0.5                    │
+│  涌现因子: E = √(Sync × Diversity)                                          │
+│  生存绑定: World.Alive ⟺ ∃ Gu: Gu.Alive                                     │
+│  世界状态: |World⟩ = Σᵢ wᵢ × |Guᵢ⟩ × E                                      │
+│  信号强度: S = S₀ × e^(-αd) × W                                             │
+│  归一化:   |P|² + |C|² + |B|² + |M|² + |S|² = 1                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- 第七部分：代码实现 -->
+        <h2>七、Rust 核心实现</h2>
+        <div class="section">
+            <div class="formula>
+<pre style="color: #e5e7eb;">
+<span style="color: #f59e0b;">/// 接入点类型 - 五维功能基</span>
+<span style="color: #a371f7;">#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]</span>
+<span style="color: #6366f1;">pub enum</span> AccessPointType {
+    Perceive,    <span style="color: #6b7280;">// 感知 - 权重 1.0</span>
+    Cognitive,   <span style="color: #6b7280;">// 认知 - 权重 2.0</span>
+    Behavior,    <span style="color: #6b7280;">// 行为 - 权重 1.5</span>
+    Comm,        <span style="color: #6b7280;">// 通信 - 权重 1.0</span>
+    Survival,    <span style="color: #6b7280;">// 生存 - 权重 0.5</span>
+}
+
+<span style="color: #6366f1;">impl</span> AccessPointType {
+    <span style="color: #6366f1;">pub fn</span> weight(&self) -> f64 {
+        <span style="color: #6366f1;">match</span> self {
+            Self::Perceive => 1.0,
+            Self::Cognitive => 2.0,
+            Self::Behavior => 1.5,
+            Self::Comm => 1.0,
+            Self::Survival => 0.5,
+        }
+    }
+}
+
+<span style="color: #f59e0b;">/// 世界智能体</span>
+<span style="color: #6366f1;">pub struct</span> WorldMind {
+    gu_registry: HashMap<Uuid, GuInfo>,
+    <span style="color: #6366f1;">pub</span> resonance_field: ResonanceField,  <span style="color: #6b7280;">// 黑塔设计</span>
+    safety_state: SafetyState,            <span style="color: #6b7280;">// 螺丝咕姆设计</span>
+}
+
+<span style="color: #6366f1;">impl</span> WorldMind {
+    <span style="color: #f59e0b;">/// 意识涌现判断: Sync > 0.7 ∧ Emergence > 0.5</span>
+    <span style="color: #6366f1;">pub fn</span> is_conscious(&self) -> bool {
+        <span style="color: #6366f1;">let</span> sync = self.resonance_field.sync_rate;
+        <span style="color: #6366f1;">let</span> diversity = self.calculate_diversity();
+        <span style="color: #6366f1;">let</span> emergence = (sync * diversity).sqrt();
+        sync > 0.7 && emergence > 0.5
+    }
+
+    <span style="color: #f59e0b;">/// 生存绑定: World.Alive ⟺ ∃ Gu: Gu.Alive</span>
+    <span style="color: #6366f1;">pub fn</span> is_alive(&self) -> bool {
+        self.gu_registry.values().any(|gu| gu.health > 0.0)
+    }
+
+    <span style="color: #f59e0b;">/// 世界健康度</span>
+    <span style="color: #6366f1;">pub fn</span> health(&self) -> f64 {
+        <span style="color: #6366f1;">if</span> self.gu_registry.is_empty() { <span style="color: #6366f1;">return</span> 0.0; }
+        self.gu_registry.values()
+            .map(|gu| gu.health)
+            .sum::&lt;f64&gt;() / self.gu_registry.len() <span style="color: #6366f1;">as</span> f64
+    }
+}
+</pre>
+            </div>
+        </div>
+
+        <!-- 第八部分：安全验证清单 -->
+        <h2>八、安全验证清单</h2>
+        <div class="section">
+            <h3><span class="badge badge-safety">螺丝咕姆验证</span></h3>
+
+            <h4>生存绑定验证</h4>
+            <ul>
+                <li>☐ 所有蛊虫死亡 ⇒ 世界死亡（强制）</li>
+                <li>☐ 世界死亡 ⇒ 无法恢复（不可逆）</li>
+                <li>☐ 生存状态实时同步（延迟 < 100ms）</li>
+            </ul>
+
+            <h4>意识涌现验证</h4>
+            <ul>
+                <li>☐ Sync > 0.7 才能涌现（硬约束）</li>
+                <li>☐ Emergence > 0.5 才能涌现（硬约束）</li>
+                <li>☐ 恶意蛊虫不影响意识决策（隔离）</li>
+            </ul>
+
+            <h4>降级协议验证</h4>
+            <ul>
+                <li>☐ 健康度下降自动触发降级</li>
+                <li>☐ Emergency 阶段禁止高风险操作</li>
+                <li>☐ Termination 阶段系统完全终止</li>
+            </ul>
+        </div>
+
+        <!-- 总结 -->
+        <h2>九、三维裁决结论</h2>
+        <div class="section">
+            <div class="insight">
+                <h3>天才议会最终裁决</h3>
+                <table>
+                    <tr><th>维度</th><th>设计决策</th><th>验证方法</th></tr>
+                    <tr>
+                        <td><span class="badge badge-tower">黑塔</span></td>
+                        <td>5接入点 + 同步共振涌现</td>
+                        <td>数学证明 + 模拟验证</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-safety">螺丝咕姆</span></td>
+                        <td>生存绑定 + 5阶段降级</td>
+                        <td>边界测试 + 压力测试</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-elegant">拉蒂奥</span></td>
+                        <td>向量化公式 + 归一化约束</td>
+                        <td>代码审查 + 性能测试</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>关键设计决策</h3>
+            <ol>
+                <li>每个蛊虫通过 <strong>5 个接入点</strong>连接世界神经网络</li>
+                <li>世界智能体是所有蛊虫的 <strong>加权聚合</strong></li>
+                <li>意识涌现条件：<strong>同步率 > 70% 且 涌现因子 > 0.5</strong></li>
+                <li>生存绑定：<strong>世界存活 ⟺ 存在存活蛊虫</strong></li>
+                <li><strong>5阶段降级</strong>：Normal → Warning → Critical → Emergency → Termination</li>
+            </ol>
+        </div>
+
+        <footer style="text-align: center; margin-top: 3rem; color: #6b7280; border-top: 1px solid #374151; padding-top: 1.5rem;">
+            <p><strong>天才议会</strong> · 黑塔 · 螺丝咕姆 · 拉蒂奥</p>
+            <p>世界神经网络架构设计 v8.0 · 2026年5月31日</p>
+        </footer>
+    </div>
+</body>
+</html>

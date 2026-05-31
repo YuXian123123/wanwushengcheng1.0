@@ -8,9 +8,9 @@ pub mod behavior;
 pub mod trust;
 pub mod audit;
 
-pub use quality::{QualityDetector, QualityScore};
+pub use quality::{QualityDetector, QualityScore, QualityConfig};
 pub use similarity::{SimilarityDetector, SimilarityResult};
-pub use behavior::{BehaviorAnalyzer, BehaviorPattern};
+pub use behavior::{BehaviorAnalyzer, BehaviorPattern, BehaviorConfig};
 pub use trust::{TrustSystem, TrustScore};
 pub use audit::{AuditLog, AuditEntry};
 
@@ -55,15 +55,25 @@ pub struct SecuritySystem {
 
 impl SecuritySystem {
     pub fn new(config: SecurityConfig) -> Self {
+        let quality_config = QualityConfig {
+            threshold: config.quality_threshold,
+            ..Default::default()
+        };
+        let behavior_config = BehaviorConfig {
+            max_history_size: 100,
+            high_frequency_threshold: 10.0,
+            repetition_threshold: 0.5,
+        };
+
         Self {
-            quality_detector: QualityDetector::new(config.quality_threshold),
+            quality_detector: QualityDetector::new(quality_config),
             similarity_detector: SimilarityDetector::new(
                 config.similarity_threshold_base,
                 config.max_similarity,
                 config.trust_alpha,
                 config.frequency_beta,
             ),
-            behavior_analyzer: BehaviorAnalyzer::new(),
+            behavior_analyzer: BehaviorAnalyzer::new(behavior_config),
             trust_system: TrustSystem::new(config.trust_decay_rate),
             audit_log: AuditLog::new(),
             config,

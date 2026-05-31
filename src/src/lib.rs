@@ -46,7 +46,11 @@ pub mod safety;
 pub mod language;
 pub mod reasoning;
 pub mod creature;
+pub mod communication;
 pub mod economy;
+pub mod world;
+pub mod herness_web;
+pub mod embedding;
 
 // 重导出配置类型
 pub use config::GlobalConfig;
@@ -66,3 +70,6 @@ pub use reasoning::{GuReasoningCore, InferenceResult, InferenceType};
 
 // 重导出蛊虫类型
 pub use creature::{GuCreature, Ability, Lifecycle, MetaCognition, ResourcePool};
+
+// 重导出词向量类型
+pub use embedding::{WordEmbedding, EmbeddingConfig, UnknownStrategy};

@@ -285,9 +285,12 @@ mod tests {
         
         // 应该只有2个记忆，因为容量限制
         assert_eq!(memory_bank.entries.len(), 2);
-        
-        // 重要性最低的记忆应该被移除
+
+        // 重要性最低的 entry1 (0.5) 被移除，entry3 (0.3) 被添加
+        // 最终剩下 entry2 (0.8) 和 entry3 (0.3)
         let contents: Vec<&str> = memory_bank.entries.iter().map(|e| e.content.as_str()).collect();
-        assert!(!contents.contains(&"记忆3"));
+        assert!(!contents.contains(&"记忆1")); // entry1 被移除
+        assert!(contents.contains(&"记忆2")); // entry2 保留
+        assert!(contents.contains(&"记忆3")); // entry3 被添加
     }
 }

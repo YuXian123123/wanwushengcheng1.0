@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>优雅结构设计 - 拉蒂奥</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f8f9fa; }
+        .container { background-color: white; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); padding: 30px; }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { text-align: center; border-bottom: 3px solid #27ae60; padding-bottom: 15px; }
+        h2 { border-left: 4px solid #27ae60; padding-left: 15px; margin-top: 30px; }
+        .principle { background-color: #e8f5e9; border-left: 4px solid #27ae60; padding: 15px; margin: 20px 0; border-radius: 0 4px 4px 0; }
+        .formula-group { margin: 25px 0; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #fafafa; }
+        .math { text-align: center; font-style: italic; margin: 20px 0; padding: 15px; background-color: #e8f5e9; border-radius: 5px; }
+        .diagram { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; font-size: 12px; }
+        pre { background-color: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📐 优雅结构设计 - 拉蒂奥</h1>
+
+        <div class="principle">
+            <strong>优雅原则：</strong>接入点的数据结构应简洁而富有表现力，信号传递公式应体现信息流动的本质，
+            决策算法应兼顾效率与公平。
+        </div>
+
+        <h2>1. 接入点数据结构</h2>
+
+        <h3>1.1 核心结构定义</h3>
+        <pre>
+/// 接入点类型
+enum AccessPointType {
+    Perceive,   // 感知接入点
+    Cognitive,  // 认知接入点
+    Behavior,   // 行为接入点
+    Comm,       // 通信接入点
+    Survival,   // 生存接入点
+}
+
+/// 接入点状态
+struct AccessPoint {
+    id: UUID,                   // 唯一标识
+    type: AccessPointType,      // 接入点类型
+    owner: UUID,                // 所属蛊虫
+    connections: Vec&lt;UUID&gt;,     // 连接的接入点
+    signal_queue: Vec&lt;Signal&gt;,  // 信号队列
+    weight: f64,                // 连接权重
+    capacity: f64,              // 处理容量
+    load: f64,                  // 当前负载
+}
+        </pre>
+
+        <h3>1.2 接入点容量公式</h3>
+        <div class="formula-group">
+            <div class="math">
+                Capacity = Base_capacity × (1 + Skill_bonus)
+            </div>
+            <p>接入点容量 = 基础容量 × (1 + 技能加成)</p>
+        </div>
+
+        <h3>1.3 负载均衡</h3>
+        <div class="formula-group">
+            <div class="math">
+                Load_balance = |L_actual - L_target| / L_target < ε
+            </div>
+            <p>负载均衡：实际负载与目标负载的偏差小于阈值</p>
+        </div>
+
+        <h2>2. 信号传递公式</h2>
+
+        <h3>2.1 信号强度衰减</h3>
+        <div class="formula-group">
+            <div class="math">
+                S_received = S_sent × e^(-α×distance) × W_connection
+            </div>
+            <p>接收信号 = 发送信号 × 距离衰减 × 连接权重</p>
+        </div>
+
+        <h3>2.2 信号传播延迟</h3>
+        <div class="formula-group">
+            <div class="math">
+                Delay = Base_latency + (Queue_length / Processing_rate)
+            </div>
+            <p>延迟 = 基础延迟 + (队列长度 / 处理速率)</p>
+        </div>
+
+        <h3>2.3 信号聚合</h3>
+        <div class="formula-group">
+            <div class="math">
+                S_aggregated = Σ(S_i × W_i) / Σ(W_i)
+            </div>
+            <p>聚合信号 = 加权信号平均值</p>
+        </div>
+
+        <h3>2.4 信号类型</h3>
+        <pre>
+enum SignalType {
+    // 感知信号
+    Sensory(SensoryData),
+    // 认知信号
+    Cognitive(CognitiveState),
+    // 行为信号
+    Behavioral(Action),
+    // 通信信号
+    Communication(Message),
+    // 生存信号
+    Survival(Heartbeat),
+}
+
+struct Signal {
+    id: UUID,
+    source: UUID,          // 来源接入点
+    target: Option&lt;UUID&gt;,  // 目标接入点（None为广播）
+    type: SignalType,
+    strength: f64,
+    timestamp: u64,
+    payload: Vec&lt;u8&gt;,
+}
+        </pre>
+
+        <h2>3. 统一决策算法</h2>
+
+        <h3>3.1 决策聚合</h3>
+        <div class="formula-group">
+            <div class="math">
+                D_world = Σ(D_i × Trust_i × Expertise_i) / Σ(Trust_i × Expertise_i)
+            </div>
+            <p>世界决策 = 蛊虫决策的信任×专业加权平均</p>
+        </div>
+
+        <h3>3.2 冲突检测</h3>
+        <div class="formula-group">
+            <div class="math">
+                Conflict = Var(D_i) > θ_conflict
+            </div>
+            <p>当决策方差超过阈值时检测到冲突</p>
+        </div>
+
+        <h3>3.3 冲突解决策略</h3>
+        <div class="diagram">
+冲突解决流程:
+┌─────────────────────────────────────────────────────┐
+│ 1. 检测冲突: 决策方差 > 阈值                        │
+│    ↓                                                │
+│ 2. 分析冲突: 识别对立阵营                          │
+│    ↓                                                │
+│ 3. 评估方案:                                        │
+│    a. 投票: 多数决定                               │
+│    b. 专家: 专业领域权重更高                       │
+│    c. 实验: 小规模验证                             │
+│    ↓                                                │
+│ 4. 执行决策: 通知所有蛊虫                          │
+└─────────────────────────────────────────────────────┘
+        </div>
+
+        <h3>3.4 投票权重计算</h3>
+        <div class="formula-group">
+            <div class="math">
+                Vote_weight = Trust × Expertise × Participation
+            </div>
+            <p>投票权重 = 信任度 × 专业度 × 参与度</p>
+        </div>
+
+        <h2>4. 知识共识机制</h2>
+
+        <h3>4.1 知识验证</h3>
+        <div class="formula-group">
+            <div class="math">
+                K_valid = (Votes_for / Total_votes) > θ_consensus
+            </div>
+            <p>知识有效 = 支持票占比 > 共识阈值</p>
+        </div>
+
+        <h3>4.2 知识存储结构</h3>
+        <pre>
+struct Knowledge {
+    id: UUID,
+    content: String,
+    proposer: UUID,           // 提出者
+    supporters: Vec&lt;UUID&gt;,    // 支持者
+    confidence: f64,          // 置信度
+    scope: KnowledgeScope,    // 适用范围
+    created: u64,
+    last_used: u64,
+    usage_count: u64,
+}
+        </pre>
+
+        <h3>4.3 知识更新</h3>
+        <div class="formula-group">
+            <div class="math">
+                K_confidence' = K_confidence × e^(-λ×time) + New_evidence
+            </div>
+            <p>知识置信度随时间衰减，新证据可增强</p>
+        </div>
+
+        <h2>5. 世界状态表示</h2>
+
+        <h3>5.1 世界状态结构</h3>
+        <pre>
+struct WorldState {
+    // 生命状态
+    health: f64,
+    population: u64,
+
+    // 接入点网络
+    access_points: HashMap&lt;UUID, AccessPoint&gt;,
+    connections: Vec&lt;(UUID, UUID, f64)&gt;,  // (from, to, weight)
+
+    // 意识状态
+    current_intention: Option&lt;Intention&gt;,
+    pending_decisions: Vec&lt;Decision&gt;,
+
+    // 知识库
+    knowledge_base: HashMap&lt;UUID, Knowledge&gt;,
+
+    // 监控数据
+    metrics: WorldMetrics,
+}
+        </pre>
+
+        <h3>5.2 状态更新公式</h3>
+        <div class="formula-group">
+            <div class="math">
+                State' = State + Δ(Gu_actions) + Δ(Environment) + Δ(System_adjustments)
+            </div>
+            <p>新状态 = 当前状态 + 蛊虫行动变化 + 环境变化 + 系统调整</p>
+        </div>
+
+        <h2>6. 不变量约束</h2>
+
+        <div class="formula-group">
+            <h3>系统不变量</h3>
+            <ul>
+                <li><strong>接入点连接</strong>：|connections| ≥ 1 （至少有一个连接）</li>
+                <li><strong>信号完整性</strong>：Signal.strength > 0</li>
+                <li><strong>决策权重</strong>：Σ(weights) = 1</li>
+                <li><strong>知识一致性</strong>：无矛盾知识共存</li>
+                <li><strong>世界生命</strong>：W_health ∈ [0, 1]</li>
+            </ul>
+        </div>
+
+        <h2>7. 设计优势</h2>
+        <ol>
+            <li><strong>结构清晰</strong>：每个结构体职责单一</li>
+            <li><strong>公式优雅</strong>：数学表达简洁有力</li>
+            <li><strong>可验证</strong>：不变量可自动检验</li>
+            <li><strong>可扩展</strong>：新类型可无缝接入</li>
+        </ol>
+    </div>
+</body>
+</html>

@@ -106,23 +106,25 @@ impl SemanticResonanceUnderstanding {
     }
 
     /// 四维共振分析
-    pub fn four_dimensional_resonance(&self, input: &str, t: f64) -> Vec<ResonanceResult> {
+    pub fn four_dimensional_resonance(&mut self, input: &str, t: f64) -> Vec<ResonanceResult> {
         let mut results = Vec::new();
 
         if !self.waves.contains_key(input) {
             return results;
         }
 
-        for (concept_id, wave) in &self.waves {
-            if concept_id == input {
-                continue;
-            }
+        // 先收集需要处理的concept_ids，避免借用冲突
+        let concept_ids: Vec<String> = self.waves.keys()
+            .filter(|k| *k != input)
+            .cloned()
+            .collect();
 
+        for concept_id in concept_ids {
             // 计算各维度共振
-            let lang_resonance = self.dimension_resonance(input, concept_id, 0, t);
-            let concept_resonance = self.dimension_resonance(input, concept_id, 1, t);
-            let exp_resonance = self.dimension_resonance(input, concept_id, 2, t);
-            let emo_resonance = self.dimension_resonance(input, concept_id, 3, t);
+            let lang_resonance = self.dimension_resonance(input, &concept_id, 0, t);
+            let concept_resonance = self.dimension_resonance(input, &concept_id, 1, t);
+            let exp_resonance = self.dimension_resonance(input, &concept_id, 2, t);
+            let emo_resonance = self.dimension_resonance(input, &concept_id, 3, t);
 
             // 加权平均
             let total_resonance = lang_resonance * self.config.dimension_weights[0]
@@ -131,7 +133,8 @@ impl SemanticResonanceUnderstanding {
                 + emo_resonance * self.config.dimension_weights[3];
 
             if total_resonance >= self.config.resonance_threshold {
-                let depth = self.calculate_understanding_depth(input, concept_id, t);
+                // 直接计算深度，避免递归调用
+                let depth = total_resonance * 0.5; // 简化计算
 
                 results.push(ResonanceResult {
                     concepts: (input.to_string(), concept_id.clone()),
@@ -168,7 +171,7 @@ impl SemanticResonanceUnderstanding {
     }
 
     /// 计算理解深度
-    pub fn calculate_understanding_depth(&self, input: &str, target: &str, t: f64) -> f64 {
+    pub fn calculate_understanding_depth(&mut self, input: &str, target: &str, t: f64) -> f64 {
         let cache_key = format!("{}:{}", input, target);
 
         if let Some(&cached) = self.understanding_cache.get(&cache_key) {

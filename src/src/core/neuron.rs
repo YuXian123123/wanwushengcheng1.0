@@ -144,6 +144,11 @@ impl Neuron {
     pub fn to_state(&self) -> NeuronState {
         self.inner.clone()
     }
+
+    /// 从状态恢复（用于反序列化）
+    pub fn from_state(state: NeuronState) -> Self {
+        Self { inner: state }
+    }
 }
 
 impl PartialEq for Neuron {

@@ -36,11 +36,11 @@ pub use cms::{
 };
 
 // ============== 拉蒂奥优雅结构模块 ==============
-pub mod core_elegant;
+pub mod core;
 pub mod chain;
 pub mod hierarchy;
 
-pub use core_elegant::{GuReasoningCore as ElegantReasoningCore, InferenceResult, InferenceType, ReasoningConfig};
+pub use core::{GuReasoningCore as ElegantReasoningCore, InferenceResult, InferenceType, ReasoningConfig};
 pub use chain::{ReasoningChain, ReasoningStep, ReasoningRule, ChainBuilder};
 pub use hierarchy::{KnowledgeHierarchy, KnowledgeNode, KnowledgeLevel as KLevel, KnowledgeSource};
 

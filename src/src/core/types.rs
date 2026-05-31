@@ -3,14 +3,20 @@
 use serde::{Deserialize, Serialize};
 
 /// 神经元类型
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+///
+/// 对应蛊虫的5个接入点，每个蛊虫有5个核心神经元
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum NeuronType {
-    /// 感知神经元 - 接收外部输入
+    /// 感知神经元 - 接收外部输入（对应 Perceive 接入点）
     Perception,
-    /// 认知神经元 - 内部处理
+    /// 认知神经元 - 内部处理（对应 Cognitive 接入点）
     Cognitive,
-    /// 行为神经元 - 输出行为
+    /// 行为神经元 - 输出行为（对应 Behavior 接入点）
     Behavior,
+    /// 通信神经元 - 蛊虫间通信（对应 Comm 接入点）
+    Comm,
+    /// 生存神经元 - 生命状态（对应 Survival 接入点）
+    Survival,
 }
 
 /// 可塑性规则（局部学习规则，非梯度下降）

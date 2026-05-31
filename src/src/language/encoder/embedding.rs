@@ -1,14 +1,24 @@
 //! 词嵌入模块
 //!
 //! 将词映射到概念向量空间
+//!
+//! # 桥接设计
+//!
+//! 支持两种模式：
+//! 1. 预训练模式：使用 WordEmbedding（如腾讯词向量）
+//! 2. 回退模式：基于哈希的伪向量（用于未知词）
 
 use crate::language::concept::ConceptVector;
 use crate::config::concept::ConceptConfig;
+use crate::embedding::{WordEmbedding, EmbeddingConfig};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// 词嵌入器
 pub struct Embedding {
-    /// 词到向量的映射
+    /// 预训练词向量（可选）
+    pretrained: Option<Arc<WordEmbedding>>,
+    /// 词到向量的映射（缓存）
     embeddings: HashMap<String, ConceptVector>,
     /// 概念配置
     config: ConceptConfig,
@@ -17,9 +27,10 @@ pub struct Embedding {
 }
 
 impl Embedding {
-    /// 创建新嵌入器
+    /// 创建新嵌入器（无预训练）
     pub fn new() -> Self {
         Self {
+            pretrained: None,
             embeddings: HashMap::new(),
             config: ConceptConfig::new(),
             use_position_encoding: true,
@@ -29,23 +40,60 @@ impl Embedding {
     /// 使用配置创建嵌入器
     pub fn with_config(config: ConceptConfig) -> Self {
         Self {
+            pretrained: None,
             embeddings: HashMap::new(),
             config,
             use_position_encoding: true,
         }
     }
 
+    /// 使用预训练词向量创建嵌入器
+    pub fn with_pretrained(pretrained: WordEmbedding, config: ConceptConfig) -> Self {
+        Self {
+            pretrained: Some(Arc::new(pretrained)),
+            embeddings: HashMap::new(),
+            config,
+            use_position_encoding: true,
+        }
+    }
+
+    /// 从文件加载预训练词向量
+    pub fn load_pretrained(&mut self, path: &str) -> Result<(), String> {
+        let emb_config = EmbeddingConfig::fasttext(self.config.vector_dim);
+        let word_embedding = WordEmbedding::from_word2vec_binary(path, emb_config)
+            .map_err(|e| format!("Failed to load pretrained embeddings: {:?}", e))?;
+
+        self.pretrained = Some(Arc::new(word_embedding));
+        Ok(())
+    }
+
     /// 获取或创建词向量
     ///
-    /// 如果词已存在，返回已有向量
-    /// 如果词不存在，创建新向量并缓存
+    /// 优先级：
+    /// 1. 本地缓存
+    /// 2. 预训练词向量
+    /// 3. 生成伪向量
     pub fn embed(&mut self, word: &str) -> ConceptVector {
+        // 检查缓存
         if let Some(vector) = self.embeddings.get(word) {
             return vector.clone();
         }
 
-        // 创建新向量
-        let vector = self.create_embedding(word);
+        // 尝试从预训练获取
+        let vector = if let Some(ref pretrained) = self.pretrained {
+            if pretrained.contains(word) {
+                // 词存在于预训练中
+                let vec = pretrained.get_vector(word);
+                ConceptVector::from_data(vec)
+            } else {
+                // 未知词：生成伪向量
+                self.create_embedding(word)
+            }
+        } else {
+            // 无预训练：生成伪向量
+            self.create_embedding(word)
+        };
+
         self.embeddings.insert(word.to_string(), vector.clone());
         vector
     }
@@ -69,10 +117,9 @@ impl Embedding {
         self.add_position_encoding(&base_vector, position)
     }
 
-    /// 创建词嵌入
+    /// 创建词嵌入（回退方案）
     fn create_embedding(&self, word: &str) -> ConceptVector {
-        // 简化实现：基于字符串特征生成向量
-        // 实际实现应使用预训练模型（如Word2Vec、FastText等）
+        // 基于字符串特征生成向量
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
 
@@ -82,7 +129,6 @@ impl Embedding {
 
         // 基于字符特征
         let char_count = word.chars().count() as f64;
-        let byte_count = word.len() as f64;
         let has_chinese = word.chars().any(|c| ('\u{4E00}'..='\u{9FFF}').contains(&c));
 
         let dim = self.config.vector_dim;
@@ -128,6 +174,15 @@ impl Embedding {
         self.embeddings.contains_key(word)
     }
 
+    /// 检查预训练词向量是否包含该词
+    pub fn in_pretrained(&self, word: &str) -> bool {
+        if let Some(ref pretrained) = self.pretrained {
+            pretrained.contains(word)
+        } else {
+            false
+        }
+    }
+
     /// 更新词向量（用于在线学习）
     pub fn update(&mut self, word: &str, new_vector: ConceptVector) {
         self.embeddings.insert(word.to_string(), new_vector);
@@ -138,9 +193,14 @@ impl Embedding {
         self.embeddings.remove(word).is_some()
     }
 
-    /// 清空词汇表
+    /// 清空缓存
     pub fn clear(&mut self) {
         self.embeddings.clear();
+    }
+
+    /// 获取预训练词向量统计
+    pub fn pretrained_stats(&self) -> Option<(usize, usize)> {
+        self.pretrained.as_ref().map(|p| (p.vocabulary_size(), p.dimension()))
     }
 }
 

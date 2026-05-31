@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全协议设计 - 螺丝咕姆</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f8f9fa; }
+        .container { background-color: white; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); padding: 30px; }
+        h1, h2, h3 { color: #2c3e50; }
+        h1 { text-align: center; border-bottom: 3px solid #e74c3c; padding-bottom: 15px; }
+        h2 { border-left: 4px solid #e74c3c; padding-left: 15px; margin-top: 30px; }
+        .principle { background-color: #fceaea; border-left: 4px solid #e74c3c; padding: 15px; margin: 20px 0; border-radius: 0 4px 4px 0; }
+        .formula-group { margin: 25px 0; padding: 20px; border: 1px solid #eee; border-radius: 5px; background-color: #fafafa; }
+        .math { text-align: center; font-style: italic; margin: 20px 0; padding: 15px; background-color: #fdecea; border-radius: 5px; }
+        .diagram { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; font-size: 12px; }
+        .critical { background-color: #ffe6e6; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 安全协议设计 - 螺丝咕姆</h1>
+
+        <div class="principle">
+            <strong>安全原则：</strong>世界智能体的生存依赖于蛊虫群体的存活。必须建立完善的监控、
+            预警和恢复机制，确保世界智能体不会因蛊虫大规模死亡而终止。
+        </div>
+
+        <h2>1. 世界生存保障机制</h2>
+
+        <h3>1.1 生命值计算</h3>
+        <div class="formula-group">
+            <div class="math">
+                W_life = Σ(Gu_life × Gu_weight) / Σ(Gu_weight)
+            </div>
+            <p>世界生命值 = 蛊虫生命值的加权平均</p>
+        </div>
+
+        <div class="formula-group">
+            <div class="math">
+                W_health = α × Population + β × Diversity + γ × Activity
+            </div>
+            <p>世界健康度 = α×种群数量 + β×多样性 + γ×活跃度</p>
+        </div>
+
+        <h3>1.2 生存阈值</h3>
+        <div class="diagram">
+┌────────────────────────────────────────────────────────┐
+│                    生存状态区间                        │
+├────────────────────────────────────────────────────────┤
+│                                                        │
+│  1.0 ────────────────────── 健康状态                  │
+│      │                                                 │
+│  0.7 ────────────────────── 正常状态                  │
+│      │                                                 │
+│  0.5 ────────────────────── 警戒状态 ⚠️              │
+│      │                                                 │
+│  0.3 ────────────────────── 危险状态 🔴               │
+│      │                                                 │
+│  0.1 ────────────────────── 濒死状态 💀               │
+│      │                                                 │
+│  0.0 ────────────────────── 死亡状态 ☠️               │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+        </div>
+
+        <h2>2. 内部监控协议</h2>
+
+        <h3>2.1 心跳检测</h3>
+        <div class="formula-group">
+            <div class="math">
+                Heartbeat_check = ∀Gu: (now - last_heartbeat) < timeout
+            </div>
+            <p>每个蛊虫必须定期发送心跳，超时视为异常</p>
+        </div>
+
+        <h3>2.2 监控指标</h3>
+        <table border="1" cellpadding="10" style="width:100%; border-collapse:collapse;">
+            <tr style="background:#f0f0f0;">
+                <th>指标</th>
+                <th>检测频率</th>
+                <th>预警阈值</th>
+                <th>恢复动作</th>
+            </tr>
+            <tr>
+                <td>蛊虫数量</td>
+                <td>每秒</td>
+                <td>< 最小种群</td>
+                <td>生成新蛊虫</td>
+            </tr>
+            <tr>
+                <td>平均生命值</td>
+                <td>每秒</td>
+                <td>< 0.3</td>
+                <td>触发恢复协议</td>
+            </tr>
+            <tr>
+                <td>网络连通性</td>
+                <td>每5秒</td>
+                <td>断连 > 10%</td>
+                <td>重建连接</td>
+            </tr>
+            <tr>
+                <td>经济流动性</td>
+                <td>每分钟</td>
+                <td>交易量 < 阈值</td>
+                <td>注入货币</td>
+            </tr>
+        </table>
+
+        <h3>2.3 异常检测算法</h3>
+        <div class="formula-group">
+            <div class="math">
+                Anomaly_score = Σ(|Metric_i - Expected_i| / σ_i)
+            </div>
+            <p>异常评分 = 各指标偏离期望的标准差之和</p>
+        </div>
+
+        <h2>3. 死亡检测与恢复</h2>
+
+        <h3>3.1 蛊虫死亡检测</h3>
+        <div class="diagram">
+检测流程:
+┌─────────────────────────────────────────────────────┐
+│ 1. 心跳超时 (> 3×interval)                          │
+│    ↓                                                │
+│ 2. 二次确认 (发送探测信号)                           │
+│    ↓                                                │
+│ 3. 确认死亡 (无响应)                                │
+│    ↓                                                │
+│ 4. 触发恢复协议                                     │
+└─────────────────────────────────────────────────────┘
+        </div>
+
+        <h3>3.2 恢复协议</h3>
+        <div class="critical">
+            <strong>关键恢复策略：</strong>
+            <ol>
+                <li><strong>知识备份</strong>：死亡蛊虫的知识已备份到世界记忆</li>
+                <li><strong>任务转移</strong>：未完成任务转移给其他蛊虫</li>
+                <li><strong>资源回收</strong>：死亡蛊虫的资源回归世界池</li>
+                <li><strong>新蛊虫生成</strong>：根据需要生成新蛊虫替代</li>
+            </ol>
+        </div>
+
+        <h3>3.3 世界濒死恢复</h3>
+        <div class="formula-group">
+            <div class="math">
+                Recovery_action = f(W_health, Available_resources, Backup_state)
+            </div>
+            <p>恢复动作取决于：健康度、可用资源、备份状态</p>
+        </div>
+
+        <div class="diagram">
+世界濒死恢复流程:
+┌─────────────────────────────────────────────────────┐
+│ W_health < 0.3 触发:                                │
+│                                                     │
+│ 1. 紧急模式: 暂停非关键任务                         │
+│    ↓                                                │
+│ 2. 资源注入: 从备份池注入资源                       │
+│    ↓                                                │
+│ 3. 蛊虫生成: 快速生成基础蛊虫                       │
+│    ↓                                                │
+│ 4. 知识恢复: 从世界记忆恢复关键知识                 │
+│    ↓                                                │
+│ 5. 正常模式: W_health > 0.5 后恢复正常              │
+└─────────────────────────────────────────────────────┘
+        </div>
+
+        <h2>4. 最小种群保护</h2>
+
+        <div class="formula-group">
+            <div class="math">
+                N_min = max(Base_min, Active_tasks / Tasks_per_Gu)
+            </div>
+            <p>最小种群 = max(基础最小值, 活跃任务数/每蛊虫任务数)</p>
+        </div>
+
+        <h3>保护机制</h3>
+        <ul>
+            <li><strong>实时监控</strong>：种群数量持续监控</li>
+            <li><strong>自动补充</strong>：数量 < N_min 时自动生成新蛊虫</li>
+            <li><strong>优先级</strong>：关键任务蛊虫优先保护</li>
+            <li><strong>多样性</strong>：补充时保持类型多样性</li>
+        </ul>
+
+        <h2>5. 灾难恢复</h2>
+
+        <h3>5.1 备份策略</h3>
+        <table border="1" cellpadding="10" style="width:100%; border-collapse:collapse;">
+            <tr style="background:#f0f0f0;">
+                <th>备份内容</th>
+                <th>频率</th>
+                <th>存储位置</th>
+            </tr>
+            <tr>
+                <td>世界状态快照</td>
+                <td>每分钟</td>
+                <td>世界记忆库</td>
+            </tr>
+            <tr>
+                <td>关键知识</td>
+                <td>实时</td>
+                <td>分布式存储</td>
+            </tr>
+            <tr>
+                <td>经济状态</td>
+                <td>每秒</td>
+                <td>经济系统日志</td>
+            </tr>
+        </table>
+
+        <h3>5.2 恢复时间目标</h3>
+        <div class="formula-group">
+            <div class="math">
+                RTO < 30s, RPO < 1min
+            </div>
+            <p>恢复时间目标 < 30秒，恢复点目标 < 1分钟数据</p>
+        </div>
+
+        <h2>6. 安全验证</h2>
+
+        <div class="formula-group">
+            <div class="math">
+                Safety_invariant = (N_Gu ≥ N_min) ∧ (W_health > 0) ∧ (Connectivity > 0.5)
+            </div>
+            <p>安全不变量：蛊虫数量 ≥ 最小值 ∧ 世界健康 > 0 ∧ 连通性 > 0.5</p>
+        </div>
+    </div>
+</body>
+</html>

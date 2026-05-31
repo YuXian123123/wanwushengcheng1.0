@@ -138,6 +138,11 @@ impl Synapse {
     pub fn to_state(&self) -> SynapseState {
         self.inner.clone()
     }
+
+    /// 从状态恢复
+    pub fn from_state(state: SynapseState) -> Self {
+        Self { inner: state }
+    }
 }
 
 impl PartialEq for Synapse {
