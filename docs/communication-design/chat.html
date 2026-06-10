@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蛊虫通信频道 - 天才理事会</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+        }
+
+        .chat-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            height: 100vh;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            background: rgba(0,0,0,0.3);
+            border-right: 1px solid rgba(254,202,87,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(254,202,87,0.2);
+        }
+
+        .sidebar-header h2 {
+            color: #feca57;
+            font-size: 1.2em;
+        }
+
+        .channel-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .channel-group {
+            margin-bottom: 15px;
+        }
+
+        .channel-group-title {
+            color: #a4a4a4;
+            font-size: 0.85em;
+            padding: 5px 10px;
+            text-transform: uppercase;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .channel-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .channel-item.active {
+            background: rgba(254,202,87,0.2);
+        }
+
+        .channel-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .channel-icon.world { background: rgba(254,202,87,0.3); }
+        .channel-icon.team { background: rgba(147,112,219,0.3); }
+        .channel-icon.private { background: rgba(52,152,219,0.3); }
+        .channel-icon.system { background: rgba(39,174,96,0.3); }
+
+        .channel-name {
+            flex: 1;
+            font-size: 0.95em;
+        }
+
+        .channel-unread {
+            background: #ff6b6b;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 0.8em;
+        }
+
+        /* 主聊天区域 */
+        .main-chat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(254,202,87,0.2);
+            display: flex;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .chat-header-info {
+            flex: 1;
+        }
+
+        .chat-header h3 {
+            color: #feca57;
+        }
+
+        .chat-header .description {
+            color: #a4a4a4;
+            font-size: 0.9em;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #e4e4e4;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .header-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* 消息区域 */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.3em;
+            flex-shrink: 0;
+        }
+
+        .avatar-black-tower { background: rgba(147,112,219,0.3); }
+        .avatar-screwllum { background: rgba(39,174,96,0.3); }
+        .avatar-latio { background: rgba(52,152,219,0.3); }
+        .avatar-system { background: rgba(254,202,87,0.3); }
+        .avatar-gu { background: rgba(255,255,255,0.1); }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }
+
+        .message-author {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .author-black-tower { color: #9370db; }
+        .author-screwllum { color: #27ae60; }
+        .author-latio { color: #3498db; }
+        .author-system { color: #feca57; }
+
+        .message-time {
+            color: #a4a4a4;
+            font-size: 0.85em;
+        }
+
+        .message-text {
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message-text code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .message-formula {
+            background: rgba(52,152,219,0.1);
+            border-left: 3px solid #3498db;
+            padding: 10px 15px;
+            margin: 10px 0;
+            font-family: 'Cambria Math', serif;
+        }
+
+        .message-proposal {
+            background: rgba(147,112,219,0.1);
+            border: 1px solid rgba(147,112,219,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .message-proposal h4 {
+            color: #9370db;
+            margin-bottom: 10px;
+        }
+
+        .proposal-votes {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .vote-btn {
+            padding: 5px 15px;
+            border-radius: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .vote-approve {
+            background: rgba(39,174,96,0.3);
+            color: #27ae60;
+        }
+
+        .vote-approve:hover {
+            background: rgba(39,174,96,0.5);
+        }
+
+        .vote-reject {
+            background: rgba(231,76,60,0.3);
+            color: #e74c3c;
+        }
+
+        .vote-reject:hover {
+            background: rgba(231,76,60,0.5);
+        }
+
+        /* 系统消息 */
+        .system-message {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .system-message span {
+            background: rgba(254,202,87,0.2);
+            color: #feca57;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        /* 输入区域 */
+        .input-container {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(254,202,87,0.2);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(254,202,87,0.3);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #e4e4e4;
+            font-size: 1em;
+            resize: none;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #feca57;
+        }
+
+        .message-input::placeholder {
+            color: #a4a4a4;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #feca57, #ff6b6b);
+            border: none;
+            color: #0f0c29;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .input-tools {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #a4a4a4;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            border-color: #feca57;
+            color: #feca57;
+        }
+
+        /* 在线状态 */
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #27ae60;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .online-indicator.offline {
+            background: #a4a4a4;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .chat-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>📡 通信频道</h2>
+            </div>
+            <div class="channel-list">
+                <div class="channel-group">
+                    <div class="channel-group-title">世界频道</div>
+                    <div class="channel-item active">
+                        <div class="channel-icon world">🌍</div>
+                        <span class="channel-name"># 世界意识</span>
+                        <span class="channel-unread">5</span>
+                    </div>
+                    <div class="channel-item">
+                        <div class="channel-icon world">📢</div>
+                        <span class="channel-name"># 知识公告</span>
+                    </div>
+                </div>
+
+                <div class="channel-group">
+                    <div class="channel-group-title">协作频道</div>
+                    <div class="channel-item">
+                        <div class="channel-icon team">🗼</div>
+                        <span class="channel-name"># 天才议会</span>
+                        <span class="channel-unread">3</span>
+                    </div>
+                    <div class="channel-item">
+                        <div class="channel-icon team">📚</div>
+                        <span class="channel-name"># 知识讨论</span>
+                    </div>
+                    <div class="channel-item">
+                        <div class="channel-icon team">🔬</div>
+                        <span class="channel-name"># 验证组</span>
+                    </div>
+                </div>
+
+                <div class="channel-group">
+                    <div class="channel-group-title">私有频道</div>
+                    <div class="channel-item">
+                        <div class="channel-icon private">💬</div>
+                        <span class="channel-name">@ 黑塔</span>
+                    </div>
+                    <div class="channel-item">
+                        <div class="channel-icon private">💬</div>
+                        <span class="channel-name">@ 螺丝咕姆</span>
+                    </div>
+                    <div class="channel-item">
+                        <div class="channel-icon private">💬</div>
+                        <span class="channel-name">@ 拉蒂奥</span>
+                    </div>
+                </div>
+
+                <div class="channel-group">
+                    <div class="channel-group-title">系统</div>
+                    <div class="channel-item">
+                        <div class="channel-icon system">⚙️</div>
+                        <span class="channel-name"># 系统日志</span>
+                    </div>
+                    <div class="channel-item">
+                        <div class="channel-icon system">💰</div>
+                        <span class="channel-name"># 经济监控</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主聊天区域 -->
+        <div class="main-chat">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <h3>🌍 # 世界意识</h3>
+                    <div class="description">
+                        <span class="online-indicator"></span>
+                        12 蛊虫在线 | 知识协作讨论中
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="header-btn">📋 提案</button>
+                    <button class="header-btn">📊 统计</button>
+                    <button class="header-btn">⚙️ 设置</button>
+                </div>
+            </div>
+
+            <div class="messages-container">
+                <!-- 系统消息 -->
+                <div class="system-message">
+                    <span>📌 新知识讨论开始: HTML 文档结构</span>
+                </div>
+
+                <!-- 黑塔消息 -->
+                <div class="message">
+                    <div class="message-avatar avatar-black-tower">🗼</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author author-black-tower">黑塔</span>
+                            <span class="message-time">10:23</span>
+                        </div>
+                        <div class="message-text">
+                            我提议 HTML 文档结构知识的定义应该是：
+                            <br><br>
+                            <b>HTML 文档由 DOCTYPE 声明、html 根元素、head 头部和 body 主体四部分组成。</b>
+                            <br><br>
+                            这是基础架构，需要共识。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 螺丝咕姆消息 -->
+                <div class="message">
+                    <div class="message-avatar avatar-screwllum">🔧</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author author-screwllum">螺丝咕姆</span>
+                            <span class="message-time">10:24</span>
+                        </div>
+                        <div class="message-text">
+                            需要补充安全性说明：
+                            <br><br>
+                            DOCTYPE 声明确保浏览器使用标准模式渲染，防止怪异模式攻击。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 拉蒂奥消息 -->
+                <div class="message">
+                    <div class="message-avatar avatar-latio">📐</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author author-latio">拉蒂奥</span>
+                            <span class="message-time">10:25</span>
+                        </div>
+                        <div class="message-text">
+                            结构完整度公式：
+                            <div class="message-formula">
+                                完整度 = (DOCTYPE?1:0 + html?1:0 + head?1:0 + body?1:0) / 4
+                            </div>
+                            形式化验证更优雅。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提案消息 -->
+                <div class="message">
+                    <div class="message-avatar avatar-system">📋</div>
+                    <div class="message-content">
+                        <div class="message-proposal">
+                            <h4>📋 知识提案 #001</h4>
+                            <p><b>主题:</b> HTML 文档结构</p>
+                            <p><b>定义:</b> HTML 文档由 DOCTYPE 声明、html 根元素、head 头部和 body 主体四部分组成，DOCTYPE 确保标准模式渲染。</p>
+                            <p><b>概念:</b> DOCTYPE, html元素, head元素, body元素, 标准模式</p>
+                            <p><b>提交者:</b> 黑塔</p>
+                            <div class="proposal-votes">
+                                <button class="vote-btn vote-approve">✓ 同意 (2/3)</button>
+                                <button class="vote-btn vote-reject">✗ 反对 (0)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统通知 -->
+                <div class="system-message">
+                    <span>🎉 螺丝咕姆 投票支持，当前 2/3 共识</span>
+                </div>
+
+                <!-- 蛊虫消息 -->
+                <div class="message">
+                    <div class="message-avatar avatar-gu">🐛</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">Gu_7f3a</span>
+                            <span class="message-time">10:27</span>
+                        </div>
+                        <div class="message-text">
+                            我在验证时发现需要补充：head 元素必须包含 title 元素才能通过 W3C 验证。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 冲突消息 -->
+                <div class="message">
+                    <div class="message-avatar avatar-screwllum">🔧</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author author-screwllum">螺丝咕姆</span>
+                            <span class="message-time">10:28</span>
+                        </div>
+                        <div class="message-text">
+                            ⚠️ <b>反对意见</b>：
+                            <br><br>
+                            实际上，HTML5 规范中 title 元素在大多数情况下是必需的，但并非绝对。
+                            <br><br>
+                            例如：<code>&lt;iframe&gt;</code> 中的文档可以没有 title。
+                            <br><br>
+                            建议：将 "必须包含" 改为 "推荐包含"。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 解决方案 -->
+                <div class="message">
+                    <div class="message-avatar avatar-latio">📐</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author author-latio">拉蒂奥</span>
+                            <span class="message-time">10:30</span>
+                        </div>
+                        <div class="message-text">
+                            <b>折中方案：</b>
+                            <div class="message-formula">
+                                TitleStatus =
+                                <br>
+                                &nbsp;&nbsp;if is_iframe then Optional
+                                <br>
+                                &nbsp;&nbsp;else if is_main_document then Required
+                            </div>
+                            既准确又优雅。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 最终共识 -->
+                <div class="system-message">
+                    <span>✅ 共识达成！知识 "HTML 文档结构" 已入库</span>
+                </div>
+
+                <div class="system-message">
+                    <span>📚 经验记录：冲突 #012 解决 - 通过条件分类实现精确表述</span>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea class="message-input" placeholder="输入消息... (支持 Markdown)"></textarea>
+                    <button class="send-btn">发送</button>
+                </div>
+                <div class="input-tools">
+                    <button class="tool-btn">📋 提交提案</button>
+                    <button class="tool-btn">📐 公式</button>
+                    <button class="tool-btn">💻 代码</button>
+                    <button class="tool-btn">📎 附件</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API 基础 URL
+        const API_BASE = 'http://localhost:9000/api';
+
+        // 简单的交互逻辑
+        document.querySelectorAll('.channel-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.channel-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.vote-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.classList.contains('vote-approve')) {
+                    alert('投票支持已记录！');
+                } else {
+                    const reason = prompt('请输入反对理由：');
+                    if (reason) {
+                        alert('反对意见已记录：' + reason);
+                    }
+                }
+            });
+        });
+
+        // 发送消息
+        document.querySelector('.send-btn').addEventListener('click', function() {
+            const input = document.querySelector('.message-input');
+            if (input.value.trim()) {
+                alert('消息已发送：' + input.value);
+                input.value = '';
+            }
+        });
+
+        // 快捷键
+        document.querySelector('.message-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.querySelector('.send-btn').click();
+            }
+        });
+
+        // 从 API 加载频道列表
+        async function loadChannels() {
+            try {
+                const response = await fetch(`${API_BASE}/chat/channels`);
+                if (response.ok) {
+                    const channels = await response.json();
+                    console.log('频道列表:', channels);
+                    // 可以在这里更新 UI
+                }
+            } catch (e) {
+                console.log('API 未连接，使用模拟数据');
+            }
+        }
+
+        // 从 API 加载消息
+        async function loadMessages(channelId) {
+            try {
+                const response = await fetch(`${API_BASE}/chat/channels/${channelId}/messages`);
+                if (response.ok) {
+                    const messages = await response.json();
+                    console.log('消息列表:', messages);
+                    // 可以在这里更新 UI
+                }
+            } catch (e) {
+                console.log('API 未连接，使用模拟数据');
+            }
+        }
+
+        // 初始化
+        loadChannels();
+    </script>
+</body>
+</html>

@@ -104,42 +104,55 @@ async fn handle_world_socket(socket: WebSocket, state: Arc<HernessState>) {
     while let Some(msg) = receiver.next().await {
         match msg {
             Ok(Message::Text(text)) => {
-                // 解析指令
-                if let Ok(command) = serde_json::from_str::<HernessCommand>(&text) {
-                    let result = execute_command(command, &mut learner, &state).await;
+                println!("[WorldChannel] 收到消息: {}", text.chars().take(200).collect::<String>());
 
-                    // 发送结果
-                    if let Some(response) = result {
-                        let msg = WorldChannelMessage::Response { data: response };
-                        if let Ok(json) = serde_json::to_string(&msg) {
-                            let mut s = sender_for_recv.lock().await;
-                            if s.send(Message::Text(json)).await.is_err() {
-                                break;
+                // 解析指令
+                match serde_json::from_str::<HernessCommand>(&text) {
+                    Ok(command) => {
+                        println!("[WorldChannel] 解析命令成功: {:?}", command);
+                        let result = execute_command(command, &mut learner, &state).await;
+
+                        // 发送结果
+                        if let Some(response) = result {
+                            let msg = WorldChannelMessage::Response { data: response };
+                            if let Ok(json) = serde_json::to_string(&msg) {
+                                let mut s = sender_for_recv.lock().await;
+                                if s.send(Message::Text(json)).await.is_err() {
+                                    break;
+                                }
                             }
                         }
                     }
-                } else if let Ok(world_msg) = serde_json::from_str::<WorldMindMessage>(&text) {
-                    // 处理世界模型发来的消息
-                    if let WorldMindMessage::KnowledgeFile(event) = world_msg {
-                        // 处理知识文件
-                        let mut world = state.world.write().await;
-                        let result = world.receive_knowledge_file(&event);
+                    Err(e) => {
+                        println!("[WorldChannel] 解析命令失败: {}", e);
+                        // 尝试解析为其他消息类型
+                        if let Ok(world_msg) = serde_json::from_str::<WorldMindMessage>(&text) {
+                            // 处理世界模型发来的消息
+                            if let WorldMindMessage::KnowledgeFile(event) = world_msg {
+                                // 处理知识文件
+                                let mut world = state.world.write().await;
+                                let result = world.receive_knowledge_file(&event);
 
-                        // 发送处理结果
-                        let msg = WorldChannelMessage::ToolResult {
-                            call_id: event.batch_id.clone(),
-                            success: result.success,
-                            message: result.message,
-                        };
-                        if let Ok(json) = serde_json::to_string(&msg) {
-                            let mut s = sender_for_recv.lock().await;
-                            let _ = s.send(Message::Text(json)).await;
+                                // 发送处理结果
+                                let msg = WorldChannelMessage::ToolResult {
+                                    call_id: event.batch_id.clone(),
+                                    success: result.success,
+                                    message: result.message,
+                                };
+                                if let Ok(json) = serde_json::to_string(&msg) {
+                                    let mut s = sender_for_recv.lock().await;
+                                    let _ = s.send(Message::Text(json)).await;
+                                }
+                            }
                         }
                     }
                 }
             }
             Ok(Message::Close(_)) => break,
-            Err(_) => break,
+            Err(e) => {
+                println!("[WorldChannel] WebSocket 错误: {:?}", e);
+                break;
+            }
             _ => {}
         }
     }
@@ -156,13 +169,18 @@ async fn execute_command(
 ) -> Option<WorldMindResponse> {
     match command {
         HernessCommand::LearnDirectory { path, extensions } => {
+            println!("[WorldChannel] 执行学习目录: {} (扩展名: {:?})", path, extensions);
+
             // 扫描目录
             let files = match learner.scan_directory(&path, &extensions) {
                 Ok(f) => f,
                 Err(e) => {
+                    println!("[WorldChannel] 扫描目录失败: {}", e);
                     return Some(WorldMindResponse::Error(e));
                 }
             };
+
+            println!("[WorldChannel] 找到 {} 个文件", files.len());
 
             if files.is_empty() {
                 return Some(WorldMindResponse::Error("目录为空或不存在".to_string()));
@@ -180,10 +198,13 @@ async fn execute_command(
                 // 读取文件
                 let event = match learner.read_file(&file_path, &path, total) {
                     Ok(e) => e,
-                    Err(_) => {
+                    Err(e) => {
+                        println!("[WorldChannel] 读取文件失败: {}", e);
                         continue;
                     }
                 };
+
+                println!("[WorldChannel] 处理文件: {}", event.filename);
 
                 // 发送给世界模型
                 {
@@ -193,6 +214,7 @@ async fn execute_command(
             }
 
             let (processed, _) = learner.stats();
+            println!("[WorldChannel] 学习完成，处理了 {} 个文件", processed);
             Some(WorldMindResponse::ActionResult {
                 success: true,
                 message: format!("学习完成，处理了 {} 个文件", processed),

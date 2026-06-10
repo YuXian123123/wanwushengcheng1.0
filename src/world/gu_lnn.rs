@@ -10,7 +10,7 @@
 //!
 //! # 架构
 //!
-//! ```
+//! ```text
 //! ┌─────────────────────────────────────────┐
 //! │              GuLNN (蛊虫神经网络)        │
 //! │                                         │
@@ -41,6 +41,16 @@ use crate::core::NeuronType;
 
 /// 接入点类型（重导出以便使用）
 pub use super::AccessPointType;
+
+/// 接入点状态（用于前端显示）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AccessPointStatus {
+    pub perception: f64,
+    pub action: f64,
+    pub communication: f64,
+    pub memory: f64,
+    pub reasoning: f64,
+}
 
 /// 蛊虫神经元状态（可序列化）
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -153,7 +163,13 @@ impl GuLNN {
         let mut neurons = HashMap::new();
         let mut neuron_id_to_type = HashMap::new();
 
-        // 创建5个核心神经元
+        // 创建5个核心神经元，添加随机扰动让每个蛊虫不同
+        // 使用时间戳作为随机种子
+        let random_factor = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos() as f64;
+
         for neuron_type in [
             NeuronType::Perception,
             NeuronType::Cognitive,
@@ -161,7 +177,13 @@ impl GuLNN {
             NeuronType::Comm,
             NeuronType::Survival,
         ] {
-            let neuron = GuNeuronState::new(neuron_type);
+            let mut neuron = GuNeuronState::new(neuron_type);
+
+            // 添加随机初始扰动（-0.3 到 0.3）
+            let perturbation = ((random_factor * (neuron_type as usize + 1) as f64).sin() * 0.3);
+            neuron.state = neuron.state + perturbation;
+            neuron.state = neuron.state.clamp(-1.0, 1.0);
+
             neuron_id_to_type.insert(neuron.id, neuron_type);
             neurons.insert(neuron_type, neuron);
         }
@@ -208,6 +230,36 @@ impl GuLNN {
     /// Survival 神经元状态决定蛊虫是否存活
     pub fn survival_state(&self) -> f64 {
         self.get_neuron_state(NeuronType::Survival)
+    }
+
+    /// 获取整体活跃度（用于健康度）
+    ///
+    /// 所有神经元活跃度的平均值，映射到 [0, 1]
+    pub fn get_overall_activity(&self) -> f64 {
+        let total: f64 = self.neurons.values()
+            .map(|n| (n.activity + 1.0) / 2.0) // 从 [-1, 1] 映射到 [0, 1]
+            .sum();
+        total / self.neurons.len() as f64
+    }
+
+    /// 获取接入点状态（用于前端显示）
+    ///
+    /// 返回每个接入点的活跃度 [0, 1]
+    pub fn get_access_point_status(&self) -> AccessPointStatus {
+        AccessPointStatus {
+            perception: self.get_normalized_activity(NeuronType::Perception),
+            action: self.get_normalized_activity(NeuronType::Behavior),
+            communication: self.get_normalized_activity(NeuronType::Comm),
+            memory: self.get_normalized_activity(NeuronType::Cognitive), // Cognitive 对应 memory
+            reasoning: self.get_normalized_activity(NeuronType::Cognitive),
+        }
+    }
+
+    /// 获取归一化的活跃度 [0, 1]
+    fn get_normalized_activity(&self, neuron_type: NeuronType) -> f64 {
+        self.neurons.get(&neuron_type)
+            .map(|n| (n.activity + 1.0) / 2.0)
+            .unwrap_or(0.5)
     }
 
     /// 获取行为状态

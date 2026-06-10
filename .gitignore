@@ -43,6 +43,32 @@ data/embeddings/
 
 # Node.js
 node_modules/
+web/node_modules/
 web/.vite/
 web/dist/
+web/build/
+herness-web/.vite/
+herness-web/node_modules/
+herness-web/dist/
+herness-web/build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# Playwright/Screenshots
+.playwright-mcp/
+screenshots/
+web/screenshots/
+
+# Serena memories (local)
+.serena/
+
+# Build artifacts
+*.js.map
 

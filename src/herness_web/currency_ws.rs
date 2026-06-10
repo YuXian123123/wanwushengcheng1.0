@@ -6,6 +6,10 @@
 //! - 订阅 TransactionEvent 广播通道
 //! - WorldMind 推送交易事件到通道
 //! - WebSocket 客户端接收真实交易数据
+//!
+//! # 金币总供应量
+//!
+//! 总供应量 = 蛊虫数量 × 每只蛊虫出生携带金币(500)
 
 use axum::{
     extract::{ws::{WebSocket, WebSocketUpgrade, Message}, State},
@@ -17,6 +21,9 @@ use tokio::time::{interval, Duration};
 use serde::Serialize;
 use super::HernessState;
 use super::protocol::{TransactionEvent, CurrencyStats};
+
+/// 蛊虫出生携带金币（与 CurrencyConfig.gu_birth_coins 一致）
+const GU_BIRTH_COINS: f64 = 500.0;
 
 /// 货币 WebSocket 消息
 #[derive(Debug, Serialize)]
@@ -41,14 +48,14 @@ async fn handle_currency_socket(socket: WebSocket, state: Arc<HernessState>) {
     // 订阅交易事件通道
     let mut tx_rx = state.transaction_tx.subscribe();
 
-    // 统计数据
-    let mut total_transactions: u64 = 0;
-    let mut total_supply: f64 = 0.0;
+    // 克隆 state 用于 send_task
+    let state_for_stats = state.clone();
 
     // 发送任务
     let send_task = tokio::spawn(async move {
         // 定期发送统计信息
         let mut stats_tick = interval(Duration::from_secs(1));
+        let mut total_transactions: u64 = 0;
 
         loop {
             tokio::select! {
@@ -57,7 +64,6 @@ async fn handle_currency_socket(socket: WebSocket, state: Arc<HernessState>) {
                     match result {
                         Ok(event) => {
                             total_transactions += 1;
-                            total_supply = total_supply.max(event.from_balance).max(event.to_balance);
 
                             // 发送交易事件
                             let tx_msg = CurrencyMessage {
@@ -78,6 +84,18 @@ async fn handle_currency_socket(socket: WebSocket, state: Arc<HernessState>) {
 
                 // 定期发送统计
                 _ = stats_tick.tick() => {
+                    // 从 WorldMind 获取蛊虫实际余额总和
+                    let (gu_count, total_supply) = {
+                        let world = state_for_stats.world.read().await;
+                        let count = world.population() as usize;
+                        // 计算所有蛊虫的实际余额总和
+                        let supply: f64 = world.gu_registry()
+                            .values()
+                            .map(|info| info.wallet.balance)
+                            .sum();
+                        (count, supply)
+                    };
+
                     let stats = CurrencyStats {
                         total_supply,
                         total_transactions,

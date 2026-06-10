@@ -21,6 +21,7 @@ pub mod trading;
 pub mod survival;
 pub mod reward;
 pub mod security;
+pub mod generation_reward;
 
 // 重导出主要类型
 pub use config::EconomyConfig;
@@ -31,6 +32,7 @@ pub use trading::{TradingSystem, Trade, TradeType};
 pub use survival::{SurvivalSystem, SurvivalState};
 pub use reward::{RewardSystem, RewardResult, RewardType, RewardParams};
 pub use security::{SecuritySystem, SecurityCheckResult};
+pub use generation_reward::{GenerationRewardConfig, CoinChange, GenerationResult, GenerationHistory};
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -77,12 +79,13 @@ impl EconomySystem {
         }
     }
 
-    /// 注册实体（蛊虫）
+    /// 注册实体（蛊虫）- 出生时携带500金币
     pub fn register_entity(&self, id: Uuid) -> Self {
         let mut new_system = self.clone();
 
-        // 在各子系统中注册
-        new_system.currency = self.currency.create_account(id, 0.0).unwrap_or_else(|| self.currency.clone());
+        // 在各子系统中注册，蛊虫出生携带金币
+        let birth_coins = self.config.currency.gu_birth_coins;
+        new_system.currency = self.currency.create_account(id, birth_coins).unwrap_or_else(|| self.currency.clone());
         new_system.market = self.market.register(id);
         new_system.survival = self.survival.register(id);
 

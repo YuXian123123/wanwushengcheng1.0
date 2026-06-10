@@ -2,6 +2,7 @@
 //!
 //! 每只蛊虫有5个接入点：感知、认知、行为、通信、生存
 
+use crate::world::config::WorldConfig;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -32,14 +33,19 @@ impl AccessPointType {
         }
     }
 
-    /// 获取默认权重
+    /// 获取默认权重（使用默认配置）
     pub fn default_weight(&self) -> f64 {
+        self.default_weight_with_config(&WorldConfig::default())
+    }
+
+    /// 获取默认权重（使用指定配置）
+    pub fn default_weight_with_config(&self, config: &WorldConfig) -> f64 {
         match self {
-            AccessPointType::Perceive => 1.0,
-            AccessPointType::Cognitive => 2.0,
-            AccessPointType::Behavior => 1.5,
-            AccessPointType::Comm => 1.0,
-            AccessPointType::Survival => 0.5,
+            AccessPointType::Perceive => config.network.perceive_weight,
+            AccessPointType::Cognitive => config.network.cognitive_weight,
+            AccessPointType::Behavior => config.network.behavior_weight,
+            AccessPointType::Comm => config.network.comm_weight,
+            AccessPointType::Survival => config.network.survival_weight,
         }
     }
 }

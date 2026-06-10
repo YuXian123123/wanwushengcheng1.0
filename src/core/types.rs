@@ -1,5 +1,6 @@
 //! 类型定义
 
+use crate::config::GlobalConfig;
 use serde::{Deserialize, Serialize};
 
 /// 神经元类型
@@ -43,14 +44,41 @@ pub struct LNNConfig {
     pub safety: SafetyConfig,
 }
 
+impl LNNConfig {
+    /// 创建默认配置（从GlobalConfig获取）
+    pub fn new() -> Self {
+        Self::from_global_config(&GlobalConfig::new())
+    }
+
+    /// 从GlobalConfig创建
+    pub fn from_global_config(config: &GlobalConfig) -> Self {
+        Self {
+            topology: TopologyConfig::new(),
+            learning: LearningConfig::from_global_config(config),
+            timing: TimingConfig::from_global_config(config),
+            safety: SafetyConfig::new(),
+        }
+    }
+
+    /// 使用自定义参数创建
+    pub fn with_params(
+        topology: TopologyConfig,
+        learning: LearningConfig,
+        timing: TimingConfig,
+        safety: SafetyConfig,
+    ) -> Self {
+        Self {
+            topology,
+            learning,
+            timing,
+            safety,
+        }
+    }
+}
+
 impl Default for LNNConfig {
     fn default() -> Self {
-        Self {
-            topology: TopologyConfig::default(),
-            learning: LearningConfig::default(),
-            timing: TimingConfig::default(),
-            safety: SafetyConfig::default(),
-        }
+        Self::new()
     }
 }
 
@@ -65,13 +93,20 @@ pub struct TopologyConfig {
     pub max_connections: usize,
 }
 
-impl Default for TopologyConfig {
-    fn default() -> Self {
+impl TopologyConfig {
+    /// 创建默认配置
+    pub fn new() -> Self {
         Self {
             min_neurons: 10,
             max_neurons: 1000,
             max_connections: 100,
         }
+    }
+}
+
+impl Default for TopologyConfig {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -86,13 +121,25 @@ pub struct LearningConfig {
     pub max_rate: f64,
 }
 
+impl LearningConfig {
+    /// 创建默认配置（从GlobalConfig获取）
+    pub fn new() -> Self {
+        Self::from_global_config(&GlobalConfig::new())
+    }
+
+    /// 从GlobalConfig创建
+    pub fn from_global_config(config: &GlobalConfig) -> Self {
+        Self {
+            initial_rate: config.learning.base_learning_rate,
+            min_rate: config.learning.min_learning_rate,
+            max_rate: config.learning.max_learning_rate,
+        }
+    }
+}
+
 impl Default for LearningConfig {
     fn default() -> Self {
-        Self {
-            initial_rate: 0.01,
-            min_rate: 0.001,
-            max_rate: 0.1,
-        }
+        Self::new()
     }
 }
 
@@ -105,12 +152,24 @@ pub struct TimingConfig {
     pub tau_range: (f64, f64),
 }
 
-impl Default for TimingConfig {
-    fn default() -> Self {
+impl TimingConfig {
+    /// 创建默认配置（从GlobalConfig获取）
+    pub fn new() -> Self {
+        Self::from_global_config(&GlobalConfig::new())
+    }
+
+    /// 从GlobalConfig创建
+    pub fn from_global_config(config: &GlobalConfig) -> Self {
         Self {
             dt: 0.01,
-            tau_range: (0.1, 10.0),
+            tau_range: (config.lnn_core.tau_min, config.lnn_core.tau_max),
         }
+    }
+}
+
+impl Default for TimingConfig {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -125,13 +184,20 @@ pub struct SafetyConfig {
     pub audit_topology: bool,
 }
 
-impl Default for SafetyConfig {
-    fn default() -> Self {
+impl SafetyConfig {
+    /// 创建默认配置
+    pub fn new() -> Self {
         Self {
             enable_monitoring: true,
             fuse_threshold: 0.3,
             audit_topology: true,
         }
+    }
+}
+
+impl Default for SafetyConfig {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -154,6 +220,13 @@ pub struct TopologyDynamics {
 
 impl Default for TopologyDynamics {
     fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TopologyDynamics {
+    /// 创建默认配置
+    pub fn new() -> Self {
         Self {
             neuron_activity_threshold: 0.05,
             synapse_weight_threshold: 0.01,

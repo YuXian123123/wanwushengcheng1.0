@@ -65,6 +65,8 @@ pub struct CurrencyConfig {
     pub min_balance: f64,
     /// 最大余额
     pub max_balance: f64,
+    /// 蛊虫出生携带金币
+    pub gu_birth_coins: f64,
 }
 
 impl Default for CurrencyConfig {
@@ -74,6 +76,7 @@ impl Default for CurrencyConfig {
             inflation_coefficient: 0.01,
             min_balance: 0.0,
             max_balance: 1_000_000.0,
+            gu_birth_coins: 500.0, // 每只蛊虫出生携带500金币
         }
     }
 }
@@ -88,6 +91,9 @@ impl CurrencyConfig {
         }
         if self.max_balance <= self.min_balance {
             return Err("max_balance must be greater than min_balance".to_string());
+        }
+        if self.gu_birth_coins < 0.0 {
+            return Err("gu_birth_coins cannot be negative".to_string());
         }
         Ok(())
     }

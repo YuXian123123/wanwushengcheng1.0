@@ -12,7 +12,7 @@
 //!
 //! # 数据流
 //!
-//! ```
+//! ```text
 //! WorldMind 运行时
 //!     │
 //!     ├── MetricsUpdate ──→ metrics_tx ──→ WebSocket (/ws)
@@ -25,9 +25,19 @@
 //!     │                                      │
 //!     │                                      └── 无法理解时退到规则匹配
 //!     │
-//!     └── 学习目录 ──→ 递归读文件 ──→ 逐文件发送给世界 ──→ 世界内部分配消化
+//!     └── 学习目录 ──→ 文件解析器 ──→ Markdown 转换 ──→ 世界学习
 //! ```
+//!
+//! # 文件解析器插件系统
+//!
+//! ```text
+//! 文件检测 → 格式分类 → 解析器插件 → 转换器 → Markdown → 学习
+//! ```
+//!
+//! - **通用解析器**: 源码文件 (md, txt, html, js, css, java, py, rs, etc.)
+//! - **特殊解析器**: 二进制格式 (parquet, pdf, docx, etc.)
 
+pub mod parser;
 pub mod http;
 pub mod ws;
 pub mod currency_ws;
@@ -35,6 +45,16 @@ pub mod handlers;
 pub mod protocol;
 pub mod learner;
 pub mod world_channel;
+pub mod training_manager;
+pub mod training_ws;
+pub mod generate_ws;
+pub mod training_ws_herness;
+pub mod generate_ws_herness;
+pub mod training_router;
+
+// 重导出解析器
+pub use parser::{FileParser, ParserRegistry, ParsedContent, ContentType};
+pub use training_manager::{TrainingManager, TrainingConfig, TrainingState, TrainingCommand, TrainingStatusMessage, GenerateRequest, GenerateResponse, UserFeedback};
 
 use axum::Router;
 use std::sync::Arc;
@@ -63,6 +83,8 @@ pub struct HernessState {
     pub transaction_tx: tokio::sync::broadcast::Sender<TransactionEvent>,
     /// 指标更新广播通道（从 WorldMind 接收）
     pub metrics_tx: tokio::sync::broadcast::Sender<MetricsUpdate>,
+    /// 训练管理器（Arc 包装，支持共享）
+    pub training_manager: Arc<TrainingManager>,
 }
 
 /// 日志条目
@@ -93,6 +115,7 @@ impl HernessState {
             log_buffer: RwLock::new(Vec::new()),
             transaction_tx,
             metrics_tx,
+            training_manager: Arc::new(TrainingManager::new()),
         }
     }
 
@@ -115,6 +138,7 @@ impl HernessState {
         tokio::spawn(async move {
             let mut tick = tokio::time::interval(std::time::Duration::from_millis(500)); // 2Hz
             let mut phase: f64 = 0.0;
+            let mut learner = learner::Learner::new();
 
             loop {
                 tick.tick().await;
@@ -164,16 +188,10 @@ impl HernessState {
 
                 // 2. 每秒执行一次蛊虫行为（产生交易）
                 if (phase * 10.0) as u32 % 2 == 0 {
-                    let (new_world, transaction) = {
-                        let world = state.world.read().await;
+                    let transaction = {
+                        let mut world = state.world.write().await;
                         world.random_action()
                     };
-
-                    // 更新世界状态
-                    {
-                        let mut world = state.world.write().await;
-                        *world = new_world;
-                    }
 
                     // 如果产生了交易事件，广播给客户端
                     if let Some(tx) = transaction {
@@ -204,19 +222,124 @@ impl HernessState {
 
                 // 3. 定期执行世界更新（自动任务分配等）
                 if (phase * 10.0) as u32 % 4 == 0 {
-                    let new_world = {
-                        let world = state.world.read().await;
-                        world.update()
-                    };
+                    let mut world = state.world.write().await;
+                    world.update();
+                }
 
-                    // 更新世界状态
-                    {
-                        let mut w = state.world.write().await;
-                        *w = new_world;
-                    }
+                // 4. 检测并执行学习任务
+                if (phase * 10.0) as u32 % 4 == 0 {
+                    Self::process_learning_tasks(&state, &mut learner).await;
                 }
             }
         });
+    }
+
+    /// 处理学习任务
+    ///
+    /// 检查任务描述中是否包含学习路径，如果有则执行学习
+    async fn process_learning_tasks(state: &Arc<Self>, learner: &mut learner::Learner) {
+        // 查找需要进行学习的任务
+        let learning_tasks: Vec<(Uuid, String)> = {
+            let world = state.world.read().await;
+            world.get_tasks().iter()
+                .filter(|t| t.status == crate::world::behavior::TaskStatus::InProgress)
+                .filter_map(|t| {
+                    // 解析任务描述中的学习路径
+                    Self::extract_learning_path(&t.description).map(|path| (t.id, path))
+                })
+                .collect()
+        };
+
+        for (task_id, path) in learning_tasks {
+            println!("[Herness] 检测到学习任务，路径: {}", path);
+
+            // 检查是否已熔断
+            if learner.is_halted() {
+                println!("[Herness] 学习已熔断，跳过");
+                break;
+            }
+
+            // 扫描目录
+            let files = match learner.scan_directory(&path, &[]) {
+                Ok(f) => f,
+                Err(e) => {
+                    println!("[Herness] 扫描目录失败: {}", e);
+                    continue;
+                }
+            };
+
+            if files.is_empty() {
+                println!("[Herness] 目录为空或不存在: {}", path);
+                continue;
+            }
+
+            println!("[Herness] 找到 {} 个文件，开始学习", files.len());
+            let total = files.len();
+
+            // 逐文件发送给世界意识
+            for file_path in files {
+                if learner.is_halted() {
+                    break;
+                }
+
+                // 读取并解析文件
+                let event = match learner.read_file(&file_path, &path, total) {
+                    Ok(e) => e,
+                    Err(e) => {
+                        println!("[Herness] 读取文件失败: {}", e);
+                        continue;
+                    }
+                };
+
+                println!("[Herness] 学习文件: {}", event.filename);
+
+                // 发送给世界意识
+                {
+                    let mut world = state.world.write().await;
+                    world.receive_knowledge_file(&event);
+                }
+            }
+
+            let (processed, _) = learner.stats();
+            println!("[Herness] 学习完成，处理了 {} 个文件", processed);
+
+            // 标记任务完成
+            {
+                let mut world = state.world.write().await;
+                let _ = world.complete_task(task_id);
+            }
+        }
+    }
+
+    /// 从任务描述中提取学习路径
+    ///
+    /// 支持格式：
+    /// - "学习 D:/path/to/dir"
+    /// - "Learn D:/path/to/dir"
+    /// - "D:/path/to/dir" (直接是路径)
+    fn extract_learning_path(description: &str) -> Option<String> {
+        let desc = description.trim();
+
+        // 尝试匹配 "学习 xxx" 或 "Learn xxx"
+        if let Some(path) = desc.strip_prefix("学习 ") {
+            return Some(path.trim().to_string());
+        }
+        if let Some(path) = desc.strip_prefix("Learn ") {
+            return Some(path.trim().to_string());
+        }
+        if let Some(path) = desc.strip_prefix("learn ") {
+            return Some(path.trim().to_string());
+        }
+
+        // 检查是否直接是路径（包含 / 或 \）
+        if desc.contains('/') || desc.contains('\\') {
+            // 简单验证：路径应该存在或看起来像路径
+            if std::path::Path::new(desc).exists() {
+                return Some(desc.to_string());
+            }
+        }
+
+        None
     }
 }
 
@@ -249,6 +372,22 @@ pub fn create_router(state: Arc<HernessState>) -> Router {
         // 取消任务
         .route("/api/tasks/:id/cancel", axum::routing::post(handlers::cancel_task))
 
+        // === 学习 API ===
+        // 扫描目录（检测文件格式）
+        .route("/api/learn/scan", axum::routing::post(handlers::scan_directory))
+        // 学习目录
+        .route("/api/learn/directory", axum::routing::post(handlers::learn_directory))
+        // 学习单个文件
+        .route("/api/learn/file", axum::routing::post(handlers::learn_file))
+
+        // === 聊天频道 API ===
+        // 获取频道列表
+        .route("/api/chat/channels", axum::routing::get(handlers::get_chat_channels))
+        // 获取频道消息
+        .route("/api/chat/channels/:id/messages", axum::routing::get(handlers::get_chat_messages))
+        // 发送消息
+        .route("/api/chat/channels/:id/messages", axum::routing::post(handlers::send_chat_message))
+
         // === WebSocket (高频实时数据) ===
         // 世界状态 WebSocket
         .route("/ws", axum::routing::get(ws::websocket_handler))
@@ -256,6 +395,10 @@ pub fn create_router(state: Arc<HernessState>) -> Router {
         .route("/ws/currency", axum::routing::get(currency_ws::currency_websocket_handler))
         // 世界模型通信通道
         .route("/ws/world", axum::routing::get(world_channel::world_channel_handler))
+        // 训练状态 WebSocket
+        .route("/ws/training", axum::routing::get(training_ws_herness::training_ws_herness))
+        // 场景生成 WebSocket
+        .route("/ws/generate", axum::routing::get(generate_ws_herness::generate_ws_herness))
 
         // 静态文件
         .fallback(handlers::serve_static)

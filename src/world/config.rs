@@ -61,6 +61,8 @@ pub struct WorldSurvivalConfig {
     pub critical_threshold: f64,
     /// 心跳超时（秒）
     pub heartbeat_timeout: u64,
+    /// 蛊虫出生携带金币
+    pub gu_birth_coins: f64,
 }
 
 impl Default for WorldSurvivalConfig {
@@ -72,6 +74,7 @@ impl Default for WorldSurvivalConfig {
             danger_threshold: 0.2,
             critical_threshold: 0.1,
             heartbeat_timeout: 30,
+            gu_birth_coins: 500.0, // 每只蛊虫出生携带500金币
         }
     }
 }
@@ -83,6 +86,9 @@ impl WorldSurvivalConfig {
         }
         if self.survival_threshold <= 0.0 || self.survival_threshold > 1.0 {
             return Err("survival_threshold must be between 0 and 1".to_string());
+        }
+        if self.gu_birth_coins < 0.0 {
+            return Err("gu_birth_coins cannot be negative".to_string());
         }
         Ok(())
     }
@@ -103,6 +109,16 @@ pub struct WorldNetworkConfig {
     pub small_world_target: f64,
     /// 世界记忆最大容量
     pub max_memory_size: usize,
+    /// Perceive接入点默认权重
+    pub perceive_weight: f64,
+    /// Cognitive接入点默认权重
+    pub cognitive_weight: f64,
+    /// Behavior接入点默认权重
+    pub behavior_weight: f64,
+    /// Comm接入点默认权重
+    pub comm_weight: f64,
+    /// Survival接入点默认权重
+    pub survival_weight: f64,
 }
 
 impl Default for WorldNetworkConfig {
@@ -114,6 +130,11 @@ impl Default for WorldNetworkConfig {
             base_latency_ms: 10,
             small_world_target: 2.0,
             max_memory_size: 10000,
+            perceive_weight: 1.0,
+            cognitive_weight: 2.0,
+            behavior_weight: 1.5,
+            comm_weight: 1.0,
+            survival_weight: 0.5,
         }
     }
 }

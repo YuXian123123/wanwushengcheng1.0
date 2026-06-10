@@ -49,6 +49,7 @@ pub mod creature;
 pub mod communication;
 pub mod economy;
 pub mod world;
+pub mod world_gen;
 pub mod herness_web;
 pub mod embedding;
 

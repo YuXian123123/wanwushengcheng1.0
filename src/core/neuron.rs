@@ -3,6 +3,7 @@
 //! 液体神经网络的核心计算单元
 
 use crate::core::NeuronType;
+use crate::config::GlobalConfig;
 use serde::{Deserialize, Serialize};
 
 /// 获取当前时间戳（毫秒）
@@ -41,11 +42,28 @@ pub struct NeuronState {
 pub struct Neuron {
     /// 内部状态
     inner: NeuronState,
+    /// 活跃度衰减因子（来自配置）
+    activity_decay: f64,
+    /// 状态归一化范围（来自配置）
+    state_limit: f64,
+    /// 时间常数最小值（来自配置）
+    tau_min: f64,
+    /// 时间常数最大值（来自配置）
+    tau_max: f64,
+    /// 偏置最小值（来自配置）
+    bias_min: f64,
+    /// 偏置最大值（来自配置）
+    bias_max: f64,
 }
 
 impl Neuron {
-    /// 创建新神经元
+    /// 创建新神经元（使用默认配置）
     pub fn new(id: String, neuron_type: NeuronType) -> Self {
+        Self::with_config(id, neuron_type, &GlobalConfig::new())
+    }
+
+    /// 创建新神经元（使用指定配置）
+    pub fn with_config(id: String, neuron_type: NeuronType, config: &GlobalConfig) -> Self {
         Self {
             inner: NeuronState {
                 id,
@@ -58,6 +76,12 @@ impl Neuron {
                 last_active_ms: None,
                 created_at_ms: current_time_ms(),
             },
+            activity_decay: config.lnn_core.activity_decay,
+            state_limit: config.lnn_core.state_normalization_limit,
+            tau_min: config.lnn_core.tau_min,
+            tau_max: config.lnn_core.tau_max,
+            bias_min: config.lnn_core.bias_min,
+            bias_max: config.lnn_core.bias_max,
         }
     }
 
@@ -88,12 +112,12 @@ impl Neuron {
 
     /// 设置时间常数
     pub fn set_tau(&mut self, tau: f64) {
-        self.inner.tau = tau.clamp(0.1, 10.0);
+        self.inner.tau = tau.clamp(self.tau_min, self.tau_max);
     }
 
     /// 设置偏置
     pub fn set_bias(&mut self, bias: f64) {
-        self.inner.bias = bias.clamp(-1.0, 1.0);
+        self.inner.bias = bias.clamp(self.bias_min, self.bias_max);
     }
 
     /// 连续时间状态更新
@@ -111,11 +135,12 @@ impl Neuron {
         // 欧拉法求解微分方程
         let dx = (dt / self.inner.tau) * (-self.inner.state + input + self.inner.bias);
 
-        // 状态归一化到 [-1, 1]
-        self.inner.state = (self.inner.state + dx).clamp(-1.0, 1.0);
+        // 状态归一化
+        self.inner.state = (self.inner.state + dx).clamp(-self.state_limit, self.state_limit);
 
-        // 活跃度更新（指数移动平均）
-        self.inner.activity = self.inner.activity * 0.99 + self.inner.state.abs() * 0.01;
+        // 活跃度更新（指数移动平均，使用配置的衰减因子）
+        let growth_factor = 1.0 - self.activity_decay;
+        self.inner.activity = self.inner.activity * self.activity_decay + self.inner.state.abs() * growth_factor;
 
         // 记录活跃时间
         self.inner.last_active_ms = Some(current_time_ms());
@@ -145,9 +170,22 @@ impl Neuron {
         self.inner.clone()
     }
 
-    /// 从状态恢复（用于反序列化）
+    /// 从状态恢复（使用默认配置）
     pub fn from_state(state: NeuronState) -> Self {
-        Self { inner: state }
+        Self::from_state_with_config(state, &GlobalConfig::new())
+    }
+
+    /// 从状态恢复（使用指定配置）
+    pub fn from_state_with_config(state: NeuronState, config: &GlobalConfig) -> Self {
+        Self {
+            inner: state,
+            activity_decay: config.lnn_core.activity_decay,
+            state_limit: config.lnn_core.state_normalization_limit,
+            tau_min: config.lnn_core.tau_min,
+            tau_max: config.lnn_core.tau_max,
+            bias_min: config.lnn_core.bias_min,
+            bias_max: config.lnn_core.bias_max,
+        }
     }
 }
 

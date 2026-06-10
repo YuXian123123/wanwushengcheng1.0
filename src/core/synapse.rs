@@ -3,10 +3,8 @@
 //! 神经元之间的连接，包含权重和学习规则
 
 use crate::core::PlasticityRule;
+use crate::config::GlobalConfig;
 use serde::{Deserialize, Serialize};
-
-/// 突触权重上限
-pub const MAX_WEIGHT: f64 = 10.0;
 
 /// 获取当前时间戳（毫秒）
 fn current_time_ms() -> u64 {
@@ -37,18 +35,32 @@ pub struct SynapseState {
 #[derive(Debug, Clone)]
 pub struct Synapse {
     inner: SynapseState,
+    /// 权重上限（来自配置）
+    max_weight: f64,
 }
 
 impl Synapse {
-    /// 创建新突触
+    /// 创建新突触（使用默认配置）
     pub fn new(
         from_id: String,
         to_id: String,
         initial_weight: f64,
         rule: PlasticityRule,
     ) -> Self {
+        Self::with_config(from_id, to_id, initial_weight, rule, &GlobalConfig::new())
+    }
+
+    /// 创建新突触（使用指定配置）
+    pub fn with_config(
+        from_id: String,
+        to_id: String,
+        initial_weight: f64,
+        rule: PlasticityRule,
+        config: &GlobalConfig,
+    ) -> Self {
         let id = format!("{}->{}", from_id, to_id);
-        let weight = initial_weight.clamp(-MAX_WEIGHT, MAX_WEIGHT);
+        let max_weight = config.lnn_core.max_weight;
+        let weight = initial_weight.clamp(-max_weight, max_weight);
 
         Self {
             inner: SynapseState {
@@ -59,6 +71,7 @@ impl Synapse {
                 plasticity_rule: rule,
                 last_active_ms: None,
             },
+            max_weight,
         }
     }
 
@@ -84,7 +97,7 @@ impl Synapse {
 
     /// 设置权重（带边界约束）
     pub fn set_weight(&mut self, weight: f64) {
-        self.inner.weight = weight.clamp(-MAX_WEIGHT, MAX_WEIGHT);
+        self.inner.weight = weight.clamp(-self.max_weight, self.max_weight);
     }
 
     /// 获取可塑性规则
@@ -125,7 +138,7 @@ impl Synapse {
         };
 
         // 更新权重并限制范围
-        self.inner.weight = (self.inner.weight + delta_w).clamp(-MAX_WEIGHT, MAX_WEIGHT);
+        self.inner.weight = (self.inner.weight + delta_w).clamp(-self.max_weight, self.max_weight);
         self.inner.last_active_ms = Some(current_time_ms());
     }
 
@@ -139,9 +152,17 @@ impl Synapse {
         self.inner.clone()
     }
 
-    /// 从状态恢复
+    /// 从状态恢复（使用默认配置）
     pub fn from_state(state: SynapseState) -> Self {
-        Self { inner: state }
+        Self::from_state_with_config(state, &GlobalConfig::new())
+    }
+
+    /// 从状态恢复（使用指定配置）
+    pub fn from_state_with_config(state: SynapseState, config: &GlobalConfig) -> Self {
+        Self {
+            inner: state,
+            max_weight: config.lnn_core.max_weight,
+        }
     }
 }
 
@@ -173,14 +194,18 @@ mod tests {
 
     #[test]
     fn test_weight_clamping() {
-        let synapse = Synapse::new(
+        let config = GlobalConfig::new();
+        let max_weight = config.lnn_core.max_weight;
+
+        let synapse = Synapse::with_config(
             "n1".to_string(),
             "n2".to_string(),
             100.0, // 超过上限
             PlasticityRule::Hebbian,
+            &config,
         );
 
-        assert_eq!(synapse.weight(), MAX_WEIGHT);
+        assert_eq!(synapse.weight(), max_weight);
     }
 
     #[test]
@@ -205,11 +230,15 @@ mod tests {
 
     #[test]
     fn test_oja_prevents_explosion() {
-        let mut synapse = Synapse::new(
+        let config = GlobalConfig::new();
+        let max_weight = config.lnn_core.max_weight;
+
+        let mut synapse = Synapse::with_config(
             "n1".to_string(),
             "n2".to_string(),
             0.1,
             PlasticityRule::Oja,
+            &config,
         );
 
         // 持续学习
@@ -218,7 +247,7 @@ mod tests {
         }
 
         // Oja规则应该防止权重爆炸
-        assert!(synapse.weight().abs() <= MAX_WEIGHT);
+        assert!(synapse.weight().abs() <= max_weight);
         assert!(synapse.weight().abs() > 0.0); // 应该有学习效果
     }
 }

@@ -36,6 +36,23 @@ pub mod color;
 pub mod event;
 pub mod behavior;
 pub mod gu_lnn;
+pub mod cognis;
+pub mod knowledge_encoder;
+pub mod knowledge_storage;
+pub mod knowledge_pool;
+pub mod world_knowledge;
+pub mod knowledge_collaboration;
+pub mod chat_channel;
+pub mod lnn_language;
+
+#[cfg(test)]
+mod topic_extraction_test;
+
+#[cfg(test)]
+mod knowledge_flow_test;
+
+#[cfg(test)]
+mod html_learning_test;
 
 // 重导出主要类型
 pub use config::WorldConfig;
@@ -79,6 +96,24 @@ pub use color::{
 };
 pub use event::{WorldEvent, TransactionData, TransactionKind};
 pub use gu_lnn::{GuLNN, GuNeuronState, GuSynapse, BehaviorTendency};
+pub use cognis::{CogniParticle, EntityType, RelationType, ParseResult, CognisParser};
+pub use knowledge_encoder::{KnowledgeEncoder, NeuralSignal, KnowledgeValue};
+pub use knowledge_storage::{SkillStorage, SkillDocument, GuIndexDocument, SkillRef, SkillRelation, LearnerInfo};
+pub use knowledge_pool::{KnowledgePool, CandidateKnowledge, VoteRecord, CandidateStatus, LearningResult, KnowledgeEvaluator};
+pub use world_knowledge::{WorldKnowledgeStore, CandidateVersion, Vote, VotingSession, VotingStatus, KnowledgeGraph, GraphNode, GraphEdge};
+pub use knowledge_collaboration::{
+    KnowledgeCollaboration, KnowledgeDiscussion, ContentProposal, ContentPart,
+    Comment, CommentType, ProposalStatus, DiscussionStatus, Conflict, ConflictParty,
+    Stance, Argument, ArgumentType, Resolution, ResolutionMethod, Experience,
+    ExperienceType, ConflictPattern, TimelineEvent, TimelineEventType, Revision,
+};
+pub use chat_channel::{
+    ChatSystem, ChatChannel, ChatMessage, ChannelType, MessageContent,
+    SenderRole, Reaction, SystemNotificationType,
+};
+pub use lnn_language::{
+    LNNLanguageEmergence, LanguageVocabulary, EmergedMessage, LNNStateSnapshot,
+};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -103,6 +138,15 @@ pub struct WorldMind {
     pub consciousness: ConsciousnessLayer,
     /// 任务列表（用户创建）
     tasks: Vec<Task>,
+    /// 知识协作系统（蛊虫讨论生成知识）
+    #[serde(skip)]
+    knowledge_collaboration: KnowledgeCollaboration,
+    /// 聊天系统（蛊虫实时通信）
+    #[serde(skip)]
+    chat_system: ChatSystem,
+    /// LNN 语言涌现器（神经网络状态 → 聊天消息）
+    #[serde(skip)]
+    language_emergence: LNNLanguageEmergence,
 }
 
 /// 蛊虫信息
@@ -127,6 +171,12 @@ pub struct GuInfo {
     pub lnn: GuLNN,
 }
 
+/// 候选主题及其得分（用于技能名称提取算法）
+struct TopicCandidate {
+    word: String,
+    score: f64,
+}
+
 impl WorldMind {
     /// 创建新的世界智能体
     pub fn new() -> Self {
@@ -145,6 +195,9 @@ impl WorldMind {
             safety_state: WorldSafetyState::new(),
             consciousness: ConsciousnessLayer::new(consciousness::ConsciousnessConfig::default()),
             tasks: Vec::new(),
+            knowledge_collaboration: KnowledgeCollaboration::new(),
+            chat_system: ChatSystem::new(),
+            language_emergence: LNNLanguageEmergence::new(),
         }
     }
 
@@ -189,11 +242,11 @@ impl WorldMind {
         // 生成名称（基于颜色）
         let name = color_gene.color_name();
 
-        // 初始化钱包（初始余额 1000 金币）
-        let wallet = GuWallet::new(gu_id, 1000.0);
+        // 初始化钱包（使用配置中的出生金币）
+        let wallet = GuWallet::new(gu_id, self.config.survival.gu_birth_coins);
 
-        // 初始化技能
-        let skills = Skill::skill_pool();
+        // 初始化技能（初始为空，通过学习获得）
+        let skills = Vec::new();
 
         // 初始化蛊虫神经网络（黑塔设计：网络状态驱动行为涌现）
         let lnn = GuLNN::new();
@@ -223,6 +276,13 @@ impl WorldMind {
 
         // 同步心跳记录（用于死亡检测）
         new_mind.heartbeats.insert(gu_id, current_timestamp());
+
+        // 注册到知识协作系统
+        new_mind.knowledge_collaboration.register_gu(gu_id);
+
+        // 加入聊天频道
+        new_mind.chat_system.join_channel("world", gu_id);
+        new_mind.chat_system.join_channel("knowledge", gu_id);
 
         new_mind
     }
@@ -310,49 +370,62 @@ impl WorldMind {
     }
 
     /// 更新世界状态（综合三位天才的设计）
-    pub fn update(&self) -> Self {
-        let mut new_mind = self.clone();
+    pub fn update(&mut self) {
         let now = current_timestamp();
 
         // 检测并移除死亡蛊虫
-        let dead_gus = self.detect_dead_gus();
-        for gu_id in &dead_gus {
-            new_mind = new_mind.unregister_gu(gu_id);
-        }
+        // 注意：暂时跳过死亡检测，因为心跳机制尚未完善
+        // let dead_gus = self.detect_dead_gus();
 
         // 更新健康状态
-        new_mind.state = new_mind.state.update_health_status(&self.config);
+        self.state = self.state.update_health_status(&self.config);
 
         // 更新共振场（黑塔设计）- 意识涌现
-        new_mind.resonance_field = self.resonance_field.update(1.0, now);
+        self.resonance_field = self.resonance_field.clone().update(1.0, now);
 
         // 更新安全状态（螺丝咕姆设计）
-        let health = new_mind.state.health;
-        let gu_count = new_mind.gu_registry.len() as u64;
-        new_mind.safety_state = self.safety_state.update(health, gu_count, now);
+        let health = self.state.health;
+        let gu_count = self.gu_registry.len() as u64;
+        self.safety_state = self.safety_state.clone().update(health, gu_count, now);
 
         // 更新意识层（拉蒂奥设计）
-        new_mind.consciousness = self.consciousness.merge_intentions();
-        let trust_scores: HashMap<Uuid, f64> = new_mind.gu_registry.iter()
+        self.consciousness = self.consciousness.clone().merge_intentions();
+        let trust_scores: HashMap<Uuid, f64> = self.gu_registry.iter()
             .map(|(id, info)| (*id, info.trust_score))
             .collect();
-        new_mind.consciousness = new_mind.consciousness.process_decisions(&trust_scores);
+        self.consciousness = self.consciousness.process_decisions(&trust_scores);
 
         // 检查生存条件
-        if !new_mind.state.check_survival(&self.config) {
+        if !self.state.check_survival(&self.config) {
             // 触发恢复协议：生成新蛊虫
-            let needed = self.config.survival.min_population - new_mind.state.population;
+            let needed = self.config.survival.min_population - self.state.population;
             for _ in 0..needed {
-                new_mind = new_mind.register_gu(Uuid::new_v4());
+                let gu_id = Uuid::new_v4();
+                // 简化注册：直接添加
+                let new_gu = GuInfo {
+                    id: gu_id,
+                    access_points: vec![],
+                    trust_score: 0.5,
+                    expertise: HashMap::new(),
+                    last_heartbeat: now,
+                    color_gene: ColorGene::random_primordial(),
+                    parents: (None, None),
+                    wallet: GuWallet::new(gu_id, 1000.0),
+                    name: "新蛊虫".to_string(),
+                    skills: Vec::new(),
+                    lnn: GuLNN::new(),
+                };
+                self.gu_registry.insert(gu_id, new_gu);
+                self.state.population += 1;
             }
         }
 
         // 优雅降级检查（螺丝咕姆设计）
-        if new_mind.safety_state.needs_emergency_intervention() {
+        if self.safety_state.needs_emergency_intervention() {
             // 保存种子
-            new_mind.safety_state.layered_survival =
-                new_mind.safety_state.layered_survival.save_seed(
-                    new_mind.state.population,
+            self.safety_state.layered_survival =
+                self.safety_state.layered_survival.clone().save_seed(
+                    self.state.population,
                     vec![],  // 知识快照
                     0,       // 配置哈希
                     now,
@@ -360,15 +433,110 @@ impl WorldMind {
         }
 
         // 自动分配待领取的任务（世界模型自治）
-        new_mind = new_mind.auto_assign_pending_tasks();
+        self.auto_assign_pending_tasks();
 
-        new_mind
+        // LNN 状态扰动 → 聊天消息涌现（黑塔设计：网络状态驱动语言涌现）
+        self.emerge_chat_from_lnn();
+    }
+
+    /// 从 LNN 状态涌现聊天消息
+    ///
+    /// 每次世界更新时，根据蛊虫的神经网络状态决定是否产生聊天消息
+    /// 这是真正的"意识扰动"到"语言表达"的涌现
+    fn emerge_chat_from_lnn(&mut self) {
+        // 收集所有蛊虫的状态快照（包含技能信息）
+        let snapshots: Vec<LNNStateSnapshot> = self.gu_registry.iter()
+            .map(|(id, info)| LNNStateSnapshot::from_gu_info(*id, &info.name, &info.lnn, &info.skills))
+            .collect();
+
+        let gu_count = snapshots.len();
+        if gu_count == 0 {
+            return;
+        }
+
+        // 使用时间戳作为随机种子
+        let now_ns = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+
+        // 随机选择 3-5 个蛊虫尝试发言（增加多样性）
+        let speak_count = 3 + (now_ns % 3) as usize;
+
+        // 为每个蛊虫生成一个随机索引
+        for i in 0..speak_count.min(gu_count) {
+            let idx = ((now_ns as usize) + i * 7) % gu_count;
+            let snapshot = &snapshots[idx];
+
+            // 准备知识上下文
+            let knowledge_context: Option<(&[String], Option<&str>)> = if !snapshot.recent_topics.is_empty() {
+                Some((&snapshot.recent_topics, snapshot.knowledge_summary.as_deref()))
+            } else {
+                None
+            };
+
+            // 使用语言涌现器尝试生成消息
+            if let Some(emerged) = self.language_emergence.emerge_message(
+                snapshot.state_vector,
+                snapshot.activity,
+                snapshot.behavior_tendency,
+                snapshot.gu_id,
+                &snapshot.gu_name,
+                snapshot.current_skill.as_deref(),
+                knowledge_context,
+            ) {
+                // 发送到对应频道
+                self.chat_system.send_message(
+                    &emerged.channel_id,
+                    emerged.sender_id,
+                    &emerged.sender_name,
+                    emerged.sender_role,
+                    emerged.content,
+                );
+            }
+        }
+
+        // 共识消息：每 30 秒允许一次（避免刷屏）
+        let update_count = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        if update_count % 30 == 0 && self.resonance_field.sync_rate > 0.85 && !snapshots.is_empty() {
+            let avg_activity: f64 = snapshots.iter().map(|s| s.activity).sum::<f64>() / snapshots.len() as f64;
+
+            if avg_activity > 0.5 {
+                // 提取所有知识主题作为共识话题
+                let all_topics: Vec<&String> = snapshots.iter()
+                    .flat_map(|s| s.recent_topics.iter())
+                    .take(3)
+                    .collect();
+
+                let topic = all_topics.first()
+                    .map(|s| s.as_str())
+                    .unwrap_or("当前讨论");
+
+                if let Some(consensus) = self.language_emergence.emerge_consensus(
+                    topic,
+                    snapshots.len(),
+                    self.resonance_field.sync_rate,
+                ) {
+                    self.chat_system.send_message(
+                        &consensus.channel_id,
+                        consensus.sender_id,
+                        &consensus.sender_name,
+                        consensus.sender_role,
+                        consensus.content,
+                    );
+                }
+            }
+        }
     }
 
     /// 自动分配待领取的任务
     ///
     /// 世界模型根据蛊虫的能力和信任度，自动分配最合适的蛊虫
-    fn auto_assign_pending_tasks(mut self) -> Self {
+    fn auto_assign_pending_tasks(&mut self) {
         use behavior::TaskStatus;
 
         // 收集需要分配的任务和对应的蛊虫
@@ -386,8 +554,6 @@ impl WorldMind {
                 task.assign_to(gu_id);
             }
         }
-
-        self
     }
 
     /// 找到最适合执行任务的蛊虫
@@ -477,6 +643,31 @@ impl WorldMind {
     /// 获取蛊虫数量
     pub fn population(&self) -> u64 {
         self.state.population
+    }
+
+    /// 获取蛊虫注册表（只读）
+    pub fn gu_registry(&self) -> &HashMap<Uuid, GuInfo> {
+        &self.gu_registry
+    }
+
+    /// 获取知识协作系统（只读）
+    pub fn knowledge_collaboration(&self) -> &KnowledgeCollaboration {
+        &self.knowledge_collaboration
+    }
+
+    /// 获取知识协作系统（可变）
+    pub fn knowledge_collaboration_mut(&mut self) -> &mut KnowledgeCollaboration {
+        &mut self.knowledge_collaboration
+    }
+
+    /// 获取聊天系统（只读）
+    pub fn chat_system(&self) -> &ChatSystem {
+        &self.chat_system
+    }
+
+    /// 获取聊天系统（可变）
+    pub fn chat_system_mut(&mut self) -> &mut ChatSystem {
+        &mut self.chat_system
     }
 
     /// 获取健康状态
@@ -745,8 +936,31 @@ impl WorldMind {
     pub fn update_world_network(&mut self) {
         let dt = self.config.neural.update_dt_ms as f64 / 1000.0;
 
-        // 1. 更新每个蛊虫的内部网络
-        for gu in self.gu_registry.values_mut() {
+        // 1. 更新每个蛊虫的内部网络 + 注入随机扰动
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+
+        for (idx, gu) in self.gu_registry.values_mut().enumerate() {
+            // 注入随机扰动（模拟世界的随机刺激）
+            // 使用蛊虫索引和时间戳生成伪随机扰动
+            let perturbation_base = ((now as f64) * (idx as f64 + 1.0)).sin();
+            let perturbation = perturbation_base * 0.1; // 扰动强度 0.1
+
+            // 随机选择一个神经元类型注入扰动
+            let neuron_idx = (now as usize + idx) % 5;
+            let neuron_type = match neuron_idx {
+                0 => crate::core::NeuronType::Perception,
+                1 => crate::core::NeuronType::Cognitive,
+                2 => crate::core::NeuronType::Behavior,
+                3 => crate::core::NeuronType::Comm,
+                _ => crate::core::NeuronType::Survival,
+            };
+
+            gu.lnn.receive_world_signal(neuron_type, perturbation);
+
+            // 正常网络更新
             gu.lnn.update(dt);
         }
 
@@ -773,30 +987,28 @@ impl WorldMind {
 
     // ========== 行为执行方法（产生真实交易事件） ==========
 
-    /// 执行蛊虫行为，返回新的世界状态和交易事件
-    pub fn execute_gu_action(&self, gu_id: Uuid, action: GuAction) -> (Self, Option<TransactionData>) {
-        let gu_info = match self.gu_registry.get(&gu_id) {
-            Some(info) => info.clone(),
-            None => return (self.clone(), None),
-        };
+    /// 执行蛊虫行为，返回交易事件
+    pub fn execute_gu_action(&mut self, gu_id: Uuid, action: GuAction) -> Option<TransactionData> {
+        if !self.gu_registry.contains_key(&gu_id) {
+            return None;
+        }
 
-        let mut new_mind = self.clone();
-        let transaction = match action {
+        match action {
             GuAction::AcceptTask(task_id) => {
                 // 蛊虫接取任务（不产生交易，只是状态变更）
-                match new_mind.assign_task(task_id, gu_id) {
+                match self.assign_task(task_id, gu_id) {
                     Ok(()) => None,
                     Err(_) => None,
                 }
             }
             GuAction::BuyResource => {
                 let resource = Resource::random_resource();
-                let gu = new_mind.gu_registry.get_mut(&gu_id).unwrap();
+                let gu = self.gu_registry.get_mut(&gu_id).unwrap();
                 let result = GuBehavior::buy_resource(&mut gu.wallet, &gu.name, &resource);
                 result.transaction
             }
             GuAction::Learn(action) => {
-                let gu = new_mind.gu_registry.get_mut(&gu_id).unwrap();
+                let gu = self.gu_registry.get_mut(&gu_id).unwrap();
                 let gu_name = gu.name.clone();
                 let skills = &mut gu.skills;
                 let result = GuBehavior::learn(skills, &gu_name, action);
@@ -804,31 +1016,30 @@ impl WorldMind {
                 result.transaction
             }
             GuAction::Transfer { to_id, amount } => {
-                let to_info = match self.gu_registry.get(&to_id) {
-                    Some(info) => info.clone(),
-                    None => return (new_mind, None),
-                };
+                if !self.gu_registry.contains_key(&to_id) {
+                    return None;
+                }
 
-                let from_name = gu_info.name.clone();
-                let to_name = to_info.name.clone();
+                let from_name = self.gu_registry.get(&gu_id).unwrap().name.clone();
+                let to_name = self.gu_registry.get(&to_id).unwrap().name.clone();
 
-                // 分步操作以避免借用冲突
-                let from_balance_before = new_mind.gu_registry.get(&gu_id).unwrap().wallet.balance;
+                // 检查余额
+                let from_balance_before = self.gu_registry.get(&gu_id).unwrap().wallet.balance;
                 if from_balance_before < amount {
-                    return (new_mind, None);
+                    return None;
                 }
 
                 // 先更新 from_wallet
                 {
-                    let from_wallet = &mut new_mind.gu_registry.get_mut(&gu_id).unwrap().wallet;
+                    let from_wallet = &mut self.gu_registry.get_mut(&gu_id).unwrap().wallet;
                     from_wallet.balance -= amount;
                     from_wallet.total_expense += amount;
                 }
 
                 // 再更新 to_wallet
                 let (from_balance_after, to_balance_after) = {
-                    let from_balance = new_mind.gu_registry.get(&gu_id).unwrap().wallet.balance;
-                    let to_wallet = &mut new_mind.gu_registry.get_mut(&to_id).unwrap().wallet;
+                    let from_balance = self.gu_registry.get(&gu_id).unwrap().wallet.balance;
+                    let to_wallet = &mut self.gu_registry.get_mut(&to_id).unwrap().wallet;
                     to_wallet.balance += amount;
                     to_wallet.total_income += amount;
                     (from_balance, to_wallet.balance)
@@ -854,13 +1065,11 @@ impl WorldMind {
                     detail: format!("转账{}金币", amount as i64),
                 })
             }
-        };
-
-        (new_mind, transaction)
+        }
     }
 
     /// 随机执行一个蛊虫的随机行为（用于模拟）
-    pub fn random_action(&self) -> (Self, Option<TransactionData>) {
+    pub fn random_action(&mut self) -> Option<TransactionData> {
         self.emergent_action()
     }
 
@@ -870,10 +1079,10 @@ impl WorldMind {
     /// 1. 更新蛊虫神经网络（接收世界信号）
     /// 2. 根据网络状态决定行为倾向
     /// 3. 根据行为倾向执行具体行为
-    pub fn emergent_action(&self) -> (Self, Option<TransactionData>) {
+    pub fn emergent_action(&mut self) -> Option<TransactionData> {
         let gu_ids: Vec<Uuid> = self.gu_registry.keys().copied().collect();
         if gu_ids.is_empty() {
-            return (self.clone(), None);
+            return None;
         }
 
         // 选择一个蛊虫（可以考虑优先选择活跃度高的）
@@ -886,8 +1095,7 @@ impl WorldMind {
             / (self.config.survival.min_population.max(10) * 10) as f64;
 
         // 更新蛊虫神经网络
-        let mut new_mind = self.clone();
-        let gu = new_mind.gu_registry.get_mut(&gu_id).unwrap();
+        let gu = self.gu_registry.get_mut(&gu_id).unwrap();
 
         // 向神经网络输入世界信号
         // - Perception: 接收世界健康度
@@ -903,7 +1111,7 @@ impl WorldMind {
             BehaviorTendency::Active => {
                 // 高活跃：尝试接取任务或转账
                 // 优先检查是否有待领取的任务
-                let pending_tasks: Vec<Uuid> = new_mind.tasks.iter()
+                let pending_tasks: Vec<Uuid> = self.tasks.iter()
                     .filter(|t| t.status == behavior::TaskStatus::Pending)
                     .map(|t| t.id)
                     .collect();
@@ -928,7 +1136,7 @@ impl WorldMind {
             }
             BehaviorTendency::Moderate => {
                 // 中等活跃：根据 Cognitive 神经元状态决定学习行为
-                let gu = new_mind.gu_registry.get(&gu_id).unwrap();
+                let gu = self.gu_registry.get(&gu_id).unwrap();
                 let cognitive_state = gu.lnn.get_neuron_state(crate::core::NeuronType::Cognitive);
                 let skills = &gu.skills;
 
@@ -947,11 +1155,11 @@ impl WorldMind {
             }
             BehaviorTendency::Rest => {
                 // 休息：不执行行为
-                return (new_mind, None);
+                return None;
             }
             BehaviorTendency::Survival => {
                 // 生存优先：尝试接取任务获取金币
-                let pending_tasks: Vec<Uuid> = new_mind.tasks.iter()
+                let pending_tasks: Vec<Uuid> = self.tasks.iter()
                     .filter(|t| t.status == behavior::TaskStatus::Pending)
                     .map(|t| t.id)
                     .collect();
@@ -966,7 +1174,7 @@ impl WorldMind {
             }
         };
 
-        new_mind.execute_gu_action(gu_id, action)
+        self.execute_gu_action(gu_id, action)
     }
 
     /// 获取货币供应量
@@ -1046,6 +1254,7 @@ impl WorldMind {
     /// 完成任务（用户确认）
     ///
     /// 用户判断任务是否完成，完成后奖励自动发放给执行任务的蛊虫
+    /// 同时蛊虫会学习任务所需的技能
     pub fn complete_task(&mut self, task_id: Uuid) -> Result<TransactionData, String> {
         // 查找任务
         let task = self.tasks.iter_mut()
@@ -1061,14 +1270,61 @@ impl WorldMind {
         let gu_id = task.assigned_to
             .ok_or_else(|| "任务未分配给任何蛊虫".to_string())?;
 
+        // 保存任务信息用于学习
+        let task_name = task.name.clone();
+        let task_description = task.description.clone();
+        let task_skills = task.required_skills.clone();
+
         // 标记任务完成
         task.complete();
 
-        // 发放奖励
+        // 发放奖励并学习技能
         let reward = task.reward;
-        let task_name = task.name.clone();
         let gu = self.gu_registry.get_mut(&gu_id)
             .ok_or_else(|| format!("蛊虫 {} 不存在", gu_id))?;
+
+        // 学习技能：根据任务需求或任务名称创建知识点
+        if !task_skills.is_empty() {
+            // 任务有技能要求，学习这些技能
+            for skill_name in &task_skills {
+                // 检查是否已有该技能
+                if let Some(existing_skill) = gu.skills.iter_mut().find(|s| &s.name == skill_name) {
+                    // 已有技能，添加新知识点
+                    let node = KnowledgeNode::new(
+                        format!("{}实践经验", task_name),
+                        format!("通过完成任务「{}」获得", task_name),
+                        KnowledgeNodeType::Experience,
+                    );
+                    existing_skill.extend_knowledge(node, None);
+                } else {
+                    // 没有该技能，创建新技能
+                    let foundation = KnowledgeNode::new(
+                        format!("{}基础", skill_name),
+                        format!("通过完成任务「{}」入门", task_name),
+                        KnowledgeNodeType::Foundation,
+                    );
+                    let new_skill = Skill::new(
+                        skill_name.clone(),
+                        task_description.clone(),
+                        foundation,
+                    );
+                    gu.skills.push(new_skill);
+                }
+            }
+        } else {
+            // 任务没有技能要求，根据任务名称创建技能
+            let foundation = KnowledgeNode::new(
+                format!("{}基础", task_name),
+                task_description.clone(),
+                KnowledgeNodeType::Foundation,
+            );
+            let new_skill = Skill::new(
+                task_name.clone(),
+                task_description.clone(),
+                foundation,
+            );
+            gu.skills.push(new_skill);
+        }
 
         Ok(gu.wallet.deposit(
             reward,
@@ -1129,36 +1385,688 @@ impl WorldMind {
     /// 接收知识文件（递归学习时逐个发送）
     ///
     /// 世界模型内部分配给蛊虫消化
+    ///
+    /// # 知识消耗流程（改造后）
+    ///
+    /// ```text
+    /// 知识文件
+    ///    │
+    ///    ▼
+    /// ┌─────────────────────────────────────┐
+    /// │ 1. 认知素分解 (CognisParser)        │
+    /// │    - 提取实体 (Entity)              │
+    /// │    - 提取属性 (Attribute)           │
+    /// │    - 提取关系 (Relation)            │
+    /// └─────────────────────────────────────┘
+    ///    │
+    ///    ▼
+    /// ┌─────────────────────────────────────┐
+    /// │ 2. 信号编码 (KnowledgeEncoder)      │
+    /// │    - Entity → Perceive+Cognitive    │
+    /// │    - Relation → Cognitive+Comm      │
+    /// │    - 归一化信号强度                  │
+    /// └─────────────────────────────────────┘
+    ///    │
+    ///    ▼
+    /// ┌─────────────────────────────────────┐
+    /// │ 3. LNN 融合学习                     │
+    /// │    - 输入神经信号                   │
+    /// │    - 赫布学习更新权重               │
+    /// │    - 更新活跃度                     │
+    /// └─────────────────────────────────────┘
+    ///    │
+    ///    ▼
+    /// ┌─────────────────────────────────────┐
+    /// │ 4. 知识存储                         │
+    /// │    - 创建技能文档                   │
+    /// │    - 持久化到 HTML 文件             │
+    /// │    - 更新蛊虫索引                   │
+    /// └─────────────────────────────────────┘
+    /// ```
     pub fn receive_knowledge_file(&mut self, file_event: &crate::herness_web::KnowledgeFileEvent) -> FileDigestResult {
-        // 选择一个蛊虫来消化这个文件
-        let gu_id = self.select_gu_for_learning();
+        use cognis::CognisParser;
+        use knowledge_encoder::KnowledgeEncoder;
+        use lnn_language::LNNLanguageEmergence;
 
-        // 更新蛊虫的知识网络
-        if let Some(gu) = self.gu_registry.get_mut(&gu_id) {
-            // 创建新的知识点
-            let knowledge_node = KnowledgeNode::new(
-                file_event.filename.clone(),
-                file_event.content.chars().take(500).collect(), // 摘要
-                KnowledgeNodeType::Foundation,
-            );
+        // ===== 获取所有蛊虫，全部参与学习 =====
+        let all_gu_ids: Vec<Uuid> = self.gu_registry.keys().copied().collect();
+        let gu_count = all_gu_ids.len();
 
-            // 如果有技能，添加到技能的知识网络
-            if !gu.skills.is_empty() {
-                let skill_idx = rand::random::<usize>() % gu.skills.len();
-                gu.skills[skill_idx].extend_knowledge(knowledge_node, None);
+        if gu_count == 0 {
+            return FileDigestResult {
+                success: false,
+                message: "没有可用的蛊虫进行学习".to_string(),
+                files_processed: file_event.index,
+                should_continue: false,
+                skill_name: None,
+            };
+        }
+
+        // ===== 第一阶段：认知素分解（统一解析，所有蛊虫共享） =====
+        let mut parser = CognisParser::new();
+        let parse_result = parser.parse(&file_event.content);
+
+        // ===== 第二阶段：信号编码（统一编码） =====
+        let encoder = KnowledgeEncoder::new();
+        let neural_signals = encoder.encode(&parse_result);
+        let knowledge_value = encoder.calculate_knowledge_value(&parse_result);
+
+        // ===== 第三阶段：所有蛊虫 LNN 融合学习 =====
+        // 每个蛊虫都接收神经信号，但由于网络结构差异，产生的状态各不相同
+        for gu_id in &all_gu_ids {
+            if let Some(gu) = self.gu_registry.get_mut(gu_id) {
+                // 输入编码后的神经信号（每个蛊虫的响应不同）
+                for signal in &neural_signals {
+                    gu.lnn.receive_world_signal(signal.neuron_type, signal.strength);
+                }
+
+                // 额外的学习信号（基于知识价值）
+                gu.lnn.receive_world_signal(
+                    crate::core::NeuronType::Cognitive,
+                    knowledge_value.score * 0.3,
+                );
+
+                // 触发多次更新以促进赫布学习（每个蛊虫学习过程不同）
+                for _ in 0..parse_result.particles.len().min(10) {
+                    gu.lnn.update(0.01);
+                }
+            }
+        }
+
+        // ===== 第四阶段：知识协作讨论（LNN 神经网络驱动） =====
+        let skill_name = match &parse_result.main_topic {
+            Some(topic) => topic.clone(),
+            None => Self::extract_skill_name(&file_event.relative_path, &file_event.filename, &file_event.content),
+        };
+
+        // 提取知识内容用于讨论
+        let definition = Self::create_knowledge_summary(&parse_result, &file_event.content);
+        let topics: Vec<String> = parse_result.keywords.iter().take(5).cloned().collect();
+
+        // 发送系统通知：讨论开始
+        self.chat_system.send_system_notification(
+            "knowledge",
+            chat_channel::SystemNotificationType::DiscussionStarted,
+            format!("📌 新知识讨论开始: {} (共 {} 只蛊虫参与)", skill_name, gu_count),
+        );
+
+        // 创建讨论，由第一只蛊虫发起
+        let initiator_id = all_gu_ids[0];
+
+        // 开始讨论
+        self.knowledge_collaboration.start_discussion(&skill_name, initiator_id);
+
+        // ===== 使用 LNN 神经网络生成每个蛊虫的讨论内容 =====
+        let language_emergence = LNNLanguageEmergence::default();
+
+        // 收集每个蛊虫生成的消息
+        let mut gu_messages: Vec<(Uuid, String, String)> = Vec::new(); // (gu_id, gu_name, message)
+
+        for (idx, gu_id) in all_gu_ids.iter().enumerate() {
+            // 跳过发起者（已经加入讨论）
+            if idx > 0 {
+                self.knowledge_collaboration.join_discussion(&skill_name, *gu_id);
             }
 
-            // 增加信任度
-            self.safety_state.trust_entropy =
-                self.safety_state.trust_entropy.reward(&gu_id, 0.01);
+            // 获取蛊虫信息
+            let (gu_name, state_vector, activity, behavior_tendency) = {
+                if let Some(gu) = self.gu_registry.get(gu_id) {
+                    (
+                        gu.name.clone(),
+                        gu.lnn.state_vector(),
+                        gu.lnn.get_overall_activity(),
+                        gu.lnn.decide_behavior(),
+                    )
+                } else {
+                    continue;
+                }
+            };
+
+            // 使用 LNN 神经网络状态涌现消息
+            if let Some(emerged_msg) = language_emergence.emerge_message(
+                state_vector,
+                activity,
+                behavior_tendency,
+                *gu_id,
+                &gu_name,
+                Some(&file_event.filename),
+                Some((&topics, Some(definition.as_str()))),
+            ) {
+                // 将涌现的消息内容转换为字符串
+                let message_text = match emerged_msg.content {
+                    chat_channel::MessageContent::Text(text) => text,
+                    chat_channel::MessageContent::Proposal { topic, content, .. } => {
+                        format!("📝 关于「{}」的提议: {}", topic, content)
+                    }
+                    chat_channel::MessageContent::Vote { support, proposal_id, reason } => {
+                        format!("{} {} ({})", if support { "✅ 同意" } else { "❌ 反对" }, proposal_id, reason)
+                    }
+                    _ => format!("关于「{}」的思考", skill_name),
+                };
+
+                gu_messages.push((*gu_id, gu_name.clone(), message_text));
+
+                // 发起者额外发送提议
+                if idx == 0 {
+                    let proposal_id = self.knowledge_collaboration.propose(
+                        &skill_name,
+                        *gu_id,
+                        &gu_name,
+                        ContentPart::Definition,
+                        definition.clone(),
+                    );
+
+                    if let Some(pid) = proposal_id {
+                        self.chat_system.send_message(
+                            "knowledge",
+                            *gu_id,
+                            &gu_name,
+                            chat_channel::SenderRole::Gu,
+                            chat_channel::MessageContent::Proposal {
+                                topic: skill_name.clone(),
+                                part: ContentPart::Definition,
+                                content: definition.clone(),
+                                proposal_id: pid,
+                            },
+                        );
+                    }
+                }
+            } else {
+                // 如果神经网络活跃度不足，发送简短的参与消息
+                gu_messages.push((*gu_id, gu_name.to_string(), format!("我正在学习「{}」...", skill_name)));
+            }
+        }
+
+        // 发送所有蛊虫的讨论消息
+        for (gu_id, gu_name, message) in gu_messages {
+            self.chat_system.send_message(
+                "knowledge",
+                gu_id,
+                &gu_name,
+                chat_channel::SenderRole::Gu,
+                chat_channel::MessageContent::Text(message),
+            );
+        }
+
+        // ===== 第五阶段：所有蛊虫投票 =====
+        // 获取该主题所有提议并让所有蛊虫投票
+        if let Some(discussion) = self.knowledge_collaboration.get_discussion(&skill_name) {
+            // 收集提议 ID
+            let proposal_ids: Vec<String> = discussion.proposals.values()
+                .flat_map(|ps| ps.iter().map(|p| p.id.clone()))
+                .collect();
+
+            // 让每个蛊虫投票（投票理由由 LNN 状态驱动）
+            for proposal_id in &proposal_ids {
+                for voter_id in &all_gu_ids {
+                    // 获取蛊虫的神经网络状态来决定投票理由
+                    let (voter_name, state_vector, activity) = {
+                        if let Some(gu) = self.gu_registry.get(voter_id) {
+                            (gu.name.clone(), gu.lnn.state_vector(), gu.lnn.get_overall_activity())
+                        } else {
+                            continue;
+                        }
+                    };
+
+                    // 根据神经网络状态生成投票理由
+                    let cognitive = state_vector[1]; // Cognitive 神经元状态
+                    let comm = state_vector[3]; // Comm 神经元状态
+
+                    let reason = if cognitive > 0.5 && comm > 0.5 {
+                        format!("经过思考，我认为这个提议很有价值 (认知度: {:.0}%)", cognitive * 100.0)
+                    } else if cognitive > 0.3 {
+                        format!("我同意这个观点，值得深入探讨")
+                    } else {
+                        format!("支持该提议 (活跃度: {:.0}%)", activity * 100.0)
+                    };
+
+                    // 投票支持
+                    self.knowledge_collaboration.vote_support(&skill_name, proposal_id, *voter_id);
+
+                    // 在聊天频道显示投票
+                    self.chat_system.send_message(
+                        "knowledge",
+                        *voter_id,
+                        &voter_name,
+                        chat_channel::SenderRole::Gu,
+                        chat_channel::MessageContent::Vote {
+                            proposal_id: proposal_id.clone(),
+                            support: true,
+                            reason,
+                        },
+                    );
+                }
+            }
+        }
+
+        // 检查共识
+        if let Some(_consensus) = self.knowledge_collaboration.check_consensus(&skill_name) {
+            // 在聊天频道发送共识达成通知
+            self.chat_system.send_message(
+                "knowledge",
+                Uuid::nil(),
+                "系统",
+                chat_channel::SenderRole::System,
+                chat_channel::MessageContent::ConsensusReached {
+                    topic: skill_name.clone(),
+                    participants: all_gu_ids.len(),
+                },
+            );
+
+            // 共识达成，保存到世界知识库
+            if let Some(_path) = self.knowledge_collaboration.save_to_world(&skill_name) {
+                // 发送知识入库通知
+                self.chat_system.send_system_notification(
+                    "knowledge",
+                    chat_channel::SystemNotificationType::KnowledgeStored,
+                    format!("✅ 知识「{}」已入库，所有蛊虫已习得", skill_name),
+                );
+
+                // ===== 更新所有蛊虫的技能 =====
+                for gu_id in &all_gu_ids {
+                    if let Some(gu) = self.gu_registry.get_mut(gu_id) {
+                        let knowledge_node = KnowledgeNode::new(
+                            file_event.filename.clone(),
+                            definition.clone(),
+                            KnowledgeNodeType::Foundation,
+                        );
+
+                        // 查找或创建技能
+                        let skill_idx = gu.skills.iter()
+                            .position(|s| s.name == skill_name);
+
+                        if let Some(idx) = skill_idx {
+                            gu.skills[idx].extend_knowledge(knowledge_node, None);
+                        } else {
+                            let new_skill = Skill::new(
+                                skill_name.clone(),
+                                format!("通过协作学习 {} 获得", file_event.filename),
+                                knowledge_node,
+                            );
+                            gu.skills.push(new_skill);
+                        }
+
+                        // 更新信任度（每只蛊虫都获得奖励）
+                        self.safety_state.trust_entropy =
+                            self.safety_state.trust_entropy.reward(gu_id, knowledge_value.score * 0.05);
+                    }
+                }
+            }
         }
 
         FileDigestResult {
             success: true,
-            message: format!("文件 {} 已分配给蛊虫消化", file_event.filename),
+            message: format!("文件 {} 已通过 {} 只蛊虫协作学习处理", file_event.filename, gu_count),
             files_processed: file_event.index,
-            should_continue: true, // 继续发送更多文件
+            should_continue: true,
+            skill_name: Some(skill_name),
         }
+    }
+
+    /// 创建知识摘要（从解析结果生成）
+    fn create_knowledge_summary(
+        parse_result: &cognis::ParseResult,
+        content: &str,
+    ) -> String {
+        let mut summary_parts = Vec::new();
+
+        // 主题
+        if let Some(topic) = &parse_result.main_topic {
+            summary_parts.push(format!("主题: {}", topic));
+        }
+
+        // 代码语言
+        if !parse_result.code_languages.is_empty() {
+            summary_parts.push(format!("语言: {}", parse_result.code_languages.join(", ")));
+        }
+
+        // 关键词
+        if !parse_result.keywords.is_empty() {
+            summary_parts.push(format!("关键词: {}", parse_result.keywords.iter().take(5).cloned().collect::<Vec<_>>().join(", ")));
+        }
+
+        // 实体数量
+        let entity_count = parse_result.particles.iter()
+            .filter(|p| matches!(p, cognis::CogniParticle::Entity { .. }))
+            .count();
+        if entity_count > 0 {
+            summary_parts.push(format!("实体数: {}", entity_count));
+        }
+
+        // 原始内容摘要
+        let content_preview: String = content.chars().take(300).collect();
+        summary_parts.push(format!("\n{}", content_preview));
+
+        summary_parts.join("\n")
+    }
+
+    /// 从文件路径中提取技能名称（三天才裁决方法 - 天才委员会设计）
+    ///
+    /// 算法步骤（三天才裁决）：
+    /// 1. 黑塔：创新性评估 - 代码语言识别（权重最高）
+    /// 2. 螺丝咕姆：可信度评估 - 领域关键词匹配
+    /// 3. 拉蒂奥：优雅度评估 - 位置和频率加权
+    /// 4. 综合裁决：选择综合得分最高的主题
+    fn extract_skill_name(relative_path: &str, _filename: &str, content: &str) -> String {
+        // 获取三种方法的结果
+        let abstraction_result = Self::abstraction_ladder_topic(content);
+        let analogy_result = Self::cross_domain_analogy_topic(content);
+        let elegance_result = Self::elegance_scorer_topic(content);
+
+        // 三天才裁决
+        let main_topic = Self::trinity_decide_topic(
+            content,
+            &abstraction_result,
+            &analogy_result,
+            &elegance_result,
+        );
+
+        // 从相对路径提取子主题
+        let sub_topic = Self::extract_sub_topic(relative_path);
+
+        // 组合技能名
+        match (main_topic, sub_topic) {
+            (Some(main), Some(sub)) => format!("{}-{}", main, sub),
+            (Some(main), None) => main,
+            (None, Some(sub)) => sub,
+            (None, None) => "通用知识".to_string(),
+        }
+    }
+
+    // ==================== 三种主题提取方法 ====================
+
+    /// 方法1: 抽象阶梯 - 从代码语言和标题提取
+    fn abstraction_ladder_topic(content: &str) -> Option<String> {
+        // 维度1: 代码块语言（权重最高）
+        let languages = Self::extract_code_languages(content);
+        if let Some(lang) = languages.first() {
+            return Some(lang.clone());
+        }
+
+        // 维度2: Markdown 标题关键词
+        let title_words = Self::extract_title_words(content);
+        if let Some(word) = title_words.first() {
+            return Some(word.clone());
+        }
+
+        None
+    }
+
+    /// 方法2: 跨域类比 - 基于领域关键词匹配
+    fn cross_domain_analogy_topic(content: &str) -> Option<String> {
+        // 领域知识库（中心词）
+        let domain_centers: [(&str, &[&str]); 5] = [
+            ("HTML", &["tag", "element", "attribute", "document", "html", "body", "head", "div", "span"]),
+            ("CSS", &["style", "selector", "property", "value", "flex", "grid", "margin", "padding"]),
+            ("JavaScript", &["function", "variable", "const", "let", "var", "async", "promise", "callback"]),
+            ("Rust", &["fn", "let", "mut", "struct", "impl", "trait", "borrow", "ownership"]),
+            ("Python", &["def", "class", "import", "self", "lambda", "list", "dict"]),
+        ];
+
+        let content_lower = content.to_lowercase();
+        let mut best_domain: Option<String> = None;
+        let mut best_score = 0.0;
+
+        for (domain, keywords) in &domain_centers {
+            let mut matches = 0;
+
+            // 检查领域名称本身是否出现
+            if content_lower.contains(&domain.to_lowercase()) {
+                matches += 3; // 领域名本身出现，权重加3
+            }
+
+            // 检查关键词
+            for keyword in *keywords {
+                if content_lower.contains(keyword) {
+                    matches += 1;
+                }
+            }
+            let score = matches as f32 / (keywords.len() + 3) as f32;
+            if score > best_score && score >= 0.15 {
+                best_score = score;
+                best_domain = Some(domain.to_string());
+            }
+        }
+
+        best_domain
+    }
+
+    /// 方法3: 优雅评分 - 基于位置和频率
+    fn elegance_scorer_topic(content: &str) -> Option<String> {
+        let candidates = Self::extract_topic_candidates(content);
+        Self::select_best_topic(&candidates)
+    }
+
+    // ==================== 三天才裁决 ====================
+
+    /// 三天才裁决：综合评估选择最佳主题
+    ///
+    /// 权重分配：
+    /// - 跨域类比（螺丝咕姆）：权重 0.5（最高，因为基于领域知识库）
+    /// - 抽象阶梯（黑塔）：权重 0.3
+    /// - 优雅评分（拉蒂奥）：权重 0.2
+    fn trinity_decide_topic(
+        content: &str,
+        abstraction_result: &Option<String>,
+        analogy_result: &Option<String>,
+        elegance_result: &Option<String>,
+    ) -> Option<String> {
+        // 收集所有候选及其加权得分
+        let mut candidates: Vec<(String, f32)> = Vec::new();
+
+        // 黑塔评分：创新性（代码语言识别）
+        if let Some(topic) = abstraction_result {
+            let base_score = Self::black_tower_score(topic, content);
+            let weighted = base_score * 0.3; // 权重 30%
+            candidates.push((topic.clone(), weighted));
+        }
+
+        // 螺丝咕姆评分：可信度（领域匹配）- 最高权重
+        if let Some(topic) = analogy_result {
+            let base_score = Self::screwllum_score(topic, content);
+            let weighted = base_score * 0.5; // 权重 50%
+            candidates.push((topic.clone(), weighted));
+        }
+
+        // 拉蒂奥评分：优雅度（位置频率）
+        if let Some(topic) = elegance_result {
+            let base_score = Self::latio_score(topic);
+            let weighted = base_score * 0.2; // 权重 20%
+            candidates.push((topic.clone(), weighted));
+        }
+
+        // 选择得分最高的
+        candidates.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        candidates.first().map(|(topic, _)| topic.clone())
+    }
+
+    /// 黑塔评分：创新性评估
+    fn black_tower_score(topic: &str, content: &str) -> f32 {
+        // 代码语言识别得分最高
+        let code_languages = ["html", "css", "javascript", "rust", "python", "java", "go"];
+        let topic_lower = topic.to_lowercase();
+
+        let mut score = 0.5;
+        if code_languages.contains(&topic_lower.as_str()) {
+            score = 0.9; // 代码语言，高分
+        } else if content.to_lowercase().matches(&topic_lower).count() > 5 {
+            score = 0.7; // 出现多次，中等分
+        }
+        score
+    }
+
+    /// 螺丝咕姆评分：可信度评估
+    fn screwllum_score(topic: &str, content: &str) -> f32 {
+        // 检查主题在内容中出现的次数
+        let count = content.to_lowercase().matches(&topic.to_lowercase()).count();
+        if count > 10 {
+            0.9
+        } else if count > 5 {
+            0.7
+        } else if count > 0 {
+            0.5
+        } else {
+            0.1
+        }
+    }
+
+    /// 拉蒂奥评分：优雅度评估
+    fn latio_score(topic: &str) -> f32 {
+        // 短而精的主题得分更高
+        let len = topic.len();
+        if len <= 5 {
+            0.9
+        } else if len <= 10 {
+            0.7
+        } else {
+            0.5
+        }
+    }
+
+    /// 从内容中提取主题候选词（多维度特征提取）
+    fn extract_topic_candidates(content: &str) -> Vec<TopicCandidate> {
+        let mut candidates: Vec<TopicCandidate> = Vec::new();
+
+        // 维度1: 从代码块语言标识提取（权重最高 = 4.0）
+        let code_languages = Self::extract_code_languages(content);
+        for lang in code_languages {
+            candidates.push(TopicCandidate { word: lang, score: 4.0 });
+        }
+
+        // 维度2: 从 Markdown 标题中提取（权重 = 3.0）
+        let title_words = Self::extract_title_words(content);
+        for word in title_words {
+            candidates.push(TopicCandidate { word, score: 3.0 });
+        }
+
+        // 维度3: 从高频词提取（权重 = 词频 × 0.5）
+        let frequent_words = Self::extract_frequent_words(content, 5);
+        for (word, count) in frequent_words {
+            if count >= 2 {
+                candidates.push(TopicCandidate { word, score: count as f64 * 0.5 });
+            }
+        }
+
+        candidates
+    }
+
+    /// 从 Markdown 标题中提取关键词
+    fn extract_title_words(content: &str) -> Vec<String> {
+        let mut words = Vec::new();
+
+        for line in content.lines().take(50) {
+            let trimmed = line.trim();
+            if trimmed.starts_with('#') {
+                let title = trimmed.trim_start_matches('#').trim();
+                for word in title.split_whitespace() {
+                    let word = word.trim_matches(|c: char| !c.is_alphanumeric());
+                    if word.len() >= 2 && word.len() <= 20 {
+                        let has_upper = word.chars().any(|c| c.is_uppercase());
+                        let is_alnum = word.chars().all(|c| c.is_ascii_alphanumeric());
+                        if has_upper && is_alnum {
+                            let normalized = Self::normalize_topic_word(word);
+                            if !words.contains(&normalized) {
+                                words.push(normalized);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        words.truncate(3);
+        words
+    }
+
+    /// 从代码块中提取语言标识
+    fn extract_code_languages(content: &str) -> Vec<String> {
+        let mut languages = Vec::new();
+
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("```") {
+                let lang = trimmed.trim_start_matches('`').trim();
+                if !lang.is_empty() && lang.len() <= 20 {
+                    let normalized = Self::normalize_topic_word(lang);
+                    if !languages.contains(&normalized) {
+                        languages.push(normalized);
+                    }
+                }
+            }
+        }
+
+        languages.truncate(2);
+        languages
+    }
+
+    /// 提取高频词（排除停用词）
+    fn extract_frequent_words(content: &str, top_n: usize) -> Vec<(String, usize)> {
+        use std::collections::HashMap;
+
+        let stop_words = [
+            "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+            "have", "has", "had", "do", "does", "did", "will", "would", "could",
+            "should", "may", "might", "must", "shall", "can", "to", "of", "in",
+            "for", "on", "with", "at", "by", "from", "as", "and", "but", "or",
+            "not", "this", "that", "的", "是", "在", "了", "和", "与", "或", "有",
+            "这", "那", "个", "上", "下", "中", "为", "以", "于", "对", "也", "就",
+        ];
+
+        let mut word_count: HashMap<String, usize> = HashMap::new();
+        let content_preview: String = content.chars().take(2000).collect();
+
+        for word in content_preview.split(|c: char| c.is_whitespace() || c.is_ascii_punctuation()) {
+            let word = word.trim();
+            if word.len() < 2 || word.len() > 20 { continue; }
+            let word_lower = word.to_lowercase();
+            if stop_words.contains(&word_lower.as_str()) { continue; }
+
+            let has_upper = word.chars().any(|c| c.is_uppercase());
+            let is_ascii = word.chars().all(|c| c.is_ascii_alphanumeric());
+            if has_upper && is_ascii {
+                let normalized = Self::normalize_topic_word(word);
+                *word_count.entry(normalized).or_insert(0) += 1;
+            }
+        }
+
+        let mut sorted: Vec<(String, usize)> = word_count.into_iter().collect();
+        sorted.sort_by(|a, b| b.1.cmp(&a.1));
+        sorted.truncate(top_n);
+        sorted
+    }
+
+    /// 规范化主题词
+    fn normalize_topic_word(word: &str) -> String {
+        let mut chars = word.chars();
+        match chars.next() {
+            None => String::new(),
+            Some(first) => {
+                let first_upper = first.to_uppercase().to_string();
+                let rest: String = chars.map(|c| c.to_lowercase().next().unwrap_or(c)).collect();
+                format!("{}{}", first_upper, rest)
+            }
+        }
+    }
+
+    /// 选择最佳主题
+    fn select_best_topic(candidates: &[TopicCandidate]) -> Option<String> {
+        candidates
+            .iter()
+            .max_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|c| c.word.clone())
+    }
+
+    /// 从相对路径中提取子主题（父目录名）
+    fn extract_sub_topic(relative_path: &str) -> Option<String> {
+        let parts: Vec<&str> = relative_path.split('/').filter(|s| !s.is_empty()).collect();
+
+        if parts.len() > 1 {
+            let parent_dir = parts[0];
+            // 直接使用父目录名，不做硬编码映射
+            return Some(parent_dir.to_string());
+        }
+
+        None
     }
 
     /// 选择一个蛊虫来学习
@@ -1173,8 +2081,27 @@ impl WorldMind {
             .map(|(id, _)| *id)
             .unwrap_or_else(|| {
                 // 如果没有蛊虫，返回一个默认值（实际应该创建新蛊虫）
+                println!("[WorldMind] 警告：没有蛊虫可供学习！");
                 Uuid::nil()
             })
+    }
+
+    /// 获取蛊虫技能数量（用于调试）
+    pub fn get_total_skills(&self) -> usize {
+        self.gu_registry.values().map(|gu| gu.skills.len()).sum()
+    }
+
+    /// 获取所有蛊虫的技能摘要
+    pub fn get_skills_summary(&self) -> Vec<(Uuid, String, usize)> {
+        self.gu_registry.iter()
+            .filter_map(|(id, gu)| {
+                if gu.skills.is_empty() {
+                    None
+                } else {
+                    Some((*id, gu.name.clone(), gu.skills.len()))
+                }
+            })
+            .collect()
     }
 
     /// 判断是否应该熔断
@@ -1226,6 +2153,8 @@ pub struct FileDigestResult {
     pub files_processed: usize,
     /// 是否应该继续
     pub should_continue: bool,
+    /// 创建的技能名称（如果有）
+    pub skill_name: Option<String>,
 }
 
 /// 跨蛊虫突触
@@ -1311,11 +2240,11 @@ mod tests {
     #[test]
     fn test_survival_mechanism() {
         let config = WorldConfig::default();
-        let mind = WorldMind::with_config(config);
+        let mut mind = WorldMind::with_config(config);
 
         // 更新后应该自动生成蛊虫以满足最小种群
-        let updated = mind.update();
-        assert!(updated.population() >= mind.config.survival.min_population);
+        mind.update();
+        assert!(mind.population() >= mind.config.survival.min_population);
     }
 
     #[test]
@@ -1345,9 +2274,9 @@ mod tests {
         }
 
         // 更新后应该涌现意识
-        let updated = mind.update();
+        mind.update();
         // 由于初始相位相同，同步率应该很高
-        assert!(updated.consciousness_sync_rate() > 0.5);
+        assert!(mind.consciousness_sync_rate() > 0.5);
     }
 
     #[test]
@@ -1379,11 +2308,11 @@ mod tests {
         mind = mind.register_gu(gu_id2);
 
         // 执行涌现行为
-        let (new_mind, transaction) = mind.emergent_action();
+        let _transaction = mind.emergent_action();
 
         // 验证行为确实执行了（可能会有交易或者没有，取决于 LNN 状态）
         // 主要验证不会 panic
-        assert_eq!(new_mind.population(), 2);
+        assert_eq!(mind.population(), 2);
     }
 
     #[test]
@@ -1494,3 +2423,5 @@ mod tests {
         assert_eq!(mind.population(), 5);
     }
 }
+
+pub mod skill_extractor;

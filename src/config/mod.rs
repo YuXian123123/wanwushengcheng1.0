@@ -12,6 +12,9 @@ pub mod learning;
 pub mod consensus;
 pub mod context;
 pub mod tokenizer;
+pub mod cognis;
+pub mod language;
+pub mod lnn_core;
 
 use serde::{Deserialize, Serialize};
 
@@ -28,6 +31,16 @@ pub struct GlobalConfig {
     pub context: context::ContextConfig,
     /// 分词器配置
     pub tokenizer: tokenizer::TokenizerConfig,
+    /// 认知素分解器配置
+    pub cognis: cognis::CognisConfig,
+    /// 知识编码器配置
+    pub knowledge_encoder: cognis::KnowledgeEncoderConfig,
+    /// 知识消耗流程配置
+    pub knowledge_consumption: cognis::KnowledgeConsumptionConfig,
+    /// 语言配置
+    pub language: language::LanguageConfig,
+    /// LNN核心配置
+    pub lnn_core: lnn_core::LNNCoreConfig,
 }
 
 impl GlobalConfig {
@@ -39,6 +52,11 @@ impl GlobalConfig {
             consensus: consensus::ConsensusConfig::new(),
             context: context::ContextConfig::new(),
             tokenizer: tokenizer::TokenizerConfig::new(),
+            cognis: cognis::CognisConfig::new(),
+            knowledge_encoder: cognis::KnowledgeEncoderConfig::new(),
+            knowledge_consumption: cognis::KnowledgeConsumptionConfig::new(),
+            language: language::LanguageConfig::new(),
+            lnn_core: lnn_core::LNNCoreConfig::new(),
         }
     }
 
@@ -70,6 +88,11 @@ impl GlobalConfig {
         self.consensus.validate()?;
         self.context.validate()?;
         self.tokenizer.validate()?;
+        self.cognis.validate()?;
+        self.knowledge_encoder.validate()?;
+        self.knowledge_consumption.validate()?;
+        self.language.validate()?;
+        self.lnn_core.validate()?;
         Ok(())
     }
 }

@@ -1,10 +1,22 @@
 //! 学习器模块
 //!
-//! 负责递归读取目录文件，发送给世界模型
+//! 负责递归读取目录文件，解析格式，发送给世界模型
+//!
+//! # 文件解析流程
+//!
+//! ```text
+//! 文件检测 → 格式分类 → 解析器插件 → Markdown → 学习
+//! ```
+//!
+//! # 支持的文件格式
+//!
+//! - **通用格式**: md, txt, html, js, css, java, py, rs, etc.
+//! - **特殊格式**: parquet, pdf, docx (需要对应 feature 或插件)
 
 use std::path::Path;
 use std::fs;
 use uuid::Uuid;
+use super::parser::ParserRegistry;
 use super::protocol::{KnowledgeFileEvent, HernessCommand, WorldMindResponse, WorldMindMessage};
 
 /// 学习器
@@ -19,6 +31,8 @@ pub struct Learner {
     halted: bool,
     /// 熔断原因
     halt_reason: Option<String>,
+    /// 解析器注册表
+    parser_registry: ParserRegistry,
 }
 
 impl Learner {
@@ -30,7 +44,13 @@ impl Learner {
             total_files: 0,
             halted: false,
             halt_reason: None,
+            parser_registry: ParserRegistry::new(),
         }
+    }
+
+    /// 获取支持的文件扩展名
+    pub fn supported_extensions(&self) -> Vec<String> {
+        self.parser_registry.supported_extensions()
     }
 
     /// 检查是否已熔断
@@ -105,6 +125,7 @@ Halt { reason: "原因" }
     }
 
     /// 递归扫描目录，返回所有文件路径
+    /// 支持单个文件或目录
     pub fn scan_directory(
         &self,
         dir_path: &str,
@@ -112,10 +133,31 @@ Halt { reason: "原因" }
     ) -> Result<Vec<std::path::PathBuf>, String> {
         let path = Path::new(dir_path);
         if !path.exists() {
-            return Err(format!("目录不存在: {}", dir_path));
+            return Err(format!("路径不存在: {}", dir_path));
         }
+
+        // 如果是单个文件，直接返回
+        if path.is_file() {
+            // 检查扩展名
+            let ext = path.extension()
+                .map(|e| e.to_string_lossy().to_lowercase())
+                .unwrap_or_default();
+
+            // 如果没有指定扩展名过滤，或者扩展名匹配
+            if extensions.is_empty() || extensions.iter().any(|e| e.to_lowercase() == ext) {
+                // 检查是否支持该格式
+                if self.parser_registry.find_parser(&ext).is_some() {
+                    return Ok(vec![path.to_path_buf()]);
+                } else {
+                    return Err(format!("不支持的文件格式: {}", ext));
+                }
+            } else {
+                return Ok(vec![]);
+            }
+        }
+
         if !path.is_dir() {
-            return Err(format!("不是目录: {}", dir_path));
+            return Err(format!("不是文件或目录: {}", dir_path));
         }
 
         let mut files = Vec::new();
@@ -164,27 +206,31 @@ Halt { reason: "原因" }
     }
 
     /// 读取文件并生成 KnowledgeFileEvent
+    ///
+    /// 使用解析器插件系统自动检测文件类型并转换为 Markdown
     pub fn read_file(
         &mut self,
         file_path: &std::path::Path,
         root_dir: &str,
         total: usize,
     ) -> Result<KnowledgeFileEvent, String> {
-        let content = fs::read_to_string(file_path)
-            .map_err(|e| format!("读取文件失败: {}", e))?;
-
         let filename = file_path.file_name()
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
 
         let extension = file_path.extension()
-            .map(|e| e.to_string_lossy().to_string())
+            .map(|e| e.to_string_lossy().to_lowercase())
             .unwrap_or_default();
 
         let relative_path = file_path.strip_prefix(root_dir)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|_| file_path.to_string_lossy().to_string());
 
+        // 使用解析器系统解析文件
+        let parsed = self.parser_registry.parse_file(file_path)
+            .map_err(|e| format!("解析文件失败: {}", e))?;
+
+        let content = parsed.content;
         let size = content.len();
 
         self.files_processed += 1;

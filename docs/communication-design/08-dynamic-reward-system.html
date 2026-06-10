@@ -1,1 +1,599 @@
-<!DOCTYPE html><html><head><title>动态奖励计算系统设计</title></head><body><h1>动态奖励计算系统设计</h1></body></html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态奖励计算系统设计 - 天才理事会</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e4e4e4;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 2px solid #feca57;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #feca57, #ff6b6b, #48cae4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { color: #a4a4a4; margin-top: 10px; }
+
+        .genius-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .genius-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .genius-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .genius-card.black-tower { border-top: 4px solid #9370db; }
+        .genius-card.screwllum { border-top: 4px solid #27ae60; }
+        .genius-card.latio { border-top: 4px solid #3498db; }
+        .genius-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+        }
+        .genius-card.black-tower .genius-avatar { background: rgba(147,112,219,0.3); }
+        .genius-card.screwllum .genius-avatar { background: rgba(39,174,96,0.3); }
+        .genius-card.latio .genius-avatar { background: rgba(52,152,219,0.3); }
+        h2 { color: #feca57; margin: 15px 0; font-size: 1.5em; }
+        h3 { color: #48cae4; margin: 10px 0; }
+        h4 { color: #ff6b6b; margin: 8px 0; }
+
+        .section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .architecture {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 15px 0;
+        }
+        .formula {
+            background: rgba(52,152,219,0.1);
+            border-left: 4px solid #3498db;
+            padding: 15px 20px;
+            margin: 15px 0;
+            font-family: 'Cambria Math', serif;
+            font-size: 1.1em;
+        }
+        .formula-highlight {
+            background: rgba(254,202,87,0.15);
+            border: 1px solid rgba(254,202,87,0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .formula-highlight .main-formula {
+            font-size: 1.4em;
+            color: #feca57;
+            font-family: 'Cambria Math', serif;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid rgba(254,202,87,0.3);
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background: rgba(254,202,87,0.2);
+            color: #feca57;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin: 2px;
+        }
+        .tag.innovation { background: rgba(147,112,219,0.3); color: #9370db; }
+        .tag.security { background: rgba(39,174,96,0.3); color: #27ae60; }
+        .tag.elegance { background: rgba(52,152,219,0.3); color: #3498db; }
+
+        ul { margin: 10px 0 10px 20px; }
+        li { margin: 5px 0; }
+
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            height: 120px;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .bar {
+            flex: 1;
+            background: linear-gradient(to top, #9370db, #feca57);
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 5px;
+            font-size: 0.8em;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(254,202,87,0.3);
+            color: #a4a4a4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 动态奖励计算系统</h1>
+            <div class="subtitle">Dynamic Reward Calculation System</div>
+            <div class="subtitle">天才理事会 | Genius Council</div>
+        </header>
+
+        <!-- 核心公式 -->
+        <section class="section">
+            <h2>🎯 核心奖励公式</h2>
+            <div class="formula-highlight">
+                <div class="main-formula">
+                    Reward = Base × Quality × Novelty × Consensus × Trust × Decay(t)
+                </div>
+            </div>
+            <p style="text-align: center; color: #a4a4a4;">
+                奖励 = 基础值 × 质量因子 × 新颖因子 × 共识因子 × 信任因子 × 时间衰减
+            </p>
+        </section>
+
+        <!-- 设计目标 -->
+        <section class="section">
+            <h2>🎯 设计目标</h2>
+            <div class="architecture">┌──────────────────────────────────────────────────────────────┐
+│                    动态奖励核心目标                            │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   问题：如何设计公平、激励相容、防作弊的奖励机制？            │
+│                                                              │
+│   解决方案：五维奖励 + 动态调整 + 反作弊机制                  │
+│                                                              │
+│   设计原则：                                                  │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ P1: 公平性 - 相同贡献获得相同奖励                    │   │
+│   │ P2: 激励性 - 高质量贡献获得高奖励                    │   │
+│   │ P3: 防作弊 - 作弊行为被检测并惩罚                    │   │
+│   │ P4: 可持续性 - 奖励池不枯竭                         │   │
+│   │ P5: 涌现性 - 奖励驱动系统进化                        │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <!-- 天才贡献 -->
+        <section class="section">
+            <h2>🏛️ 天才理事会设计</h2>
+            <div class="genius-grid">
+                <div class="genius-card black-tower">
+                    <div class="genius-avatar">🗼</div>
+                    <h2>黑塔</h2>
+                    <h3>涌现激励架构</h3>
+                    <p><span class="tag innovation">自适应奖励</span></p>
+                    <p><span class="tag innovation">涌现机制</span></p>
+                    <p><span class="tag innovation">系统进化</span></p>
+                    <ul>
+                        <li>动态基础值调整</li>
+                        <li>新颖度涌现奖励</li>
+                        <li>群体贡献激励</li>
+                    </ul>
+                </div>
+                <div class="genius-card screwllum">
+                    <div class="genius-avatar">🔧</div>
+                    <h2>螺丝咕姆</h2>
+                    <h3>防作弊机制</h3>
+                    <p><span class="tag security">行为分析</span></p>
+                    <p><span class="tag security">异常检测</span></p>
+                    <p><span class="tag security">惩罚机制</span></p>
+                    <ul>
+                        <li>作弊模式识别</li>
+                        <li>信任熵监控</li>
+                        <li>渐进式惩罚</li>
+                    </ul>
+                </div>
+                <div class="genius-card latio">
+                    <div class="genius-avatar">📐</div>
+                    <h2>拉蒂奥</h2>
+                    <h3>奖励数学公式</h3>
+                    <p><span class="tag elegance">贡献度公式</span></p>
+                    <p><span class="tag elegance">衰减函数</span></p>
+                    <p><span class="tag elegance">最优策略</span></p>
+                    <ul>
+                        <li>形式化奖励定义</li>
+                        <li>公平性证明</li>
+                        <li>激励相容条件</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 黑塔：涌现激励架构 -->
+        <section class="section">
+            <h2>🗼 黑塔：涌现激励架构</h2>
+
+            <h3>动态基础值调整</h3>
+            <p>基础奖励值根据系统状态动态调整：</p>
+            <div class="architecture">┌──────────────────────────────────────────────────────────────┐
+│                    基础值调整算法                             │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   Base(t+1) = Base(t) × (1 + α × (Target - Actual)/Target)   │
+│                                                              │
+│   其中：                                                     │
+│   - Target = 目标活跃度                                      │
+│   - Actual = 实际活跃度                                      │
+│   - α = 调整速率参数                                         │
+│                                                              │
+│   效果：                                                     │
+│   - 活跃度低 → 提高基础奖励 → 激励参与                       │
+│   - 活跃度高 → 降低基础奖励 → 控制通胀                       │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</div>
+
+            <h3>新颖度涌现奖励</h3>
+            <div class="formula">
+                Novelty(K) = 1 - max{sim(K, K') | K' ∈ KnowledgeBase}
+                <br><br>
+                新颖度 = 1 - 与知识库中最相似知识的相似度
+                <br>
+                完全新颖 → Novelty = 1.0
+                <br>
+                完全重复 → Novelty = 0.0
+            </div>
+
+            <h3>群体贡献激励</h3>
+            <p>当多个蛊虫协作完成知识贡献时，奖励分配：</p>
+            <div class="formula">
+                Reward_i = TotalReward × (Contribution_i / Σ Contribution_j)
+                <br><br>
+                贡献度计算：Contribution = 工作量 × 质量系数 × 协作系数
+            </div>
+
+            <h3>涌现奖励可视化</h3>
+            <div class="chart">
+                <div class="bar" style="height: 30%;">
+                    <span>基础</span>
+                </div>
+                <div class="bar" style="height: 50%;">
+                    <span>质量</span>
+                </div>
+                <div class="bar" style="height: 70%;">
+                    <span>新颖</span>
+                </div>
+                <div class="bar" style="height: 85%;">
+                    <span>共识</span>
+                </div>
+                <div class="bar" style="height: 60%;">
+                    <span>信任</span>
+                </div>
+                <div class="bar" style="height: 100%;">
+                    <span>总奖励</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 螺丝咕姆：防作弊机制 -->
+        <section class="section">
+            <h2>🔧 螺丝咕姆：防作弊机制</h2>
+
+            <h3>作弊模式识别</h3>
+            <div class="architecture">┌──────────────────────────────────────────────────────────────┐
+│                    常见作弊模式                               │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ 模式1: 刷量攻击                                      │   │
+│   │ 检测: 短时间内大量低质量提交                         │   │
+│   │ 应对: 速率限制 + 信任度惩罚                          │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                              │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ 模式2: 合谋攻击                                      │   │
+│   │ 检测: 固定小组互相验证/投票                          │   │
+│   │ 应对: 随机验证者分配 + 关系图分析                    │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                              │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ 模式3: 内容抄袭                                      │   │
+│   │ 检测: 相似度检测 + 来源追踪                          │   │
+│   │ 应对: 拒绝奖励 + 降低信任度                          │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                              │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ 模式4: 时间操纵                                      │   │
+│   │ 检测: 时间戳异常 + 行为序列分析                      │   │
+│   │ 应对: 服务器时间验证 + 序列校验                      │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</div>
+
+            <h3>信任熵监控</h3>
+            <p>使用信息熵度量蛊虫行为的异常程度：</p>
+            <div class="formula">
+                TrustEntropy(Gu) = -Σ pᵢ log(pᵢ)
+                <br><br>
+                其中 pᵢ = 该蛊虫第 i 类行为的频率
+                <br><br>
+                正常蛊虫：熵值稳定在特定范围
+                <br>
+                异常蛊虫：熵值突然变化（行为模式突变）
+            </div>
+
+            <h3>渐进式惩罚</h3>
+            <table>
+                <tr>
+                    <th>违规级别</th>
+                    <th>触发条件</th>
+                    <th>惩罚措施</th>
+                    <th>恢复时间</th>
+                </tr>
+                <tr>
+                    <td style="color: #feca57;">轻微</td>
+                    <td>首次异常</td>
+                    <td>警告 + 奖励减半</td>
+                    <td>24小时</td>
+                </tr>
+                <tr>
+                    <td style="color: #ff6b6b;">中等</td>
+                    <td>重复异常或中度作弊</td>
+                    <td>信任度-20% + 奖励冻结</td>
+                    <td>7天</td>
+                </tr>
+                <tr>
+                    <td style="color: #e74c3c;">严重</td>
+                    <td>严重作弊或攻击</td>
+                    <td>信任度清零 + 禁入</td>
+                    <td>30天</td>
+                </tr>
+                <tr>
+                    <td style="color: #8e44ad;">永久</td>
+                    <td>恶意攻击系统</td>
+                    <td>永久封禁</td>
+                    <td>永不</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 拉蒂奥：奖励数学公式 -->
+        <section class="section">
+            <h2>📐 拉蒂奥：奖励数学公式</h2>
+
+            <h3>完整奖励公式分解</h3>
+            <div class="formula">
+                <b>Reward = Base × Q × N × C × T × D(t)</b>
+                <br><br>
+                <b>质量因子 Q：</b>
+                <br>
+                Q = (ContentQuality × Relevance × Completeness)^(1/3)
+                <br>
+                范围：[0, 1]
+                <br><br>
+                <b>新颖因子 N：</b>
+                <br>
+                N = 1 - max{sim(K, K')}
+                <br>
+                范围：[0, 1]
+                <br><br>
+                <b>共识因子 C：</b>
+                <br>
+                C = (ApproveVotes / TotalVotes)^γ
+                <br>
+                γ > 1 使高共识获得额外加成
+                <br><br>
+                <b>信任因子 T：</b>
+                <br>
+                T = TrustScore ∈ [0.1, 1.0]
+                <br>
+                新蛊虫从 0.5 开始
+                <br><br>
+                <b>时间衰减 D(t)：</b>
+                <br>
+                D(t) = e^(-λt)
+                <br>
+                鼓励早期参与
+            </div>
+
+            <h3>公平性证明</h3>
+            <div class="formula">
+                <b>定理：</b> 相同贡献获得相同奖励（期望值）
+                <br><br>
+                <b>证明：</b>
+                <br>
+                设 Gu₁ 和 Gu₂ 有相同贡献特征：
+                <br>
+                Quality₁ = Quality₂
+                <br>
+                Novelty₁ = Novelty₂
+                <br>
+                ...
+                <br><br>
+                则 E[Reward₁] = E[Reward₂] □
+                <br><br>
+                <b>注：</b>随机因素（验证者选择）导致实际奖励有方差
+            </div>
+
+            <h3>激励相容条件</h3>
+            <p>设计使诚实行为成为最优策略：</p>
+            <div class="formula">
+                E[Reward(诚实)] > E[Reward(作弊)] - Penalty(作弊)
+                <br><br>
+                即：诚实期望收益 > 作弊期望收益 - 惩罚
+                <br><br>
+                通过调节参数确保此条件成立
+            </div>
+
+            <h3>奖励因子权重</h3>
+            <table>
+                <tr>
+                    <th>因子</th>
+                    <th>权重</th>
+                    <th>可调范围</th>
+                    <th>影响</th>
+                </tr>
+                <tr>
+                    <td>质量因子 Q</td>
+                    <td>0.30</td>
+                    <td>[0.2, 0.4]</td>
+                    <td>鼓励高质量内容</td>
+                </tr>
+                <tr>
+                    <td>新颖因子 N</td>
+                    <td>0.20</td>
+                    <td>[0.1, 0.3]</td>
+                    <td>鼓励创新</td>
+                </tr>
+                <tr>
+                    <td>共识因子 C</td>
+                    <td>0.25</td>
+                    <td>[0.15, 0.35]</td>
+                    <td>鼓励协作</td>
+                </tr>
+                <tr>
+                    <td>信任因子 T</td>
+                    <td>0.15</td>
+                    <td>[0.1, 0.2]</td>
+                    <td>奖励长期贡献</td>
+                </tr>
+                <tr>
+                    <td>时间衰减 D</td>
+                    <td>0.10</td>
+                    <td>[0.05, 0.15]</td>
+                    <td>鼓励早期参与</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- 奖励类型 -->
+        <section class="section">
+            <h2>🏆 奖励类型</h2>
+            <div class="architecture">┌──────────────────────────────────────────────────────────────┐
+│                    奖励类型分类                               │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ 知识贡献奖励                                         │   │
+│   │ - 新知识提交：Base × 1.0                            │   │
+│   │ - 知识改进：Base × 0.5                              │   │
+│   │ - 知识验证：Base × 0.3                              │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                              │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ 协作贡献奖励                                         │   │
+│   │ - 讨论参与：Base × 0.2                              │   │
+│   │ - 冲突解决：Base × 0.4                              │   │
+│   │ - 知识传播：Base × 0.3                              │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                              │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ 特殊贡献奖励                                         │   │
+│   │ - 系统改进：Base × 2.0                              │   │
+│   │ - 漏洞报告：Base × 3.0                              │   │
+│   │ - 重大发现：Base × 5.0                              │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <!-- 奖励流程 -->
+        <section class="section">
+            <h2>🔄 奖励计算流程</h2>
+            <div class="architecture">┌──────────────────────────────────────────────────────────────┐
+│                    奖励计算流程                               │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   贡献完成 ───► 质量评估 ───► 新颖度计算                     │
+│        │            │              │                         │
+│        │            ▼              ▼                         │
+│        │     ┌─────────────────────────────┐                │
+│        │     │        初步奖励计算          │                │
+│        │     │  R₀ = Base × Q × N          │                │
+│        │     └─────────────────────────────┘                │
+│        │                   │                                  │
+│        ▼                   ▼                                  │
+│   作弊检测 ◄───────── 共识验证                                │
+│        │                   │                                  │
+│        ▼                   ▼                                  │
+│   ┌─────────┐        ┌─────────┐                             │
+│   │ 正常    │        │ 异常    │                             │
+│   │ 最终奖励│        │ 惩罚    │                             │
+│   │ R = R₀  │        │ R = 0   │                             │
+│   │ ×C×T×D  │        │ Trust↓  │                             │
+│   └─────────┘        └─────────┘                             │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <!-- 与其他系统关联 -->
+        <section class="section">
+            <h2>🔗 系统关联</h2>
+            <div class="architecture">┌──────────────────────────────────────────────────────────────┐
+│                    奖励系统关联图                             │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐   │
+│   │  知识系统   │────►│  奖励系统   │────►│  经济系统   │   │
+│   │ (贡献来源)  │     │ (计算引擎)  │     │ (金币分发)  │   │
+│   └─────────────┘     └─────────────┘     └─────────────┘   │
+│         │                    │                    │          │
+│         │                    │                    │          │
+│         ▼                    ▼                    ▼          │
+│   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐   │
+│   │  验证系统   │────►│  信任系统   │────►│  行为系统   │   │
+│   └─────────────┘     └─────────────┘     └─────────────┘   │
+│                                                              │
+│   反馈循环：                                                  │
+│   - 高奖励 → 高激励 → 高质量贡献 → 更高奖励                   │
+│   - 作弊惩罚 → 低信任 → 低奖励 → 行为纠正                     │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</div>
+        </section>
+
+        <footer>
+            <p>动态奖励计算系统设计 | 天才理事会 | 2026年5月31日</p>
+            <p><a href="00-index.html" style="color: #feca57;">← 返回总览</a></p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -9,7 +9,7 @@
 //!
 //! # 消息流向
 //!
-//! ```
+//! ```text
 //! WorldMind ──────┐
 //!   │            │
 //!   │ Snapshot   │ TransactionEvent

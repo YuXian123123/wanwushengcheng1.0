@@ -223,40 +223,23 @@ pub async fn get_gu_list(
 ) -> Result<Json<GuListResponse>, StatusCode> {
     let world = state.world.read().await;
 
-    // 蛊虫名称列表
-    let gu_names = [
-        "火灵虫", "冰灵虫", "雷灵虫", "风灵虫", "土灵虫",
-        "金灵虫", "木灵虫", "水灵虫", "光灵虫", "暗灵虫",
-        "炎魔虫", "霜寒虫", "电光虫", "旋风虫", "岩石虫",
-        "玄铁虫", "青木虫", "深海虫", "圣光虫", "幽影虫",
-        "星辰虫", "月华虫", "日炎虫", "云雾虫", "山岳虫",
-    ];
-
-    // 能力池
-    let ability_pool = [
-        "火焰喷射", "冰冻护盾", "闪电链", "风刃", "岩石护甲",
-        "金属硬化", "自然治愈", "水盾", "圣光祝福", "暗影潜行",
-    ];
-
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-
     let gus: Vec<GuSummary> = world.all_gus()
         .iter()
         .enumerate()
         .map(|(i, (id, info))| {
-            let health = 0.5 + (i as f64 * 0.02).min(0.45);
+            // 从蛊虫神经网络获取真实的健康度
+            let health = info.lnn.get_overall_activity();
             let active = health > 0.3;
 
-            // 随机选择1-3个能力
-            let num_abilities = rng.gen_range(1..=3);
-            let abilities: Vec<String> = ability_pool
-                .iter()
-                .cycle()
-                .skip(i)
-                .take(num_abilities)
-                .map(|s| s.to_string())
-                .collect();
+            // 从蛊虫的技能列表获取真实能力（学习中形成的）
+            // 如果没有技能，显示 "无"
+            let abilities: Vec<String> = if info.skills.is_empty() {
+                vec!["无".to_string()]
+            } else {
+                info.skills.iter()
+                    .map(|skill| skill.name.clone())
+                    .collect()
+            };
 
             // 从蛊虫信息获取颜色
             let (color, generation, is_primordial) = {
@@ -267,6 +250,12 @@ pub async fn get_gu_list(
             // 根据颜色确定名称
             let name = info.color_gene.color_name();
 
+            // 从蛊虫神经网络获取真实的接入点状态
+            let ap_status = info.lnn.get_access_point_status();
+
+            // 从钱包获取真实资源
+            let resources = info.wallet.balance as u32;
+
             GuSummary {
                 id: id.to_string(),
                 name,
@@ -274,13 +263,13 @@ pub async fn get_gu_list(
                 trust_score: info.trust_score,
                 active,
                 abilities,
-                resources: rng.gen_range(100..1000),
+                resources,
                 access_points: AccessPointsStatus {
-                    perception: 0.5 + (i as f64 * 0.02),
-                    action: 0.4 + (i as f64 * 0.02),
-                    communication: 0.3 + (i as f64 * 0.02),
-                    memory: 0.5 + (i as f64 * 0.015),
-                    reasoning: 0.4 + (i as f64 * 0.018),
+                    perception: ap_status.perception,
+                    action: ap_status.action,
+                    communication: ap_status.communication,
+                    memory: ap_status.memory,
+                    reasoning: ap_status.reasoning,
                 },
                 color,
                 generation,
@@ -622,23 +611,23 @@ pub async fn serve_static(uri: Uri) -> impl IntoResponse {
     match std::fs::read(&file_path) {
         Ok(content) => {
             // 根据文件扩展名确定 MIME 类型
-            let mime_type = match file_path.extension().and_then(|e| e.to_str()) {
-                Some("html") => "text/html",
-                Some("css") => "text/css",
-                Some("js") => "application/javascript",
-                Some("json") => "application/json",
-                Some("png") => "image/png",
-                Some("jpg") | Some("jpeg") => "image/jpeg",
-                Some("svg") => "image/svg+xml",
-                Some("ico") => "image/x-icon",
-                Some("woff") | Some("woff2") => "font/woff2",
-                _ => "application/octet-stream",
+            let (mime_type, cache_control) = match file_path.extension().and_then(|e| e.to_str()) {
+                Some("html") => ("text/html", "no-cache, no-store, must-revalidate"),
+                Some("js") => ("application/javascript", "no-cache, no-store, must-revalidate"),
+                Some("css") => ("text/css", "max-age=86400"),
+                Some("json") => ("application/json", "no-cache"),
+                Some("png") => ("image/png", "max-age=31536000"),
+                Some("jpg") | Some("jpeg") => ("image/jpeg", "max-age=31536000"),
+                Some("svg") => ("image/svg+xml", "max-age=31536000"),
+                Some("ico") => ("image/x-icon", "max-age=31536000"),
+                Some("woff") | Some("woff2") => ("font/woff2", "max-age=31536000"),
+                _ => ("application/octet-stream", "no-cache"),
             };
 
             Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, mime_type)
-                .header(header::CACHE_CONTROL, "max-age=3600")
+                .header(header::CACHE_CONTROL, cache_control)
                 .body(content.into())
                 .unwrap()
         }
@@ -676,4 +665,348 @@ cd herness-web && npm install && npm run build
             }
         }
     }
+}
+
+// ============================================================================
+// 聊天频道 API
+// ============================================================================
+
+/// 聊天频道响应
+#[derive(Debug, Serialize)]
+pub struct ChatChannelResponse {
+    pub id: String,
+    pub name: String,
+    pub channel_type: String,
+    pub online_count: usize,
+    pub message_count: usize,
+}
+
+/// 获取聊天频道列表
+pub async fn get_chat_channels(
+    State(state): State<Arc<HernessState>>,
+) -> Json<Vec<ChatChannelResponse>> {
+    let world = state.world.read().await;
+    let chat_system = world.chat_system();
+
+    chat_system.get_all_channels().iter()
+        .map(|c| ChatChannelResponse {
+            id: c.id.clone(),
+            name: c.name.clone(),
+            channel_type: format!("{:?}", c.channel_type),
+            online_count: c.online_participants.len(),
+            message_count: c.messages.len(),
+        })
+        .collect::<Vec<_>>()
+        .into()
+}
+
+/// 聊天消息响应
+#[derive(Debug, Serialize)]
+pub struct ChatMessageResponse {
+    pub id: String,
+    pub sender_id: String,
+    pub sender_name: String,
+    pub sender_role: String,
+    pub content: serde_json::Value,
+    pub sent_at: u64,
+}
+
+/// 获取频道消息
+pub async fn get_chat_messages(
+    State(state): State<Arc<HernessState>>,
+    Path(channel_id): Path<String>,
+) -> Result<Json<Vec<ChatMessageResponse>>, StatusCode> {
+    let world = state.world.read().await;
+    let chat_system = world.chat_system();
+
+    let messages = chat_system.get_messages(&channel_id, 100);
+
+    let response: Vec<ChatMessageResponse> = messages.iter()
+        .map(|m| ChatMessageResponse {
+            id: m.id.clone(),
+            sender_id: m.sender_id.to_string(),
+            sender_name: m.sender_name.clone(),
+            sender_role: format!("{:?}", m.sender_role),
+            content: serde_json::to_value(&m.content).unwrap_or(serde_json::Value::Null),
+            sent_at: m.sent_at,
+        })
+        .collect();
+
+    Ok(Json(response))
+}
+
+/// 发送消息请求
+#[derive(Debug, Deserialize)]
+pub struct SendChatMessageRequest {
+    pub sender_id: String,
+    pub sender_name: String,
+    pub content: String,
+}
+
+/// 发送消息响应
+#[derive(Debug, Serialize)]
+pub struct SendChatMessageResponse {
+    pub success: bool,
+    pub message_id: Option<String>,
+    pub error: Option<String>,
+}
+
+/// 发送聊天消息
+pub async fn send_chat_message(
+    State(state): State<Arc<HernessState>>,
+    Path(channel_id): Path<String>,
+    Json(body): Json<SendChatMessageRequest>,
+) -> Result<Json<SendChatMessageResponse>, StatusCode> {
+    let sender_id = uuid::Uuid::parse_str(&body.sender_id)
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
+
+    let mut world = state.world.write().await;
+    let chat_system = world.chat_system_mut();
+
+    let message_id = chat_system.send_message(
+        &channel_id,
+        sender_id,
+        &body.sender_name,
+        crate::world::chat_channel::SenderRole::Gu,
+        crate::world::chat_channel::MessageContent::Text(body.content),
+    );
+
+    Ok(Json(SendChatMessageResponse {
+        success: message_id.is_some(),
+        message_id,
+        error: None,
+    }))
+}
+
+// ============================================================================
+// 学习 API
+// ============================================================================
+
+/// 学习目录请求
+#[derive(Debug, Deserialize)]
+pub struct LearnDirectoryRequest {
+    /// 目录路径
+    pub path: String,
+    /// 文件扩展名（可选，默认 ["md", "txt"]）
+    #[serde(default)]
+    pub extensions: Vec<String>,
+}
+
+/// 学习文件请求
+#[derive(Debug, Deserialize)]
+pub struct LearnFileRequest {
+    /// 文件路径
+    pub path: String,
+}
+
+/// 学习响应
+#[derive(Debug, Serialize)]
+pub struct LearnResponse {
+    pub success: bool,
+    pub files_processed: usize,
+    pub message: String,
+    pub skills_created: Vec<String>,
+}
+
+/// 扫描结果
+#[derive(Debug, Serialize)]
+pub struct ScanResponse {
+    /// 目录路径
+    pub path: String,
+    /// 文件列表
+    pub files: Vec<FileInfo>,
+    /// 按扩展名分组统计
+    pub extension_stats: std::collections::HashMap<String, usize>,
+    /// 总文件数
+    pub total: usize,
+    /// 是否有需要转换器的文件
+    pub has_special_formats: bool,
+}
+
+/// 文件信息
+#[derive(Debug, Serialize)]
+pub struct FileInfo {
+    pub path: String,
+    pub extension: String,
+    pub size: u64,
+    /// 是否需要转换器
+    pub needs_converter: bool,
+    /// 解析器类型
+    pub parser_type: String,
+}
+
+/// 扫描目录
+///
+/// 检测目录中的文件格式，返回需要使用的解析器信息
+pub async fn scan_directory(
+    Json(req): Json<LearnDirectoryRequest>,
+) -> Result<Json<ScanResponse>, StatusCode> {
+    use super::learner::Learner;
+    use super::parser::ParserRegistry;
+
+    let path_str = &req.path;
+    let path = std::path::Path::new(path_str);
+    if !path.exists() {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    let learner = Learner::new();
+    let registry = ParserRegistry::new();
+
+    // 获取支持的扩展名
+    let supported = registry.supported_extensions();
+
+    // 扫描所有文件
+    let files = match learner.scan_directory(path_str, &[]) {
+        Ok(f) => f,
+        Err(_) => return Err(StatusCode::BAD_REQUEST),
+    };
+
+    let mut file_infos: Vec<FileInfo> = Vec::new();
+    let mut extension_stats: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut has_special_formats = false;
+
+    for file_path in files {
+        let ext = file_path.extension()
+            .map(|e| e.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
+
+        let size = file_path.metadata().map(|m| m.len()).unwrap_or(0);
+
+        // 判断是否需要转换器
+        let needs_converter = !["md", "txt", "html", "css", "js", "ts", "json", "yaml", "xml"].contains(&ext.as_str());
+        if needs_converter {
+            has_special_formats = true;
+        }
+
+        // 判断解析器类型
+        let parser_type = if supported.contains(&ext) {
+            if needs_converter { "special" } else { "common" }.to_string()
+        } else {
+            "unknown".to_string()
+        };
+
+        // 统计扩展名
+        *extension_stats.entry(ext.clone()).or_insert(0) += 1;
+
+        file_infos.push(FileInfo {
+            path: file_path.to_string_lossy().to_string(),
+            extension: ext,
+            size,
+            needs_converter,
+            parser_type,
+        });
+    }
+
+    let total = file_infos.len();
+
+    Ok(Json(ScanResponse {
+        path: path_str.clone(),
+        files: file_infos,
+        extension_stats,
+        total,
+        has_special_formats,
+    }))
+}
+
+/// 学习目录
+///
+/// 扫描目录中的所有文件，发送给世界模型学习
+pub async fn learn_directory(
+    State(state): State<Arc<HernessState>>,
+    Json(req): Json<LearnDirectoryRequest>,
+) -> Result<Json<LearnResponse>, StatusCode> {
+    use super::learner::Learner;
+    use super::protocol::KnowledgeFileEvent;
+
+    let path_str = &req.path;
+    let path = std::path::Path::new(path_str);
+    if !path.exists() {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    let mut learner = Learner::new();
+
+    // 如果没有指定扩展名，使用所有支持的格式
+    let extensions = if req.extensions.is_empty() {
+        learner.supported_extensions()
+    } else {
+        req.extensions
+    };
+
+    let files = match learner.scan_directory(path_str, &extensions) {
+        Ok(f) => f,
+        Err(_) => return Err(StatusCode::BAD_REQUEST),
+    };
+
+    if files.is_empty() {
+        return Ok(Json(LearnResponse {
+            success: true,
+            files_processed: 0,
+            message: "目录中没有可学习的文件".to_string(),
+            skills_created: vec![],
+        }));
+    }
+
+    let total = files.len();
+    let mut processed = 0;
+    let mut skills = std::collections::HashSet::new();
+
+    for file_path in files {
+        let event = match learner.read_file(&file_path, path_str, total) {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+
+        let mut world = state.world.write().await;
+        let result = world.receive_knowledge_file(&event);
+        if result.success {
+            processed += 1;
+            if let Some(skill_name) = result.skill_name {
+                skills.insert(skill_name);
+            }
+        }
+    }
+
+    Ok(Json(LearnResponse {
+        success: processed > 0,
+        files_processed: processed,
+        message: format!("成功学习 {}/{} 个文件", processed, total),
+        skills_created: skills.into_iter().collect(),
+    }))
+}
+
+/// 学习单个文件
+pub async fn learn_file(
+    State(state): State<Arc<HernessState>>,
+    Json(req): Json<LearnFileRequest>,
+) -> Result<Json<LearnResponse>, StatusCode> {
+    use super::learner::Learner;
+
+    let path = std::path::Path::new(&req.path);
+    if !path.exists() {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    let root_dir = path.parent()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| req.path.clone());
+
+    let mut learner = Learner::new();
+    let event = match learner.read_file(path, &root_dir, 1) {
+        Ok(e) => e,
+        Err(_) => return Err(StatusCode::BAD_REQUEST),
+    };
+
+    let mut world = state.world.write().await;
+    let result = world.receive_knowledge_file(&event);
+
+    let skills = result.skill_name.map(|s| vec![s]).unwrap_or_default();
+
+    Ok(Json(LearnResponse {
+        success: result.success,
+        files_processed: if result.success { 1 } else { 0 },
+        message: result.message,
+        skills_created: skills,
+    }))
 }
